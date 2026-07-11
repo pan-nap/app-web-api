@@ -1,0 +1,70 @@
+{
+  "id": "hs-trtc",
+  "displayName": "hs-trtc",
+  "version": "1.0.1",
+  "description": "腾讯 TRTC 音视频通话 UTS 插件（基于 TUIRoomEngine，自研视频界面，只有两个窗口界面一次视频只能进两个人，大小窗切换，悬浮窗显示）",
+  "keywords": [
+    "trtc",
+    "video",
+    "call"
+],
+  "engines": {
+    "HBuilderX": "^3.9.0",
+    "uni-app-x": "^5.13",
+    "uni-app": ""
+  },
+  "dcloudext": {
+    "type": "uts",
+    "darkmode": "x",
+    "i18n": "x",
+    "widescreen": "√",
+    "contact": {
+        "qq": "2275013777"
+    },
+    "declaration": {
+        "ads": "无",
+        "data": "用于视频对话聊天",
+        "permissions": " <!-- TRTC 必需权限 -->\n    <uses-permission android:name=\"android.permission.INTERNET\" />\n    <uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />\n    <uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\" />\n    <uses-permission android:name=\"android.permission.RECORD_AUDIO\" />\n    <uses-permission android:name=\"android.permission.MODIFY_AUDIO_SETTINGS\" />\n    <uses-permission android:name=\"android.permission.BLUETOOTH\" />\n    <uses-permission android:name=\"android.permission.CAMERA\" />\n    <uses-permission android:name=\"android.permission.READ_PHONE_STATE\" />\n    <uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\" />\n    <uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\" />\n\n    <uses-feature android:name=\"android.hardware.camera.autofocus\" />\n\n    <!-- 悬浮窗权限（用于小窗视频） -->\n    <uses-permission android:name=\"android.permission.SYSTEM_ALERT_WINDOW\" />"
+    },
+    "npmurl": "",
+    "sale": {
+        "regular": {
+            "price": "0.00"
+        },
+        "sourcecode": {
+            "price": "0.00"
+        }
+    }
+  },
+  "uni_modules": {
+    "dependencies": [],
+    "encrypt": [],
+    "platforms": {
+      "client": {
+        "uni-app-x": {
+          "app": {
+            "android": {
+                "extVersion": "1.0.0",
+                "minVersion": "24"
+            },
+            "harmony": "-",
+            "ios": "-"
+        },
+        "mp": {
+            "weixin": "-"
+        },
+        "web": {
+            "chrome": "-",
+            "safari": "-"
+        }
+        }
+      },
+      "cloud": {
+        "tcb": "x",
+        "aliyun": "x",
+        "alipay": "x"
+      }
+    }
+},
+"repository": ""
+}

@@ -1,0 +1,335 @@
+<template>
+	<view class="flex flex-col flex-1 bg-[#1a1a1a] relative">
+		<!-- 主大屏：渲染本地或远端视频 -->
+		<view ref="mainContainer" class="flex-1 flex items-center justify-center bg-[#2a2a2a] relative of-hidden" @tap="switchMainScreen">
+			<text class="absolute top-32 left-32 text-28 text-white/60 z-5 bg-black/40 px-20 py-4 rd-20">{{ mainIsLocal ? '我的画面' : '对方画面' }}</text>
+		</view>
+
+		<!-- 悬浮小窗：渲染另一路视频，点击切换主次 -->
+		<view ref="pipContainer" class="absolute top-80 right-32 w-240 h-360 rd-24 of-hidden z-10 bg-[#333]" style="border: 2px solid rgba(255,255,255,0.3);" @tap="switchMainScreen">
+			<text class="absolute top-16 left-16 text-22 text-white/60 z-5 bg-black/40 px-16 py-2 rd-16">{{ mainIsLocal ? '对方画面' : '我的画面' }}</text>
+		</view>
+
+		<!-- 底部控制栏 -->
+		<view class="absolute bottom-0 left-0 right-0 z-15 px-32 pt-48 pb-96 flex flex-col items-center justify-center">
+			<view class="flex flex-row justify-center items-center">
+				<view class="flex flex-col items-center justify-center" @tap="toggleCamera">
+					<view class="w-104 h-104 flex items-center justify-center rd-full" :class="cameraOn ? 'bg-[rgba(51,51,51,0.9)]' : 'bg-[rgba(229,57,53,0.8)]'">
+						<text class="text-48">{{ cameraOn ? '📷' : '🚫' }}</text>
+					</view>
+					<text class="text-22 text-[#ccc] mt-12">{{ cameraOn ? '关闭摄像头' : '开启摄像头' }}</text>
+				</view>
+
+				<view class="flex flex-col items-center justify-center ml-48" @tap="toggleMic">
+					<view class="w-104 h-104 flex items-center justify-center rd-full" :class="micOn ? 'bg-[rgba(51,51,51,0.9)]' : 'bg-[rgba(229,57,53,0.8)]'">
+						<text class="text-48">{{ micOn ? '🎤' : '🔇' }}</text>
+					</view>
+					<text class="text-22 text-[#ccc] mt-12">{{ micOn ? '静音' : '取消静音' }}</text>
+				</view>
+
+				<view class="flex flex-col items-center justify-center ml-48" @tap="toggleHome">
+					<view class="w-104 h-104 flex items-center justify-center rd-full">
+						<text class="text-48">👤</text>
+					</view>
+					<text class="text-22 text-[#ccc] mt-12">首页</text>
+				</view>
+			</view>
+
+			<view class="flex flex-col items-center justify-center mt-20" @tap="hangUp">
+				<view class="w-104 h-104 flex items-center justify-center rd-full bg-[#e53935]">
+					<text class="text-48">📞</text>
+				</view>
+			</view>
+		</view>
+
+		<!-- 通话状态提示 -->
+		<view class="absolute top-24 z-20" style="left: 50%; transform: translateX(-50%)">
+			<text class="text-28 text-white/80 bg-black/50 px-32 py-8 rd-24">{{ statusText }}</text>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { TrtcService } from '@/uni_modules/hs-trtc'
+	import {
+		FloatWindowService, setFloatVideoSource
+	} from '@/uni_modules/hs-trtc-floating'
+
+	// ========== 响应式状态 ==========
+	const statusText = ref('空闲')
+	const cameraOn = ref(false)
+	const micOn = ref(true)
+	const mainIsLocal = ref(true)     // true=主屏本地, false=主屏远端
+	const remoteUserId = ref<string>('') // 远端用户ID（由 STOMP 通知设置）
+
+	// ========== 容器引用 ==========
+	const mainContainer = ref<UniElement | null>(null)
+	const pipContainer = ref<UniElement | null>(null)
+
+	// ========== 原生视频容器（桥接层将 TXCloudVideoView 添加到容器中） ==========
+	let mainContainerNative : android.view.ViewGroup | null = null
+	let pipContainerNative : android.view.ViewGroup | null = null
+
+	// 标记用户是否从本页面导航到了其他页（用于浮窗点击时区分"后台"和"导航"）
+	let _navigatedToOtherPage : boolean = false
+
+	// ========== 视频视图管理 ==========
+
+	/**
+	 * 获取原生容器引用（桥接层管理 TXCloudVideoView 的新建和添加）
+	 */
+	function createVideoViews() : void {
+		// 获取原生容器引用
+		try {
+			const m = mainContainer.value!.getAndroidView<android.view.ViewGroup>()
+			if (m != null) {
+				mainContainerNative = m
+			}
+		} catch (e : any) {
+			console.error('获取主屏容器失败')
+		}
+
+		try {
+			const p = pipContainer.value!.getAndroidView<android.view.ViewGroup>()
+			if (p != null) {
+				pipContainerNative = p
+			}
+		} catch (e : any) {
+			console.error('获取小窗容器失败')
+		}
+	}
+
+	/**
+	 * 房间连接成功后：开启摄像头 + 绑定远端视频
+	 */
+	function onRoomConnected() : void {
+		// 开启摄像头
+		cameraOn.value = true
+		TrtcService.switchCamera(true)
+
+		// 绑定远端视频到小窗
+		if (pipContainerNative != null && remoteUserId.value.length > 0) {
+			TrtcService.setRemoteVideoView(remoteUserId.value, pipContainerNative)
+		}
+	}
+
+	/**
+	 * 大小屏切换：交换主屏和小窗的视频渲染目标
+	 */
+	function switchMainScreen() : void {
+		mainIsLocal.value = !mainIsLocal.value
+
+		if (mainIsLocal.value) {
+			// 主屏 ← 本地    小窗 ← 远端
+			TrtcService.setLocalVideoView(mainContainerNative)
+			if (remoteUserId.value.length > 0) {
+				TrtcService.setRemoteVideoView(remoteUserId.value, pipContainerNative)
+			}
+		} else {
+			// 主屏 ← 远端    小窗 ← 本地
+			if (remoteUserId.value.length > 0) {
+				TrtcService.setRemoteVideoView(remoteUserId.value, mainContainerNative)
+			}
+			TrtcService.setLocalVideoView(pipContainerNative)
+		}
+	}
+
+	// ========== 媒体控制 ==========
+
+	function toggleCamera() : void {
+		cameraOn.value = !cameraOn.value
+		TrtcService.switchCamera(cameraOn.value)
+	}
+
+	function toggleMic() : void {
+		micOn.value = !micOn.value
+		TrtcService.switchMicrophone(micOn.value)
+	}
+
+	function toggleHome() : void {
+		_navigatedToOtherPage = true
+		uni.navigateTo({ url: '/pages/index/index' })
+	}
+
+	function hangUp() : void {
+		TrtcService.leaveRoom()
+		FloatWindowService.destroy()
+		uni.navigateBack()
+	}
+
+	// ========== 悬浮窗管理 ==========
+
+	/**
+	 * 从悬浮窗返回时，恢复视频渲染到页面 TextureView
+	 */
+	function restoreVideoToPage() : void {
+		if (mainIsLocal.value) {
+			// 主屏 ← 本地    小窗 ← 远端
+			if (mainContainerNative != null) {
+				TrtcService.setLocalVideoView(mainContainerNative)
+			}
+			if (pipContainerNative != null && remoteUserId.value.length > 0) {
+				TrtcService.setRemoteVideoView(remoteUserId.value, pipContainerNative)
+			}
+		} else {
+			// 主屏 ← 远端    小窗 ← 本地
+			if (mainContainerNative != null && remoteUserId.value.length > 0) {
+				TrtcService.setRemoteVideoView(remoteUserId.value, mainContainerNative)
+			}
+			if (pipContainerNative != null) {
+				TrtcService.setLocalVideoView(pipContainerNative)
+			}
+		}
+	}
+
+	/**
+	 * 显示悬浮窗（按返回/切后台时）
+	 * 将视频渲染从页面 TextureView 切换到系统悬浮窗 TextureView
+	 */
+	function showFloatingWindow() : void {
+		// 告知浮动插件当前要显示的画面源
+		setFloatVideoSource(mainIsLocal.value, remoteUserId.value)
+
+		// 点击悬浮窗 → 回到页面
+		FloatWindowService.onClick(() => {
+			// #ifdef APP-ANDROID
+			try {
+				// 将 Activity 带到前台（不带 NEW_TASK 避免创建新实例）
+				const act = UTSAndroid.getUniActivity()
+				if (act != null) {
+					const actRef = act as android.app.Activity
+					const intent = new android.content.Intent(actRef, actRef.javaClass)
+					intent.addFlags(android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+					actRef.startActivity(intent)
+				}
+			} catch (_e : any) {
+				console.log('FLOAT: bringActivityToFront 失败')
+			}
+			// #endif
+			// 仅当从本页面导航到其他页时调用 navigateBack 返回
+			// 直接切后台时不 navigateBack，避免弹出视频页本身
+			if (_navigatedToOtherPage) {
+				uni.navigateBack()
+			}
+		})
+
+		// 显示悬浮窗（内部创建 TextureView 并调用 TrtcService.setXxxVideoView）
+		FloatWindowService.show()
+
+		// 注意：页面 TextureView 的 Surface 被悬浮窗替换，
+		// TrtcService.setLocalVideoView(floatTv) 会自动停止旧视图、启动新视图
+	}
+
+	// ========== 生命周期 ==========
+
+	onReady(() => {
+		// 1. 创建 Android TextureView 并添加到容器
+		createVideoViews()
+
+		// 2. 注册 TRTC 状态回调
+		TrtcService.onStatusChange((status) => {
+			switch (status) {
+				case 1:
+					statusText.value = '正在连接...'
+					break
+				case 2:
+					statusText.value = '通话中'
+					onRoomConnected()
+					break
+				case 3:
+					statusText.value = '已断开'
+					cameraOn.value = false
+					break
+				default:
+					statusText.value = ''
+			}
+		})
+
+		TrtcService.onError((code, msg) => {
+			console.error('TRTC 错误: code=' + code + ', msg=' + msg)
+			statusText.value = '连接失败: ' + msg
+		})
+
+		// 3. 注册远端用户进入回调（TRTC SDK 原生回调）
+		TrtcService.onRemoteUserEnter((userId : string) => {
+			remoteUserId.value = userId
+			console.log('TRTC 原生回调: 远端用户进入, userId=' + userId)
+		})
+		// 4. 注册远端用户离开回调（TRTC SDK 原生回调）
+		TrtcService.onRemoteUserLeave((userId : string) => {
+			console.log('TRTC 原生回调: 远端用户离开, userId=' + userId)
+			remoteUserId.value = ''
+		})
+		// 5. 远端用户视频可用时绑定远端视频
+		TrtcService.onUserVideoAvailable((userId : string, available : boolean) => {
+			console.log('TRTC 原生回调: onUserVideoAvailable, userId=' + userId + ', available=' + available)
+			if (available) {
+				// 根据当前大小屏布局选择目标容器
+				if (mainIsLocal.value) {
+					// 本地大屏、远端小窗 → 绑到小窗
+					if (pipContainerNative != null) {
+						TrtcService.setRemoteVideoView(userId, pipContainerNative)
+					}
+				} else {
+					// 远端大屏、本地小窗 → 绑到大屏
+					if (mainContainerNative != null) {
+						TrtcService.setRemoteVideoView(userId, mainContainerNative)
+					}
+				}
+			}
+		})
+
+		// 6. 绑定本地视频到主屏 TextureView
+		if (mainContainerNative != null) {
+			TrtcService.setLocalVideoView(mainContainerNative)
+		}
+
+		// 7. 进入 TRTC 房间
+		TrtcService.enterRoom({
+			sdkAppId: 1600146020, // TODO: 替换为实际 SDKAppID
+			userId: '666',
+			userSig: 'eJwtzEELgkAUBOD-stdC3q76UqFDRFSUeyiNruJu8pLVRSWE6L*3qMf5Zpgvy65376M7ljDhAVtPmZRuBnrRxIi4cK-qwlpSLOEIwAMEAXMzkNFON5HgMfAwnlWPljrnCEEEy7Knyn0*T5V5*7l81JkZS3nwTb6-NYEse0rTor2gOYf5sV3Vdrdlvz8ERi*-',          // TODO: 通过业务服务器获取
+			roomId: 888  // 固定房间号（字符和纯数字是两中房间号）
+		})
+	})
+
+	/**
+	 * 页面显示（从浮窗返回或切回前台时）→ 恢复视频渲染
+	 */
+	onPageShow(() => {
+		// 首次进入页面时不走此逻辑，避免打断 onReady 已启动的正常视频
+		if (FloatWindowService.getStatus() == 1) {
+			// 从浮窗返回：先销毁浮窗，再恢复视频到页面
+			console.log('TRTC: onShow 从浮窗返回，恢复视频渲染')
+			createVideoViews()
+			FloatWindowService.destroy()
+			_navigatedToOtherPage = false
+			restoreVideoToPage()
+		} else if (TrtcService.getCurrentStatus() == 2) {
+			// 通话中从后台返回（未启动浮窗）：Activity 的 Surface 可能已被重建，重新绑定视图
+			console.log('TRTC: onShow 从后台返回（无浮窗），重新绑定视图')
+			createVideoViews()
+			restoreVideoToPage()
+		}
+	})
+
+	/**
+	 * 页面隐藏（按返回键或切到后台）→ 启动悬浮窗
+	 */
+	onPageHide(() => {
+		console.log('onPageHide.getCurrentStatus()=>>', TrtcService.getCurrentStatus())
+		if (TrtcService.getCurrentStatus() == 2) {
+			showFloatingWindow()
+		}
+	})
+
+	/**
+	 * 页面销毁 → 释放所有 TRTC 资源
+	 */
+	onUnload(() => {
+		TrtcService.leaveRoom()
+		FloatWindowService.destroy()
+	})
+</script>
+
+<style></style>

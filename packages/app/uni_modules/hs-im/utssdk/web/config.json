@@ -1,0 +1,7 @@
+{
+  "minSdkVersion": "",
+  "dependencies": {
+    "tim-js-sdk": "^2.27.6",
+    "tim-upload-plugin": "^1.4.3"
+  }
+}

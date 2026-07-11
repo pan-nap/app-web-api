@@ -1,0 +1,21 @@
+/**
+ * unierror.uts
+ * hs-trtc-floating UTS 插件错误码定义
+ */
+
+/** 悬浮窗错误码常量 */
+export const FloatErrorCode = {
+  /** 缺少悬浮窗权限 */
+  NoOverlayPermission: 9030001,
+  /** WindowManager 不可用 */
+  WmUnavailable: 9030002,
+  /** 创建视图失败 */
+  CreateViewFailed: 9030003
+}
+
+/** 悬浮窗错误实现 */
+export class FloatErrorImpl extends UniError {
+  constructor(code: number, msg: string) {
+    super(code, msg)
+  }
+}

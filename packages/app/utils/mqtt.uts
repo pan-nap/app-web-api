@@ -1,0 +1,89 @@
+import { MqttClient, MqttConfig } from '@/uni_modules/hs-mqtt'
+import config from '../config.json'
+
+// 全局单例
+let mqttClientInstance: MqttClient | null = null
+
+function getBaseUrl() : string {
+	// #ifdef WEB
+	return location.hostname
+	// #endif
+
+	// #ifndef WEB
+	const baseUrl = config["mqttUrl"] as string
+	return baseUrl
+	// #endif
+}
+
+function getBasePort() : number {
+	// #ifdef WEB
+	return location.port
+	// #endif
+
+	// #ifndef WEB
+	return config['mqttPort'] as number
+	// #endif
+}
+
+function getBaseProtocol() : string {
+	// #ifdef WEB
+	return process.env.NODE_ENV === 'development' ? 'ws' : 'wss'
+	// #endif
+
+	// #ifndef WEB
+	return 'wss'
+	// #endif
+}
+
+/**
+ * 获取 MQTT 客户端单例
+ * 首次调用时自动连接并订阅预设主题
+ * 收到消息后通过 uni.$emit("mqttMsg", { topic, msg }) 广播给所有页面
+ */
+export async function mqttClient() {
+  if (mqttClientInstance != null) {
+    return mqttClientInstance
+  }
+  const mqttConfig: MqttConfig = {
+    protocol: getBaseProtocol(),
+    host: getBaseUrl(),
+    port: getBasePort(),
+    path: '/mqtt',
+    username: "admin",
+    password: "hsACTIVEMQ@520"
+  }
+  try {
+    const instance = new MqttClient()
+    // 重写消息回调，收到消息通过全局事件广播
+    instance.onMessageReceive = (topic: string, msg: string) => {
+      uni.$emit("mqttMsg", { topic, msg })
+    }
+    mqttClientInstance = instance
+    await instance.connect(mqttConfig)
+    await instance.subscribe("uniappx/test/topic-1")
+  } catch (e) {
+    console.error("MQTT客户端创建失败", e)
+  }
+  return mqttClientInstance
+}
+
+/** MQTT 消息结构 */
+interface MqttMessage {
+  topic: string
+  msg: string
+}
+
+/**
+ * 页面 hook：监听 MQTT 消息
+ * 页面销毁时自动注销事件，避免内存泄漏
+ */
+export function useMqttMessage(callback : (topic: string, msg: string) => void) : void {
+	const handler = (data : any) => {
+		const raw = data as MqttMessage
+		callback(raw.topic, raw.msg)
+	}
+	uni.$on("mqttMsg", handler)
+	onUnmounted(() => {
+		uni.$off("mqttMsg", handler)
+	})
+}

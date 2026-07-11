@@ -1,0 +1,58 @@
+{
+  "name": "hs-sf-backend",
+  "version": "1.0.0",
+  "description": "学生管理系统后端服务",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "init-admin": "node scripts/initAdmin.js",
+    "test": "node test-runner.js",
+    "test:watch": "node test-runner.js --watch",
+    "test:coverage": "node test-runner.js --coverage"
+  },
+  "keywords": [
+    "koa",
+    "mysql",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "imports": {
+    "#config/*": "./src/config/*.js",
+    "#controllers/authController": "./src/controllers/authController/index.js",
+    "#controllers/dictionaryController": "./src/controllers/dictionaryController/index.js",
+    "#controllers/employeeController": "./src/controllers/employeeController/index.js",
+    "#controllers/orderController": "./src/controllers/orderController/index.js",
+    "#controllers/studentController": "./src/controllers/studentController/index.js",
+    "#controllers/uploadController": "./src/controllers/uploadController/index.js",
+    "#controllers/documentController": "./src/controllers/documentController/index.js",
+    "#middleware/*": "./src/middleware/*.js",
+    "#models/*": "./src/models/*.js",
+    "#routes/*": "./src/routes/*.js",
+    "#services/*": "./src/services/*.js",
+    "#utils/*": "./src/utils/*.js",
+    "#validators/*": "./src/validators/*.js"
+  },
+  "dependencies": {
+    "@koa/bodyparser": "^6.1.0",
+    "@koa/cors": "^5.0.0",
+    "@koa/multer": "^4.0.0",
+    "@koa/router": "^15.5.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "jsonwebtoken": "^9.0.3",
+    "koa": "^3.2.1",
+    "koa-mount": "^4.2.0",
+    "koa-serve-list": "^1.0.1",
+    "koa-static": "^5.0.0",
+    "multer": "^2.1.1",
+    "mysql2": "^3.22.4"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
+  }
+}

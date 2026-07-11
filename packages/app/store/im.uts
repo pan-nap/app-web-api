@@ -1,0 +1,415 @@
+import { IMService } from '@/uni_modules/hs-im'
+import type { IMLoginConfig , ChatMessage } from '@/uni_modules/hs-im'
+
+// ========== 类型定义 ==========
+
+export type IMState = {
+	isLoggedIn: boolean
+	loginStatus: number
+	statusText: string
+	errorText: string
+	peerUserId: string
+	messages: ChatMessage[]
+	scrollAnchor: string
+	sdkAppId: number
+	userId: string
+	userSig: string
+}
+
+// ========== 状态 ==========
+
+const imState = reactive<IMState>({
+	isLoggedIn: false,
+	loginStatus: 0,
+	statusText: '未连接',
+	errorText: '',
+	peerUserId: '',
+	messages: [],
+	scrollAnchor: '',
+	sdkAppId: 0,
+	userId: '',
+	userSig: ''
+})
+
+// ========== Store 类 ==========
+
+class IMStore {
+	state: IMState = imState
+
+	/**
+	 * 注册 IM SDK 回调 → 更新响应式状态
+	 */
+	setupCallbacks(): void {
+		IMService.onLoginStatusChange((status: number): void => {
+			imState.loginStatus = status
+			if (status == 2) {
+				imState.isLoggedIn = true
+				imState.statusText = '已连接'
+				imState.errorText = ''
+				// 登录成功，跳转到聊天页面
+				uni.navigateTo({ url: '/page_im/chat/index' })
+			} else if (status == 1) {
+				imState.statusText = '连接中...'
+			} else {
+				imState.isLoggedIn = false
+				imState.statusText = '未连接'
+			}
+		})
+
+		IMService.onMessageReceived((msg: ChatMessage): void => {
+			console.log('接收消息=>>>',msg)
+			// 只接收与当前聊天对象的消息
+			if (imState.peerUserId.length > 0 && msg.sender != imState.peerUserId && !msg.isSelf) {
+				return
+			}
+			imState.messages.push(msg)
+			scrollToBottom()
+		})
+
+		IMService.onMessageRevoked((msgId: string): void => {
+			// 从消息列表中移除被撤回的消息
+			const idx = this.findMsgIndex(msgId)
+			if (idx >= 0) {
+				imState.messages.splice(idx, 1)
+			}
+		})
+
+		IMService.onError((code: number, msg: string): void => {
+			imState.errorText = '[' + code.toString() + '] ' + msg
+			console.error('IM 错误: ' + msg)
+		})
+	}
+
+	// ========== 登录 / 登出 ==========
+
+	login(sdkAppId: string, userId: string, userSig: string): void {
+		if (imState.loginStatus == 1) return
+		imState.errorText = ''
+
+		if (sdkAppId.length == 0 || userId.length == 0 || userSig.length == 0) {
+			imState.errorText = '请填写完整的登录信息'
+			return
+		}
+
+		imState.sdkAppId = parseInt(sdkAppId)
+		imState.userId = userId
+		imState.userSig = userSig
+
+		const config: IMLoginConfig = {
+			sdkAppId: imState.sdkAppId,
+			userId: imState.userId,
+			userSig: imState.userSig
+		}
+		IMService.login(config)
+	}
+
+	logout(): void {
+		IMService.logout()
+		imState.isLoggedIn = false
+		imState.loginStatus = 0
+		imState.statusText = '未连接'
+		imState.peerUserId = ''
+		imState.messages = []
+	}
+
+	/**
+	 * 设置聊天对象
+	 */
+	setPeerUserId(userId: string): void {
+		imState.peerUserId = userId
+	}
+
+	// ========== 消息发送 ==========
+
+	/**
+	 * 发送文本消息
+	 */
+	sendTextMessage(text: string): void {
+		const trimmed = text.trim()
+		if (trimmed.length == 0) return
+		if (imState.peerUserId.length == 0) {
+			imState.errorText = '请先输入聊天对象 ID'
+			return
+		}
+
+		const msgId = IMService.sendTextMessage(imState.peerUserId, trimmed)
+		if (msgId.length > 0) {
+			const msg: ChatMessage = {
+				msgId: msgId,
+				sender: imState.userId,
+				type: 0, // Text
+				text: trimmed,
+				extra: '',
+				timestamp: Date.now(),
+				isSelf: true
+			}
+			imState.messages.push(msg)
+			scrollToBottom()
+		}
+	}
+
+	/**
+	 * 发送图片消息
+	 * @param imagePath 本地图片路径
+	 */
+	sendImageMessage(imagePath: string): void {
+		console.log('IMStore: sendImageMessage 开始, imagePath=' + imagePath)
+		if (imagePath.length == 0) return
+		if (imState.peerUserId.length == 0) {
+			imState.errorText = '请先输入聊天对象 ID'
+			return
+		}
+
+		console.log('IMStore: 发送图片消息, peerUserId=' + imState.peerUserId + ', userId=' + imState.userId)
+		const msgId = IMService.sendImageMessage(imState.peerUserId, imagePath)
+		console.log('IMStore: sendImageMessage 返回 msgId=' + msgId)
+		if (msgId.length > 0) {
+			const msg: ChatMessage = {
+				msgId: msgId,
+				sender: imState.userId,
+				type: 1, // Image
+				text: '[图片]',
+				extra: imagePath,
+				timestamp: Date.now(),
+				isSelf: true
+			}
+			console.log('IMStore: 添加图片消息到列表, msg=' + JSON.stringify(msg))
+			imState.messages.push(msg)
+			console.log('IMStore: 当前消息数量=' + imState.messages.length)
+			scrollToBottom()
+		}
+	}
+
+	/**
+	 * 发送视频消息
+	 * @param videoPath 本地视频路径
+	 * @param videoType 视频类型 (0=MP4)
+	 * @param duration 视频时长（秒）
+	 * @param snapshotPath 视频封面路径
+	 */
+	sendVideoMessage(videoPath: string, videoType: number, duration: number, snapshotPath: string): void {
+		if (videoPath.length == 0) return
+		if (imState.peerUserId.length == 0) {
+			imState.errorText = '请先输入聊天对象 ID'
+			return
+		}
+
+		const msgId = IMService.sendVideoMessage(imState.peerUserId, videoPath, videoType, Math.round(duration) as number, snapshotPath)
+		if (msgId.length > 0) {
+			// 获取实际封面路径（Kotlin 端自动生成）
+			const realSnapshotPath = IMService.getLastVideoSnapshotPath()
+			const msg: ChatMessage = {
+				msgId: msgId,
+				sender: imState.userId,
+				type: 2, // Video
+				text: '[视频]',
+				extra: videoPath + '|' + realSnapshotPath + '|' + duration.toString(),
+				timestamp: Date.now(),
+				isSelf: true
+			}
+			imState.messages.push(msg)
+			scrollToBottom()
+		}
+	}
+
+	/**
+	 * 发送语音消息
+	 * @param voicePath 本地语音文件路径
+	 * @param duration 语音时长（秒）
+	 */
+	sendVoiceMessage(voicePath: string, duration: number): void {
+		if (voicePath.length == 0) return
+		if (imState.peerUserId.length == 0) {
+			imState.errorText = '请先输入聊天对象 ID'
+			return
+		}
+
+		const msgId = IMService.sendVoiceMessage(imState.peerUserId, voicePath, duration)
+		if (msgId.length > 0) {
+			const msg: ChatMessage = {
+				msgId: msgId,
+				sender: imState.userId,
+				type: 3, // Voice
+				text: '[语音]',
+				extra: voicePath + '|' + duration.toString(),
+				timestamp: Date.now(),
+				isSelf: true
+			}
+			imState.messages.push(msg)
+			scrollToBottom()
+		}
+	}
+
+	/**
+	 * 发送自定义消息
+	 * @param data 自定义数据
+	 * @param desc 描述
+	 * @param extension 扩展
+	 */
+	sendCustomMessage(data: string, desc: string, extension: string): void {
+		if (data.length == 0) return
+		if (imState.peerUserId.length == 0) {
+			imState.errorText = '请先输入聊天对象 ID'
+			return
+		}
+
+		const msgId = IMService.sendCustomMessage(imState.peerUserId, data, desc, extension)
+		if (msgId.length > 0) {
+			const msg: ChatMessage = {
+				msgId: msgId,
+				sender: imState.userId,
+				type: 4, // Custom
+				text: desc.length > 0 ? desc : '[自定义消息]',
+				extra: data,
+				timestamp: Date.now(),
+				isSelf: true
+			}
+			imState.messages.push(msg)
+			scrollToBottom()
+		}
+	}
+
+	// ========== 消息历史 ==========
+
+	/**
+	 * 加载本地缓存的历史消息
+	 */
+	loadMessages(): void {
+		if (imState.peerUserId.length == 0) {
+			imState.errorText = '请先输入聊天对象 ID'
+			return
+		}
+		imState.messages = []
+		IMService.loadMessages(imState.peerUserId, 20, function (msgs: Array<ChatMessage>, error: string): void {
+			if (error.length > 0) {
+				imState.errorText = '加载历史消息失败: ' + error
+				return
+			}
+			console.log('msgs=>>>',msgs)
+			imState.messages = msgs
+			scrollToBottom()
+		})
+	}
+
+	/**
+	 * 从服务端分页拉取 C2C 历史消息
+	 * @param lastMsgId 上一页最后一条 msgId，第一页传空串
+	 */
+	fetchC2CMessageList(lastMsgId: string): void {
+		if (imState.peerUserId.length == 0) {
+			imState.errorText = '请先输入聊天对象 ID'
+			return
+		}
+		IMService.getC2CMessageList(imState.peerUserId, 20, lastMsgId, (msgs: Array<ChatMessage>, total: number, error: string): void =>{
+			if (error.length > 0) {
+				imState.errorText = '拉取历史消息失败: ' + error
+				return
+			}
+			// 如果是第一页，替换；否则追加到前面（更早的消息）
+			if (lastMsgId.length == 0) {
+				imState.messages = msgs
+			} else {
+				imState.messages = msgs.concat(imState.messages)
+			}
+			scrollToBottom()
+		})
+	}
+
+	// ========== 消息管理 ==========
+
+	/**
+	 * 删除本地消息
+	 */
+	deleteMessage(msgId: string): void {
+		const ok = IMService.deleteMessage(msgId)
+		if (ok) {
+			const idx = this.findMsgIndex(msgId)
+			if (idx >= 0) {
+				imState.messages.splice(idx, 1)
+			}
+		} else {
+			imState.errorText = '删除消息失败: 消息未找到'
+		}
+	}
+
+	/**
+	 * 撤回消息
+	 */
+	revokeMessage(msgId: string): void {
+		const ok = IMService.revokeMessage(msgId)
+		if (!ok) {
+			imState.errorText = '撤回消息失败: 消息已超时或未找到'
+		}
+		// 撤回成功后，onMessageRevoked 回调会自动移除该消息
+	}
+
+	/**
+	 * 在消息列表中找到指定 msgId 的索引
+	 */
+	private findMsgIndex(msgId: string): number {
+		for (let i = 0; i < imState.messages.length; i++) {
+			if (imState.messages[i].msgId == msgId) {
+				return i
+			}
+		}
+		return -1
+	}
+
+	// ========== 已读功能 ==========
+
+	/**
+	 * 标记当前聊天对象的消息为已读
+	 */
+	markAsRead(): void {
+		if (imState.peerUserId.length == 0) return
+		IMService.markC2CMessageAsRead(imState.peerUserId)
+	}
+
+	/**
+	 * 标记群聊消息已读
+	 */
+	markGroupAsRead(groupId: string): void {
+		if (groupId.length == 0) return
+		IMService.markGroupMessageAsRead(groupId)
+	}
+
+	/**
+	 * 发送已读回执（将当前消息列表中属于指定发送者的非自发送消息标记已读）
+	 */
+	sendReadReceiptsForPeer(): void {
+		const ids: string[] = []
+		for (let i = 0; i < imState.messages.length; i++) {
+			const msg = imState.messages[i]
+			if (!msg.isSelf && msg.sender == imState.peerUserId) {
+				ids.push(msg.msgId)
+			}
+		}
+		if (ids.length > 0) {
+			IMService.sendMessageReadReceipts(ids)
+		}
+	}
+
+	// ========== 资源释放 ==========
+
+	destroy(): void {
+		IMService.destroy()
+	}
+}
+
+function scrollToBottom(): void {
+	imState.scrollAnchor = ''
+	setTimeout(function (): void {
+		const len = imState.messages.length
+		if (len > 0) {
+			imState.scrollAnchor = 'msg-' + (len - 1).toString()
+		} else {
+			imState.scrollAnchor = 'msg-bottom'
+		}
+	}, 50)
+}
+
+const imStore = new IMStore()
+
+export function useIMStore(): IMStore {
+	return imStore
+}

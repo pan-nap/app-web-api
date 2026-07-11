@@ -1,0 +1,572 @@
+// ========== hs-im UTS插件 - Web平台入口 ==========
+// 基于腾讯 TIM SDK Web 封装
+
+import TIM from 'tim-js-sdk'
+import TIMUploadPlugin from 'tim-upload-plugin'
+import { createTextMsg, createImageMsg, createVideoMsg, createAudioMsg, createCustomMsg } from './platform-helper.js'
+
+// ========== 消息类型常量 ==========
+
+export class MessageType {
+  static Text: number = 0
+  static Image: number = 1
+  static Video: number = 2
+  static Voice: number = 3
+  static Custom: number = 4
+}
+
+// ========== 类型定义 ==========
+
+export type IMLoginConfig = {
+  sdkAppId: number
+  userId: string
+  userSig: string
+}
+
+export type ChatMessage = {
+  msgId: string
+  sender: string
+  type: number
+  text: string
+  extra: string
+  timestamp: number
+  isSelf: boolean
+}
+
+export type IMMessageListResult = {
+  messages: ChatMessage[]
+  total: number
+  error: string
+}
+
+export class IMStatusConst {
+  static Disconnected: number = 0
+  static Connecting: number = 1
+  static Connected: number = 2
+}
+
+// ========== TIM SDK 消息类型常量（数字值） ==========
+
+const TIM_MSG_TYPE_TEXT = 1
+const TIM_MSG_TYPE_IMAGE = 2
+const TIM_MSG_TYPE_VIDEO = 3
+const TIM_MSG_TYPE_AUDIO = 4
+const TIM_MSG_TYPE_CUSTOM = 5
+
+const TIM_NET_STATE_CONNECTED = 'CONNECTED'
+const TIM_NET_STATE_CONNECTING = 'CONNECTING'
+const TIM_NET_STATE_DISCONNECTED = 'DISCONNECTED'
+
+const TIM_CONV_TYPE_C2C = 'C2C'
+const TIM_CONV_TYPE_GROUP = 'GROUP'
+
+// ========== 内部状态 ==========
+
+let _tim: any = null
+let _isLogined: boolean = false
+let _loginUserId: string = ''
+let _loginSdkAppId: number = 0
+let _loginStatus: number = 0
+let _messageCache: Map<string, any> = new Map()
+
+let _onLoginStatusChange: ((status: number) => void) | null = null
+let _onMessageReceived: ((msg: ChatMessage) => void) | null = null
+let _onMessageRevoked: ((msgId: string) => void) | null = null
+let _onError: ((code: number, msg: string) => void) | null = null
+
+function triggerLoginStatus(status: number): void {
+  _loginStatus = status
+  const cb = _onLoginStatusChange
+  if (cb != null) cb(status)
+}
+
+function triggerError(code: number, msg: string): void {
+  const cb = _onError
+  if (cb != null) cb(code, msg)
+}
+
+// ========== TIM SDK 辅助函数 ==========
+
+function ensureTIMInit(): boolean {
+  if (_tim != null) return true
+  try {
+    _tim = TIM.create({ SDKAppID: _loginSdkAppId })
+    _tim.registerPlugin({ 'tim-upload-plugin': TIMUploadPlugin })
+    _tim.setLogLevel(1) // 1 = release level
+    registerTIMEvents()
+    return true
+  } catch (e: any) {
+    console.error('IM Web: TIM SDK 初始化失败 - ' + (e != null ? e.toString() : ''))
+    return false
+  }
+}
+
+function registerTIMEvents(): void {
+  if (_tim == null) return
+
+  // 登录状态变化
+  _tim.on(TIM.EVENT.SDK_READY, function (): void {
+    console.log('IM Web: SDK_READY')
+    _isLogined = true
+    triggerLoginStatus(2)
+  })
+
+  _tim.on(TIM.EVENT.SDK_NOT_READY, function (): void {
+    console.log('IM Web: SDK_NOT_READY')
+    _isLogined = false
+    triggerLoginStatus(0)
+  })
+
+  // 连接状态
+  _tim.on(TIM.EVENT.NET_STATE_CHANGE, function (event: any): void {
+    const state = event.data != null ? event.data.state : ''
+    console.log('IM Web: NET_STATE_CHANGE state=' + state)
+    if (state == TIM_NET_STATE_CONNECTED) {
+      // 已连接
+    } else if (state == TIM_NET_STATE_CONNECTING) {
+      triggerLoginStatus(1)
+    } else if (state == TIM_NET_STATE_DISCONNECTED) {
+      triggerLoginStatus(0)
+      triggerError(-1, '网络断开')
+    }
+  })
+
+  // 收到新消息
+  _tim.on(TIM.EVENT.MESSAGE_RECEIVED, function (event: any): void {
+    const msgs = event.data != null ? event.data : []
+    msgs.forEach(function (msg: any): void {
+      const chatMsg = convertTIMMessage(msg)
+      const cb = _onMessageReceived
+      if (cb != null && chatMsg != null) cb(chatMsg)
+    })
+  })
+
+  // 消息被撤回
+  _tim.on(TIM.EVENT.MESSAGE_REVOKED, function (event: any): void {
+    const msgs = event.data != null ? event.data : []
+    msgs.forEach(function (msg: any): void {
+      const msgId = msg.ID != null ? msg.ID : ''
+      const cb = _onMessageRevoked
+      if (cb != null && msgId.length > 0) cb(msgId)
+    })
+  })
+
+  // 被踢下线
+  _tim.on(TIM.EVENT.KICKED_OUT, function (event: any): void {
+    console.log('IM Web: KICKED_OUT')
+    _isLogined = false
+    _loginUserId = ''
+    triggerLoginStatus(0)
+    triggerError(-1, '被踢下线')
+  })
+
+  // SDK 错误
+  _tim.on(TIM.EVENT.ERROR, function (event: any): void {
+    const code = event.data != null ? event.data.code : -1
+    const msg = event.data != null ? event.data.message : '未知错误'
+    console.error('IM Web: ERROR code=' + code + ', msg=' + msg)
+    triggerError(code, msg)
+  })
+}
+
+function convertTIMMessage(msg: any): ChatMessage | null {
+  if (msg == null) return null
+  const msgId = msg.ID != null ? msg.ID : ''
+  const sender = msg.from != null ? msg.from : ''
+  const timestamp = msg.time != null ? msg.time : 0
+  const isSelf = msg.isSelf != null ? msg.isSelf : false
+  const type = msg.type != null ? msg.type : TIM_MSG_TYPE_TEXT
+
+  let text: string = ''
+  let extra: string = ''
+
+  // 解析消息内容
+  if (type == TIM_MSG_TYPE_TEXT) {
+    const elem = msg.getElements()[0]
+    text = elem != null && elem.getContent() != null ? elem.getContent() : ''
+  } else if (type == TIM_MSG_TYPE_IMAGE) {
+    const elem = msg.getElements()[0]
+    const imgInfo = elem != null ? elem.getImageInfoArray()[0] : null
+    extra = imgInfo != null && imgInfo.getUrl() != null ? imgInfo.getUrl() : ''
+    text = '[图片]'
+  } else if (type == TIM_MSG_TYPE_VIDEO) {
+    const elem = msg.getElements()[0]
+    extra = elem != null && elem.getVideoUrl() != null ? elem.getVideoUrl() : ''
+    text = '[视频]'
+  } else if (type == TIM_MSG_TYPE_AUDIO) {
+    const elem = msg.getElements()[0]
+    extra = elem != null && elem.getUrl() != null ? elem.getUrl() : ''
+    text = '[语音]'
+  } else if (type == TIM_MSG_TYPE_CUSTOM) {
+    const elem = msg.getElements()[0]
+    const data = elem != null && elem.getContent() != null ? elem.getContent().data : ''
+    extra = data != null ? JSON.stringify(data) : ''
+    text = '[自定义消息]'
+  }
+
+  // 缓存消息用于后续操作
+  _messageCache.set(msgId, msg)
+
+  return {
+    msgId: msgId,
+    sender: sender,
+    type: mapTIMTypeToConst(type),
+    text: text,
+    extra: extra,
+    timestamp: timestamp,
+    isSelf: isSelf
+  }
+}
+
+function mapTIMTypeToConst(timType: number): number {
+  if (timType == TIM_MSG_TYPE_TEXT) return MessageType.Text
+  if (timType == TIM_MSG_TYPE_IMAGE) return MessageType.Image
+  if (timType == TIM_MSG_TYPE_VIDEO) return MessageType.Video
+  if (timType == TIM_MSG_TYPE_AUDIO) return MessageType.Voice
+  if (timType == TIM_MSG_TYPE_CUSTOM) return MessageType.Custom
+  return MessageType.Text
+}
+
+function mapConstToTIMType(constType: number): number {
+  if (constType == MessageType.Text) return TIM_MSG_TYPE_TEXT
+  if (constType == MessageType.Image) return TIM_MSG_TYPE_IMAGE
+  if (constType == MessageType.Video) return TIM_MSG_TYPE_VIDEO
+  if (constType == MessageType.Voice) return TIM_MSG_TYPE_AUDIO
+  if (constType == MessageType.Custom) return TIM_MSG_TYPE_CUSTOM
+  return TIM_MSG_TYPE_TEXT
+}
+
+// ========== 对外服务 ==========
+
+export class IMService {
+  static onLoginStatusChange(callback: (status: number) => void): void {
+    _onLoginStatusChange = callback
+  }
+
+  static onMessageReceived(callback: (msg: ChatMessage) => void): void {
+    _onMessageReceived = callback
+  }
+
+  static onMessageRevoked(callback: (msgId: string) => void): void {
+    _onMessageRevoked = callback
+  }
+
+  static onError(callback: (code: number, msg: string) => void): void {
+    _onError = callback
+  }
+
+  static login(config: IMLoginConfig): void {
+    if (config == null) {
+      triggerError(-1, '配置为空')
+      return
+    }
+    _loginSdkAppId = config.sdkAppId
+    _loginUserId = config.userId
+
+    if (!ensureTIMInit()) {
+      triggerError(-1, 'TIM SDK 初始化失败')
+      return
+    }
+
+    triggerLoginStatus(1)
+    _tim.login({ userID: config.userId, userSig: config.userSig })
+      .then(function (res: any): void {
+        console.log('IM Web: 登录成功 userId=' + config.userId)
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 登录失败 - ' + (err != null ? err.toString() : ''))
+        triggerError(-1, err != null ? err.toString() : '登录失败')
+        triggerLoginStatus(0)
+      })
+  }
+
+  static logout(): void {
+    if (_tim == null) return
+    _tim.logout()
+      .then(function (): void {
+        console.log('IM Web: 登出成功')
+        _isLogined = false
+        _loginUserId = ''
+        triggerLoginStatus(0)
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 登出失败 - ' + (err != null ? err.toString() : ''))
+      })
+  }
+
+  static sendTextMessage(toUserId: string, text: string): string {
+    if (!_isLogined || _tim == null) {
+      console.error('IM Web: 未登录')
+      return ''
+    }
+
+    const msg = _tim.createTextMessage(createTextMsg(toUserId, TIM_CONV_TYPE_C2C, text))
+    _tim.sendMessage(msg)
+      .then(function (res: any): void {
+        console.log('IM Web: 文本消息发送成功')
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 文本消息发送失败 - ' + (err != null ? err.toString() : ''))
+      })
+
+    _messageCache.set(msg.ID, msg)
+    return msg.ID
+  }
+
+  static sendImageMessage(toUserId: string, imageFile: any): string {
+    if (!_isLogined || _tim == null) {
+      console.error('IM Web: 未登录')
+      return ''
+    }
+    const msg = _tim.createImageMessage(createImageMsg(toUserId, TIM_CONV_TYPE_C2C, imageFile))
+    console.log('创建高级图片消息-msg=>>>',msg)
+    _tim.sendMessage(msg)
+      .then(function (res: any): void {
+        console.log('IM Web: 图片消息发送成功')
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 图片消息发送失败 - ' + (err != null ? err.toString() : ''))
+      })
+
+    _messageCache.set(msg.ID, msg)
+    return msg.ID
+  }
+
+  static sendVideoMessage(toUserId: string, videoFile: any, videoType: number, duration: number, snapshotFile: any): string {
+    if (!_isLogined || _tim == null) {
+      console.error('IM Web: 未登录')
+      return ''
+    }
+
+    const msg = _tim.createVideoMessage(createVideoMsg(toUserId, TIM_CONV_TYPE_C2C, videoFile, snapshotFile))
+
+    _tim.sendMessage(msg)
+      .then(function (res: any): void {
+        console.log('IM Web: 视频消息发送成功')
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 视频消息发送失败 - ' + (err != null ? err.toString() : ''))
+      })
+
+    _messageCache.set(msg.ID, msg)
+    return msg.ID
+  }
+
+  static sendVoiceMessage(toUserId: string, voiceFile: any, duration: number): string {
+    if (!_isLogined || _tim == null) {
+      console.error('IM Web: 未登录')
+      return ''
+    }
+
+    const msg = _tim.createAudioMessage(createAudioMsg(toUserId, TIM_CONV_TYPE_C2C, voiceFile))
+
+    _tim.sendMessage(msg)
+      .then(function (res: any): void {
+        console.log('IM Web: 语音消息发送成功')
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 语音消息发送失败 - ' + (err != null ? err.toString() : ''))
+      })
+
+    _messageCache.set(msg.ID, msg)
+    return msg.ID
+  }
+
+  static sendCustomMessage(toUserId: string, data: string, desc: string, extension: string): string {
+    if (!_isLogined || _tim == null) {
+      console.error('IM Web: 未登录')
+      return ''
+    }
+
+    let payloadData: any = {}
+    try {
+      payloadData = JSON.parse(data)
+    } catch (_e: any) {
+      payloadData = { data: data }
+    }
+
+    const msg = _tim.createCustomMessage(createCustomMsg(toUserId, TIM_CONV_TYPE_C2C, JSON.stringify(payloadData), desc, extension))
+
+    _tim.sendMessage(msg)
+      .then(function (res: any): void {
+        console.log('IM Web: 自定义消息发送成功')
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 自定义消息发送失败 - ' + (err != null ? err.toString() : ''))
+      })
+
+    _messageCache.set(msg.ID, msg)
+    return msg.ID
+  }
+
+  static getC2CMessageList(peerUserId: string, count: number, lastMsgId: string, callback: (messages: Array<ChatMessage>, total: number, error: string) => void): void {
+    if (!_isLogined || _tim == null) {
+      callback([], 0, '未登录')
+      return
+    }
+
+    const conversationID = 'C2C' + peerUserId
+    const nextReqMsgID = lastMsgId.length > 0 ? lastMsgId : ''
+
+    _tim.getMessageList({
+      conversationID: conversationID,
+      count: count,
+      nextReqMessageID: nextReqMsgID
+    })
+      .then(function (res: any): void {
+        const msgList = res.data != null && res.data.messageList != null ? res.data.messageList : []
+        const nextID = res.data != null && res.data.nextReqMessageID != null ? res.data.nextReqMessageID : ''
+        const isCompleted = res.data != null && res.data.isCompleted != null ? res.data.isCompleted : false
+
+        const chatMsgs: Array<ChatMessage> = []
+        msgList.forEach(function (msg: any): void {
+          const chatMsg = convertTIMMessage(msg)
+          if (chatMsg != null) chatMsgs.push(chatMsg)
+        })
+
+        callback(chatMsgs, chatMsgs.length, '')
+      })
+      .catch(function (err: any): void {
+        callback([], 0, err != null ? err.toString() : '获取消息列表失败')
+      })
+  }
+
+  static loadMessages(peerUserId: string, count: number, callback: (messages: Array<ChatMessage>, error: string) => void): void {
+    if (!_isLogined || _tim == null) {
+      callback([], '未登录')
+      return
+    }
+
+    const conversationID = 'C2C' + peerUserId
+
+    _tim.getMessageListHopping({
+      conversationID: conversationID,
+      count: count
+    })
+      .then(function (res: any): void {
+        const msgList = res.data != null && res.data.messageList != null ? res.data.messageList : []
+
+        const chatMsgs: Array<ChatMessage> = []
+        msgList.forEach(function (msg: any): void {
+          const chatMsg = convertTIMMessage(msg)
+          if (chatMsg != null) chatMsgs.push(chatMsg)
+        })
+
+        callback(chatMsgs, '')
+      })
+      .catch(function (err: any): void {
+        callback([], err != null ? err.toString() : '加载消息失败')
+      })
+  }
+
+  static deleteMessage(msgId: string): boolean {
+    if (!_isLogined || _tim == null) return false
+    const msg = _messageCache.get(msgId)
+    if (msg == null) return false
+
+    _tim.deleteMessage([msg])
+      .then(function (): void {
+        console.log('IM Web: 消息删除成功 msgId=' + msgId)
+        _messageCache.delete(msgId)
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 消息删除失败 - ' + (err != null ? err.toString() : ''))
+      })
+
+    return true
+  }
+
+  static revokeMessage(msgId: string): boolean {
+    if (!_isLogined || _tim == null) return false
+    const msg = _messageCache.get(msgId)
+    if (msg == null) return false
+
+    _tim.revokeMessage(msg)
+      .then(function (): void {
+        console.log('IM Web: 消息撤回成功 msgId=' + msgId)
+        _messageCache.delete(msgId)
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 消息撤回失败 - ' + (err != null ? err.toString() : ''))
+      })
+
+    return true
+  }
+
+  static markC2CMessageAsRead(userId: string): boolean {
+    if (!_isLogined || _tim == null) return false
+
+    const conversationID = 'C2C' + userId
+    _tim.setMessageRead({ conversationID: conversationID })
+      .then(function (): void {
+        console.log('IM Web: 单聊已读标记成功 userId=' + userId)
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 单聊已读标记失败 - ' + (err != null ? err.toString() : ''))
+      })
+
+    return true
+  }
+
+  static markGroupMessageAsRead(groupId: string): boolean {
+    if (!_isLogined || _tim == null) return false
+
+    const conversationID = 'GROUP' + groupId
+    _tim.setMessageRead({ conversationID: conversationID })
+      .then(function (): void {
+        console.log('IM Web: 群聊已读标记成功 groupId=' + groupId)
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 群聊已读标记失败 - ' + (err != null ? err.toString() : ''))
+      })
+
+    return true
+  }
+
+  static sendMessageReadReceipts(msgIds: string[]): boolean {
+    if (!_isLogined || _tim == null || msgIds.length == 0) return false
+
+    const msgs: any[] = []
+    msgIds.forEach(function (id: string): void {
+      const msg = _messageCache.get(id)
+      if (msg != null) msgs.push(msg)
+    })
+
+    if (msgs.length == 0) return false
+
+    _tim.sendMessageReadReceipt(msgs)
+      .then(function (): void {
+        console.log('IM Web: 消息已读回执发送成功')
+      })
+      .catch(function (err: any): void {
+        console.error('IM Web: 消息已读回执发送失败 - ' + (err != null ? err.toString() : ''))
+      })
+
+    return true
+  }
+
+  static getLoginStatus(): number {
+    return _loginStatus
+  }
+
+  static getCurrentUserId(): string {
+    return _loginUserId
+  }
+
+  static isLoggedIn(): boolean {
+    return _isLogined
+  }
+
+  static destroy(): void {
+    if (_tim != null) {
+      _tim.destroy()
+      _tim = null
+    }
+    _isLogined = false
+    _loginUserId = ''
+    _loginSdkAppId = 0
+    _loginStatus = 0
+    _messageCache.clear()
+    triggerLoginStatus(0)
+  }
+}

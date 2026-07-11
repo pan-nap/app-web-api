@@ -1,0 +1,29 @@
+import { useUserStore } from '@/store/user.uts'
+
+let url : string = ''
+const Navigate : AddInterceptorOptions = {
+	invoke: function (options : NavigateToOptions) {
+		url = options.url
+		if (!useUserStore().isLogin()) {
+			uni.redirectTo({
+				url: '/pages/login/index'
+			})
+			return false
+		}
+		return true
+	},
+	fail(err : NavigateToFail) {
+		if (err.errMsg.includes('switchTab')) {
+			uni.switchTab({
+				url,
+				complete() {
+					url = ''
+				}
+			})
+		}
+	}
+}
+
+export function useNavigate() {
+	uni.addInterceptor('navigateTo', Navigate)
+}

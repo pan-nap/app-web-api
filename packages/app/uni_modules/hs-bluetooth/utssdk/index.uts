@@ -1,0 +1,706 @@
+// ========== hs-bluetooth UTS 插件 ==========
+// 三平台完整实现通过 #ifdef 条件编译
+// Android: android.bluetooth.* 经典蓝牙 SPP
+// iOS: CoreBluetooth (BLE) + ObjC 桥接
+// HarmonyOS: @ohos.bluetooth.manager + @ohos.bluetooth.socket
+
+// ========== 类型定义 ==========
+
+/** 蓝牙设备信息 */
+export type BTDevice = {
+  name: string
+  address: string
+  rssi: number
+}
+
+/** 连接状态 */
+export const ConnectionStateConst = {
+  Disconnected: 0,
+  Connecting: 1,
+  Connected: 2
+}
+
+export type ConnectionState = number
+
+// ========== 回调类型 ==========
+
+export type ScanCallback = (device: BTDevice) => void
+export type ScanStateCallback = (scanning: boolean) => void
+export type BondedListCallback = (devices: BTDevice[]) => void
+export type ConnectionCallback = (state: ConnectionState, device: BTDevice | null) => void
+export type DataCallback = (data: string) => void
+export type ErrorCallback = (message: string) => void
+
+// ========== Android 内部状态 ==========
+// #ifdef APP-ANDROID
+const SPP_UUID = '00001101-0000-1000-8000-00805F9B34FB'
+let _androidAdapter: android.bluetooth.BluetoothAdapter | null = null
+let _discoveryReceiver: android.content.BroadcastReceiver | null = null
+let _bondReceiver: android.content.BroadcastReceiver | null = null
+let _androidSocket: android.bluetooth.BluetoothSocket | null = null
+// #endif
+
+// ========== iOS 内部状态 ==========
+// #ifdef APP-IOS
+let _iosScanning: boolean = false
+let _iosConnected: string = ''
+let _iosInitialized: boolean = false
+let _iosPendingScan: boolean = false
+// #endif
+
+// ========== HarmonyOS 内部状态 ==========
+// #ifdef APP-HARMONY
+let _harmScanning: boolean = false
+let _harmConnected: string = ''
+let _harmInitialized: boolean = false
+// #endif
+
+// ========== 通用内部状态 ==========
+let _connectedAddress: string = ''
+
+// ========== 回调辅助函数（UTS 不支持 ?.call()） ==========
+
+function invokeDeviceFound(device: BTDevice): void {
+  const cb = BluetoothService.onDeviceFound
+  if (cb != null) cb(device)
+}
+function invokeScanStateChanged(scanning: boolean): void {
+  const cb = BluetoothService.onScanStateChanged
+  if (cb != null) cb(scanning)
+}
+function invokeBondedListLoaded(list: BTDevice[]): void {
+  const cb = BluetoothService.onBondedListLoaded
+  if (cb != null) cb(list)
+}
+function invokeConnectionChanged(state: ConnectionState, device: BTDevice | null): void {
+  const cb = BluetoothService.onConnectionChanged
+  if (cb != null) cb(state, device)
+}
+function invokeDataReceived(data: string): void {
+  const cb = BluetoothService.onDataReceived
+  if (cb != null) cb(data)
+}
+function invokeError(msg: string): void {
+  const cb = BluetoothService.onError
+  if (cb != null) cb(msg)
+}
+
+// ========== BluetoothService ==========
+
+export class BluetoothService {
+
+  // -------- 回调注册 --------
+
+  static onDeviceFound: ScanCallback | null = null
+  static onScanStateChanged: ScanStateCallback | null = null
+  static onBondedListLoaded: BondedListCallback | null = null
+  static onConnectionChanged: ConnectionCallback | null = null
+  static onDataReceived: DataCallback | null = null
+  static onError: ErrorCallback | null = null
+
+  // -------- 基础功能 --------
+
+  /** 设备是否支持蓝牙 */
+  static isSupported(): boolean {
+    // #ifdef APP-ANDROID
+    try {
+      const act = UTSAndroid.getUniActivity()
+      if (act == null) return false
+      const manager = act.getSystemService('bluetooth') as android.bluetooth.BluetoothManager
+      if (manager == null) return false
+      _androidAdapter = manager.getAdapter()
+      return _androidAdapter != null
+    } catch (_e: any) {
+      return false
+    }
+    // #endif
+    // #ifdef APP-IOS
+    return true
+    // #endif
+    // #ifdef APP-HARMONY
+    try {
+      const manager = requireNapi('@ohos.bluetooth.manager')
+      return manager != null
+    } catch (_e: any) {
+      return false
+    }
+    // #endif
+  }
+
+  /** 蓝牙是否已开启 */
+  static isEnabled(): boolean {
+    // #ifdef APP-ANDROID
+    const adapter = _androidAdapter
+    return adapter != null && adapter.isEnabled()
+    // #endif
+    // #ifdef APP-IOS
+    const helper = BleCentralHelper.sharedInstance()
+    return helper.bluetoothState == CBManagerState.poweredOn
+    // #endif
+    // #ifdef APP-HARMONY
+    try {
+      const manager = requireNapi('@ohos.bluetooth.manager')
+      const state = manager.getState()
+      return state == 2
+    } catch (_e: any) {
+      return false
+    }
+    // #endif
+  }
+
+  /** 初始化蓝牙 */
+  static init(): void {
+    // #ifdef APP-ANDROID
+    try {
+      BluetoothService.isSupported()
+      const adapter = _androidAdapter
+      if (adapter != null && adapter.isEnabled()) {
+        BluetoothService.loadBondedDevices()
+      } else {
+        invokeError('蓝牙未开启')
+      }
+    } catch (e: any) {
+      invokeError('蓝牙初始化失败')
+    }
+    // #endif
+    // #ifdef APP-IOS
+    if (_iosInitialized) return
+    _iosInitialized = true
+    setupIOSCallbacks()
+    const helper = BleCentralHelper.sharedInstance()
+    helper.initCentral()
+    // #endif
+    // #ifdef APP-HARMONY
+    if (_harmInitialized) return
+    _harmInitialized = true
+    try {
+      const manager = requireNapi('@ohos.bluetooth.manager')
+      manager.on('bluetoothDeviceFind', (data: any) => {
+        const devices = data.devices as any[]
+        if (devices == null) return
+        for (let i = 0; i < devices.length; i++) {
+          const d = devices[i] as any
+          const device: BTDevice = {
+            name: d.deviceName ?? '',
+            address: d.deviceId ?? '',
+            rssi: d.rssi ?? 0
+          }
+          invokeDeviceFound(device)
+        }
+      })
+      manager.on('bondStateChange', (data: any) => {
+        const state = data.state as number
+        const deviceId = data.deviceId as string
+        if (state == 3) {
+          BluetoothService.loadBondedDevices()
+          BluetoothService.connect(deviceId)
+        }
+      })
+      BluetoothService.loadBondedDevices()
+    } catch (e: any) {
+      invokeError('蓝牙初始化失败')
+    }
+    // #endif
+  }
+
+  /** 获取已配对设备列表 */
+  static loadBondedDevices(): void {
+    // #ifdef APP-ANDROID
+    const adapter = _androidAdapter
+    if (adapter == null) return
+    const list: BTDevice[] = []
+    try {
+      const devices = adapter.getBondedDevices()
+      const iter = devices.iterator()
+      while (iter.hasNext()) {
+        const device = iter.next() as android.bluetooth.BluetoothDevice
+        list.push({
+          name: device.getName() ?? '',
+          address: device.getAddress(),
+          rssi: 0
+        })
+      }
+    } catch (_e: any) {}
+    invokeBondedListLoaded(list)
+    // #endif
+    // #ifdef APP-IOS
+    invokeBondedListLoaded([])
+    // #endif
+    // #ifdef APP-HARMONY
+    try {
+      const manager = requireNapi('@ohos.bluetooth.manager')
+      const devices = manager.getPairedDevices() as any[]
+      const listH: BTDevice[] = []
+      if (devices != null) {
+        for (let i = 0; i < devices.length; i++) {
+          const d = devices[i] as any
+          listH.push({
+            name: d.deviceName ?? '',
+            address: d.deviceId ?? '',
+            rssi: 0
+          } as BTDevice)
+        }
+      }
+      invokeBondedListLoaded(listH)
+    } catch (_e: any) {
+      invokeBondedListLoaded([])
+    }
+    // #endif
+  }
+
+  // -------- 搜索 --------
+
+  static startScan(): void {
+    // #ifdef APP-ANDROID
+    const adapter = _androidAdapter
+    if (adapter == null) return
+    BluetoothService.stopScan()
+    if (!adapter.isEnabled()) {
+      // Android 12+ 不允许静默开启蓝牙，需引导用户
+      if (android.os.Build.VERSION.SDK_INT >= 31) {
+        try {
+          const intent = new android.content.Intent(android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE)
+          intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+          UTSAndroid.getUniActivity()?.startActivity(intent)
+        } catch (_e: any) {}
+      } else {
+        adapter.enable()
+      }
+    }
+    registerDiscoveryReceiver()
+    adapter.cancelDiscovery()
+    adapter.startDiscovery()
+    // #endif
+    // #ifdef APP-IOS
+    const helper = BleCentralHelper.sharedInstance()
+    if (helper.bluetoothState != CBManagerState.poweredOn) {
+      _iosPendingScan = true
+      return
+    }
+    _iosScanning = true
+    invokeScanStateChanged(true)
+    helper.startScan()
+    // #endif
+    // #ifdef APP-HARMONY
+    try {
+      const manager = requireNapi('@ohos.bluetooth.manager')
+      manager.startBluetoothDiscovery()
+      _harmScanning = true
+      invokeScanStateChanged(true)
+    } catch (e: any) {
+      invokeError('搜索失败')
+    }
+    // #endif
+  }
+
+  static stopScan(): void {
+    // #ifdef APP-ANDROID
+    const adapter = _androidAdapter
+    if (adapter != null) {
+      try { adapter.cancelDiscovery() } catch (_e: any) {}
+    }
+    unregisterDiscoveryReceiver()
+    invokeScanStateChanged(false)
+    // #endif
+    // #ifdef APP-IOS
+    _iosPendingScan = false
+    _iosScanning = false
+    invokeScanStateChanged(false)
+    const helperIOS = BleCentralHelper.sharedInstance()
+    helperIOS.stopScan()
+    // #endif
+    // #ifdef APP-HARMONY
+    try {
+      const manager = requireNapi('@ohos.bluetooth.manager')
+      manager.stopBluetoothDiscovery()
+    } catch (_e: any) {}
+    _harmScanning = false
+    invokeScanStateChanged(false)
+    // #endif
+  }
+
+  static getScanning(): boolean {
+    // #ifdef APP-ANDROID
+    return false // Android 通过回调更新
+    // #endif
+    // #ifdef APP-IOS
+    return _iosScanning
+    // #endif
+    // #ifdef APP-HARMONY
+    return _harmScanning
+    // #endif
+  }
+
+  // -------- 配对 & 连接 --------
+
+  static pair(address: string): void {
+    // #ifdef APP-ANDROID
+    const adapter = _androidAdapter
+    if (adapter == null) return
+    try {
+      const device = adapter.getRemoteDevice(address)
+      if (device == null) return
+      if (device.getBondState() == android.bluetooth.BluetoothDevice.BOND_BONDED) {
+        BluetoothService.connect(address)
+        return
+      }
+      registerBondReceiver(address)
+      device.createBond()
+    } catch (e: any) {
+      invokeError('配对失败')
+    }
+    // #endif
+    // #ifdef APP-IOS
+    BluetoothService.connect(address)
+    // #endif
+    // #ifdef APP-HARMONY
+    try {
+      const manager = requireNapi('@ohos.bluetooth.manager')
+      manager.pairDevice(address)
+    } catch (e: any) {
+      invokeError('配对失败')
+    }
+    // #endif
+  }
+
+  static connect(address: string): void {
+    // #ifdef APP-ANDROID
+    const adapter = _androidAdapter
+    if (adapter == null) return
+    BluetoothService.disconnect()
+    invokeConnectionChanged(ConnectionStateConst.Connecting as ConnectionState, null)
+    try {
+      const device = adapter.getRemoteDevice(address)
+      const socket = device.createRfcommSocketToServiceRecord(java.util.UUID.fromString(SPP_UUID))
+      adapter.cancelDiscovery()
+      startConnectThread(socket, address)
+    } catch (e: any) {
+      invokeConnectionChanged(ConnectionStateConst.Disconnected as ConnectionState, null)
+      invokeError('连接失败')
+    }
+    // #endif
+    // #ifdef APP-IOS
+    BluetoothService.disconnect()
+    invokeConnectionChanged(ConnectionStateConst.Connecting as ConnectionState, null)
+    const helper = BleCentralHelper.sharedInstance()
+    helper.connectToPeripheral(address)
+    // #endif
+    // #ifdef APP-HARMONY
+    BluetoothService.disconnect()
+    invokeConnectionChanged(ConnectionStateConst.Connecting as ConnectionState, null)
+    try {
+      const socketMod = requireNapi('@ohos.bluetooth.socket')
+      const profileId = 1
+      const sppSocket = socketMod.constructSocketInstance(profileId, address, { secure: true })
+      sppSocket.connect().then(() => {
+        _harmConnected = address
+        _connectedAddress = address
+        invokeConnectionChanged(ConnectionStateConst.Connected as ConnectionState, { name: '', address: address, rssi: 0 } as BTDevice)
+        sppSocket.on('message', (data: any) => {
+          const buffer = data.arrayBuffer as ArrayBuffer
+          if (buffer != null && buffer.byteLength > 0) {
+            const uint8 = new Uint8Array(buffer)
+            let text = ''
+            for (let j = 0; j < uint8.length; j++) {
+              text += String.fromCharCode(uint8[j] as number)
+            }
+            invokeDataReceived(text)
+          }
+        })
+      }).catch(() => {
+        invokeConnectionChanged(ConnectionStateConst.Disconnected as ConnectionState, null)
+      })
+    } catch (e: any) {
+      invokeConnectionChanged(ConnectionStateConst.Disconnected as ConnectionState, null)
+    }
+    // #endif
+  }
+
+  static disconnect(): void {
+    // #ifdef APP-ANDROID
+    if (_androidSocket != null) {
+      cancelConnectThread()
+    }
+    _connectedAddress = ''
+    invokeConnectionChanged(ConnectionStateConst.Disconnected as ConnectionState, null)
+    // #endif
+    // #ifdef APP-IOS
+    const helper = BleCentralHelper.sharedInstance()
+    helper.disconnect()
+    _iosConnected = ''
+    _connectedAddress = ''
+    // #endif
+    // #ifdef APP-HARMONY
+    _harmConnected = ''
+    _connectedAddress = ''
+    invokeConnectionChanged(ConnectionStateConst.Disconnected as ConnectionState, null)
+    // #endif
+  }
+
+  static isConnected(): boolean {
+    return _connectedAddress.length > 0
+  }
+
+  static getConnectedAddress(): string {
+    return _connectedAddress
+  }
+
+  // -------- 数据传输 --------
+
+  static send(text: string): void {
+    if (_connectedAddress.length == 0) {
+      invokeError('未连接设备')
+      return
+    }
+    // #ifdef APP-ANDROID
+    if (_androidSocket != null) {
+      try {
+        writeConnectThread(text)
+      } catch (e: any) {
+        invokeError('发送失败')
+      }
+    }
+    // #endif
+    // #ifdef APP-IOS
+    const helper = BleCentralHelper.sharedInstance()
+    helper.sendData(text)
+    // #endif
+    // #ifdef APP-HARMONY
+    try {
+      const socketMod = requireNapi('@ohos.bluetooth.socket')
+      const sppSocket = socketMod.constructSocketInstance(1, _connectedAddress, { secure: true })
+      const uint8 = new Uint8Array(text.length)
+      for (let i = 0; i < text.length; i++) {
+        uint8[i] = text.charCodeAt(i) as number
+      }
+      sppSocket.write(uint8.buffer as ArrayBuffer)
+    } catch (e: any) {
+      invokeError('发送失败')
+    }
+    // #endif
+  }
+
+  // -------- 清理 --------
+
+  static destroy(): void {
+    // #ifdef APP-ANDROID
+    BluetoothService.stopScan()
+    BluetoothService.disconnect()
+    unregisterDiscoveryReceiver()
+    unregisterBondReceiver()
+    _androidAdapter = null
+    // #endif
+    // #ifdef APP-IOS
+    _iosScanning = false
+    _iosConnected = ''
+    _iosInitialized = false
+    _iosPendingScan = false
+    const helper = BleCentralHelper.sharedInstance()
+    helper.cleanup()
+    // #endif
+    // #ifdef APP-HARMONY
+    BluetoothService.stopScan()
+    BluetoothService.disconnect()
+    _harmInitialized = false
+    _harmScanning = false
+    _harmConnected = ''
+    try {
+      const manager = requireNapi('@ohos.bluetooth.manager')
+      manager.off('bluetoothDeviceFind', () => {})
+      manager.off('bondStateChange', () => {})
+    } catch (_e: any) {}
+    // #endif
+    _connectedAddress = ''
+    BluetoothService.onDeviceFound = null
+    BluetoothService.onScanStateChanged = null
+    BluetoothService.onBondedListLoaded = null
+    BluetoothService.onConnectionChanged = null
+    BluetoothService.onDataReceived = null
+    BluetoothService.onError = null
+  }
+}
+
+// ========== Android 辅助与类定义 ==========
+// #ifdef APP-ANDROID
+
+class _DiscoveryReceiver extends android.content.BroadcastReceiver {
+  constructor() {
+    super()
+  }
+  override onReceive(context: android.content.Context, intent: android.content.Intent): void {
+    const action = intent.getAction()
+    if (action == android.bluetooth.BluetoothDevice.ACTION_FOUND) {
+      const raw = intent.getParcelableExtra<android.bluetooth.BluetoothDevice>(android.bluetooth.BluetoothDevice.EXTRA_DEVICE)
+      if (raw == null) return
+      const device = raw
+      if (device.getBondState() == android.bluetooth.BluetoothDevice.BOND_BONDED) return
+      const rssi = intent.getIntExtra(android.bluetooth.BluetoothDevice.EXTRA_RSSI, 0)
+      invokeDeviceFound({
+        name: device.getName() ?? '',
+        address: device.getAddress(),
+        rssi: rssi as number
+      })
+    } else if (action == android.bluetooth.BluetoothAdapter.ACTION_DISCOVERY_FINISHED) {
+      invokeScanStateChanged(false)
+    }
+  }
+}
+
+let _bondTargetAddress: string = ''
+
+class _BondReceiver extends android.content.BroadcastReceiver {
+  constructor() {
+    super()
+  }
+  override onReceive(context: android.content.Context, intent: android.content.Intent): void {
+    const raw = intent.getParcelableExtra<android.bluetooth.BluetoothDevice>(android.bluetooth.BluetoothDevice.EXTRA_DEVICE)
+    if (raw == null) return
+    const device = raw
+    if (device.getAddress() != _bondTargetAddress) return
+    const state = intent.getIntExtra(android.bluetooth.BluetoothDevice.EXTRA_BOND_STATE, -1)
+    if (state == android.bluetooth.BluetoothDevice.BOND_BONDED) {
+      BluetoothService.loadBondedDevices()
+      unregisterBondReceiver()
+      BluetoothService.connect(_bondTargetAddress)
+    } else if (state == android.bluetooth.BluetoothDevice.BOND_NONE) {
+      unregisterBondReceiver()
+    }
+  }
+}
+
+function registerDiscoveryReceiver(): void {
+  if (_discoveryReceiver != null) return
+  const filter = new android.content.IntentFilter()
+  filter.addAction(android.bluetooth.BluetoothDevice.ACTION_FOUND)
+  filter.addAction(android.bluetooth.BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+  _discoveryReceiver = new _DiscoveryReceiver()
+  try {
+    const act = UTSAndroid.getUniActivity()
+    if (act != null) act.registerReceiver(_discoveryReceiver, filter)
+  } catch (_e: any) {}
+}
+
+function unregisterDiscoveryReceiver(): void {
+  if (_discoveryReceiver == null) return
+  try {
+    const act = UTSAndroid.getUniActivity()
+    if (act != null) act.unregisterReceiver(_discoveryReceiver)
+  } catch (_e: any) {}
+  _discoveryReceiver = null
+}
+
+function registerBondReceiver(targetAddress: string): void {
+  if (_bondReceiver != null) return
+  _bondTargetAddress = targetAddress
+  const filter = new android.content.IntentFilter()
+  filter.addAction(android.bluetooth.BluetoothDevice.ACTION_BOND_STATE_CHANGED)
+  _bondReceiver = new _BondReceiver()
+  try {
+    const act = UTSAndroid.getUniActivity()
+    if (act != null) act.registerReceiver(_bondReceiver, filter)
+  } catch (_e: any) {}
+}
+
+function unregisterBondReceiver(): void {
+  if (_bondReceiver == null) return
+  try {
+    const act = UTSAndroid.getUniActivity()
+    if (act != null) act.unregisterReceiver(_bondReceiver)
+  } catch (_e: any) {}
+  _bondReceiver = null
+}
+
+// Android 连接线程
+function startConnectThread(socket: android.bluetooth.BluetoothSocket, address: string): void {
+  const selfAddr = address
+  const act = UTSAndroid.getUniActivity()
+  new java.lang.Thread(function (): void {
+    try {
+      socket.connect()
+      _androidSocket = socket
+      const inputStream = socket.getInputStream()
+      act?.runOnUiThread(function (): void {
+        _connectedAddress = selfAddr
+        invokeConnectionChanged(ConnectionStateConst.Connected as ConnectionState, { name: '', address: selfAddr, rssi: 0 })
+      })
+      const reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream))
+      let line = reader.readLine()
+      while (line != null && _connectedAddress.length > 0) {
+        const data = line
+        act?.runOnUiThread(function (): void {
+          invokeDataReceived(data)
+        })
+        line = reader.readLine()
+      }
+    } catch (e: any) {
+      act?.runOnUiThread(function (): void {
+        _connectedAddress = ''
+        _androidSocket = null
+        invokeConnectionChanged(ConnectionStateConst.Disconnected as ConnectionState, null)
+        const errMsg = (e as java.lang.Throwable).getMessage()
+        invokeError('连接失败' + (errMsg != null ? ': ' + errMsg : ''))
+      })
+    }
+  }).start()
+}
+
+function writeConnectThread(text: string): void {
+  const sock = _androidSocket
+  if (sock != null) {
+    const outputStream = sock.getOutputStream()
+    const writer = new java.io.OutputStreamWriter(outputStream)
+    writer.write(text)
+    writer.flush()
+  }
+}
+
+function cancelConnectThread(): void {
+  const sock = _androidSocket
+  _androidSocket = null
+  if (sock != null) {
+    try {
+      sock.close()
+    } catch (_e: any) {}
+  }
+}
+// #endif
+
+// ========== iOS 辅助函数 ==========
+// #ifdef APP-IOS
+
+function setupIOSCallbacks(): void {
+  const helper = BleCentralHelper.sharedInstance()
+  helper.onStateUpdated = function (state: CBManagerState): void {
+    if (state == CBManagerState.poweredOn && _iosPendingScan) {
+      _iosPendingScan = false
+      BluetoothService.startScan()
+    }
+  }
+  helper.onDeviceDiscovered = function (info: BleDeviceInfo): void {
+    const name = info.name ?? ''
+    const identifier = info.identifier ?? ''
+    const rssi = info.rssi as number
+    invokeDeviceFound({ name: name, address: identifier, rssi: rssi })
+  }
+  helper.onScanStopped = function (): void {
+    _iosScanning = false
+    invokeScanStateChanged(false)
+  }
+  helper.onConnected = function (identifier: string): void {
+    _iosConnected = identifier
+    _connectedAddress = identifier
+    invokeConnectionChanged(ConnectionStateConst.Connected as ConnectionState, { name: '', address: identifier, rssi: 0 })
+  }
+  helper.onDisconnected = function (): void {
+    _iosConnected = ''
+    _connectedAddress = ''
+    invokeConnectionChanged(ConnectionStateConst.Disconnected as ConnectionState, null)
+  }
+  helper.onDataReceived = function (data: string): void {
+    invokeDataReceived(data)
+  }
+  helper.onError = function (message: string): void {
+    invokeError(message)
+  }
+}
+// #endif

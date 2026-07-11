@@ -1,0 +1,23 @@
+export type FormRule = {
+	required ?: boolean
+	message : string
+	pattern ?: RegExp
+	validator ?: (val : any) => boolean
+}
+export type FormRules = UTSJSONObject
+
+export type ItemCtx = {
+	prop : string
+	validate : () => boolean
+	clearError : () => void
+}
+
+export type FormContext = {
+	rules : FormRules
+	getValue : (prop : string) => string
+	registerItem : (ctx : ItemCtx) => void
+	unRegisterItem : (prop : string) => void
+}
+export type FormItemContext = {
+	validate : () => boolean
+}

@@ -1,0 +1,30 @@
+{
+  "id": "hs-trtc-floating",
+  "displayName": "hs-trtc-floating",
+  "version": "1.0.0",
+  "description": "TRTC 悬浮视频窗插件，依赖 hs-trtc，用于跨页面视频通话小窗显示",
+  "keywords": ["trtc", "float", "video", "window"],
+  "engines": {
+    "HBuilderX": "^3.9.0",
+    "uni-app-x": "^3.9.0"
+  },
+  "dcloudext": {
+    "type": "uts"
+  },
+  "uni_modules": {
+    "dependencies": ["hs-trtc"],
+    "encrypt": [],
+    "platforms": {
+      "client": {
+        "uni-app-x": {
+          "app": {
+            "android": {
+              "minSdkVersion": 24,
+              "targetSdkVersion": 34
+            }
+          }
+        }
+      }
+    }
+  }
+}

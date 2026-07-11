@@ -1,0 +1,36 @@
+{
+  "id": "hs-bluetooth",
+  "displayName": "hs-bluetooth",
+  "version": "1.0.0",
+  "description": "多端蓝牙 UTS 插件，支持 Android/iOS/HarmonyOS，提供经典蓝牙 SPP 搜索、配对、数据传输",
+  "keywords": ["bluetooth", "ble", "spp", "rfcomm"],
+  "engines": {
+    "HBuilderX": "^3.9.0",
+    "uni-app-x": "^3.9.0"
+  },
+  "dcloudext": {
+    "type": "uts"
+  },
+  "uni_modules": {
+    "dependencies": [],
+    "encrypt": [],
+    "platforms": {
+      "client": {
+        "uni-app-x": {
+          "app": {
+            "android": {
+              "minSdkVersion": 24,
+              "targetSdkVersion": 34
+            },
+            "ios": {
+              "deploymentTarget": "12.0"
+            },
+            "harmony": {
+              "minSdkVersion": 9
+            }
+          }
+        }
+      }
+    }
+  }
+}

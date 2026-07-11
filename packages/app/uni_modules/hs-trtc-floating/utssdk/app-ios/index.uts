@@ -1,0 +1,65 @@
+// ========== hs-trtc-floating UTS插件 - iOS平台入口 ==========
+// iOS 暂未实现悬浮窗，所有方法返回空值
+
+export type FloatWindowConfig = {
+  width: number
+  height: number
+  x: number
+  y: number
+}
+
+export const FloatWindowStatusConst = {
+  Hidden: 0,
+  Showing: 1,
+  Destroyed: 2
+}
+
+export type FloatWindowStatus = number
+
+let _status: number = 0
+
+export function setFloatVideoSource(isLocal: boolean, remoteUserId: string = ''): void {
+  console.log('FLOAT iOS: setFloatVideoSource 待实现')
+}
+
+export function checkFloatPermission(): boolean {
+  console.log('FLOAT iOS: checkFloatPermission 待实现')
+  return true
+}
+
+export function requestFloatPermission(): void {
+  console.log('FLOAT iOS: requestFloatPermission 待实现')
+}
+
+export class FloatWindowService {
+  static onShow(callback: () => void): void {
+    console.log('FLOAT iOS: onShow 待实现')
+  }
+
+  static onHide(callback: () => void): void {
+    console.log('FLOAT iOS: onHide 待实现')
+  }
+
+  static onClick(callback: () => void): void {
+    console.log('FLOAT iOS: onClick 待实现')
+  }
+
+  static show(): void {
+    console.log('FLOAT iOS: show 待实现')
+    _status = 1
+  }
+
+  static hide(): void {
+    console.log('FLOAT iOS: hide 待实现')
+    _status = 0
+  }
+
+  static destroy(): void {
+    console.log('FLOAT iOS: destroy 待实现')
+    _status = 2
+  }
+
+  static getStatus(): FloatWindowStatus {
+    return _status as FloatWindowStatus
+  }
+}

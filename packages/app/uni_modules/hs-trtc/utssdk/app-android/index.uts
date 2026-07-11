@@ -1,0 +1,294 @@
+// ========== hs-trtc UTS插件 - Android平台入口 ==========
+// 基于腾讯 TRTC SDK Android 封装
+// 底层使用 Kotlin 桥接类 TRTCBridge
+
+import { TRTCBridge } from 'hs.trtc'
+import Context from 'android.content.Context'
+import { UTSAndroid } from 'io.dcloud.uts'
+
+// ========== 类型定义 ==========
+
+export type TrtcConfig = {
+  sdkAppId: number
+  userId: string
+  userSig: string
+  roomId: number
+}
+
+export const CallStatusConst = {
+  Idle: 0,
+  Connecting: 1,
+  Connected: 2,
+  Disconnected: 3
+}
+
+export type CallStatus = number
+
+export type RemoteUserInfo = {
+  userId: string
+  hasVideo: boolean
+  hasAudio: boolean
+}
+
+export type VideoViewTag = {
+  type: 'local' | 'remote'
+}
+
+// ========== 内部状态 ==========
+
+let _currentStatus: number = 0
+let _localCameraOn: boolean = true
+let _localMicOn: boolean = true
+let _onStatusChange: ((status: CallStatus) => void) | null = null
+let _onError: ((code: number, msg: string) => void) | null = null
+let _callbacksRegistered: boolean = false
+
+let _onRemoteUserEnter: ((userId: string) => void) | null = null
+let _onRemoteUserLeave: ((userId: string) => void) | null = null
+let _onUserVideoAvailable: ((userId: string, available: boolean) => void) | null = null
+
+// ========== 渲染视图管理 ==========
+
+let _localVideoView: any | null = null
+
+function triggerStatus(status: number): void {
+  _currentStatus = status
+  const cb = _onStatusChange
+  if (cb != null) cb(status as CallStatus)
+}
+
+function triggerError(code: number, msg: string): void {
+  const cb = _onError
+  if (cb != null) cb(code, msg)
+}
+
+// ========== Android 辅助函数 ==========
+
+function initContext(): Context | null {
+  const context = UTSAndroid.getAppContext()
+  if (context == null) return null
+  return context as Context
+}
+
+function ensureBridgeInit(): boolean {
+  if (TRTCBridge.isCloudReady()) return true
+  const context = initContext()
+  if (context == null) return false
+  TRTCBridge.init(context)
+  const ready = TRTCBridge.isCloudReady()
+  if (ready && !_callbacksRegistered) {
+    _callbacksRegistered = true
+    registerNativeCallbacks()
+  }
+  return ready
+}
+
+function registerNativeCallbacks(): void {
+  TRTCBridge.setOnRemoteUserEnter(function (userId: string): void {
+    console.log('TRTC SDK 回调: onRemoteUserEnterRoom, userId=' + userId)
+    const cb = _onRemoteUserEnter
+    if (cb != null) cb(userId)
+  })
+  TRTCBridge.setOnRemoteUserLeave(function (userId: string): void {
+    console.log('TRTC SDK 回调: onRemoteUserLeaveRoom, userId=' + userId)
+    const cb = _onRemoteUserLeave
+    if (cb != null) cb(userId)
+  })
+  TRTCBridge.setOnEnterRoom(function (result: Long): void {
+    console.log('TRTC SDK 回调: onEnterRoom, result=' + result)
+    if (result > 0) {
+      triggerStatus(2)
+    } else {
+      triggerError(-1, '进入房间失败, result=' + result)
+      triggerStatus(3)
+    }
+  })
+  TRTCBridge.setOnExitRoom(function (reason: Int): void {
+    console.log('TRTC SDK 回调: onExitRoom, reason=' + reason)
+    triggerStatus(3)
+  })
+  TRTCBridge.setOnUserVideoAvailable(function (userId: string, available: boolean): void {
+    console.log('TRTC SDK 回调: onUserVideoAvailable, userId=' + userId + ', available=' + available)
+    const cb = _onUserVideoAvailable
+    if (cb != null) cb(userId, available)
+  })
+}
+
+// ========== 功能实现 ==========
+
+function enterRoomImpl(config: TrtcConfig): void {
+  if (config == null) return
+  try {
+    if (!ensureBridgeInit()) return
+    TRTCBridge.enterRoom(
+      config.sdkAppId as Int,
+      config.userId,
+      config.userSig,
+      config.roomId as Int
+    )
+    console.log('TRTC: 进入房间 API 调用成功, roomId=' + config.roomId)
+  } catch (e: any) {
+    const errMsg = e != null ? e.toString() : '未知错误'
+    console.error('TRTC: 进入房间失败 - ' + errMsg)
+    triggerError(-1, errMsg)
+    triggerStatus(3)
+  }
+}
+
+function leaveRoomImpl(): void {
+  try {
+    if (!ensureBridgeInit()) return
+    TRTCBridge.exitRoom()
+    TRTCBridge.destroy()
+    _callbacksRegistered = false
+    console.log('TRTC: 已离开房间，资源已释放')
+  } catch (e: any) {
+    console.error('TRTC: 离开房间失败 - ' + (e != null ? e.toString() : ''))
+  }
+}
+
+function switchCameraImpl(enable: boolean): void {
+  try {
+    if (!ensureBridgeInit()) return
+    if (enable) {
+      const v = _localVideoView as any
+      if (v != null) {
+        TRTCBridge.startLocalPreviewInContainer(true, v)
+      }
+    } else {
+      TRTCBridge.stopLocalPreview()
+    }
+  } catch (e: any) {
+    console.error('TRTC: 切换摄像头失败 - ' + (e != null ? e.toString() : ''))
+  }
+}
+
+function rebindLocalVideoImpl(): void {
+  try {
+    if (!ensureBridgeInit()) return
+    TRTCBridge.stopLocalPreview()
+
+    if (_localVideoView != null && _localCameraOn) {
+      const v = _localVideoView as any
+      TRTCBridge.startLocalPreviewInContainer(true, v)
+    }
+  } catch (e: any) {
+    console.error('TRTC: 绑定本地视频视图失败 - ' + (e != null ? e.toString() : ''))
+  }
+}
+
+function bindRemoteVideoViewImpl(userId: string, container: any | null): void {
+  if (container == null || userId.length == 0) {
+    if (userId.length > 0) {
+      try {
+        if (!ensureBridgeInit()) return
+        TRTCBridge.stopRemoteView(userId)
+      } catch (e: any) {
+        console.error('TRTC: 停止远端视频失败 - ' + (e != null ? e.toString() : ''))
+      }
+    }
+    return
+  }
+  try {
+    if (!ensureBridgeInit()) return
+    TRTCBridge.startRemoteView(userId, container)
+  } catch (e: any) {
+    console.error('TRTC: 绑定远端视频视图失败 - ' + (e != null ? e.toString() : ''))
+  }
+}
+
+function switchMicrophoneImpl(enable: boolean): void {
+  try {
+    if (!ensureBridgeInit()) return
+    if (enable) {
+      TRTCBridge.startLocalAudio()
+    } else {
+      TRTCBridge.stopLocalAudio()
+    }
+  } catch (e: any) {
+    console.error('TRTC: 切换麦克风失败 - ' + (e != null ? e.toString() : ''))
+  }
+}
+
+// ========== 对外服务 ==========
+
+export class TrtcService {
+  static onStatusChange(callback: (status: CallStatus) => void): void {
+    _onStatusChange = callback
+  }
+
+  static onRemoteUserEnter(callback: (userId: string) => void): void {
+    _onRemoteUserEnter = callback
+    if (_callbacksRegistered) {
+      TRTCBridge.setOnRemoteUserEnter(function (uid: string): void {
+        const cb = _onRemoteUserEnter
+        if (cb != null) cb(uid)
+      })
+    }
+  }
+
+  static onRemoteUserLeave(callback: (userId: string) => void): void {
+    _onRemoteUserLeave = callback
+    if (_callbacksRegistered) {
+      TRTCBridge.setOnRemoteUserLeave(function (uid: string): void {
+        const cb = _onRemoteUserLeave
+        if (cb != null) cb(uid)
+      })
+    }
+  }
+
+  static onUserVideoAvailable(callback: (userId: string, available: boolean) => void): void {
+    _onUserVideoAvailable = callback
+    if (_callbacksRegistered) {
+      TRTCBridge.setOnUserVideoAvailable(function (uid: string, available: boolean): void {
+        const cb = _onUserVideoAvailable
+        if (cb != null) cb(uid, available)
+      })
+    }
+  }
+
+  static onError(callback: (code: number, msg: string) => void): void {
+    _onError = callback
+  }
+
+  static enterRoom(config: TrtcConfig): void {
+    triggerStatus(1)
+    enterRoomImpl(config)
+  }
+
+  static leaveRoom(): void {
+    leaveRoomImpl()
+    triggerStatus(3)
+  }
+
+  static switchCamera(enable: boolean): void {
+    _localCameraOn = enable
+    switchCameraImpl(enable)
+  }
+
+  static switchMicrophone(enable: boolean): void {
+    _localMicOn = enable
+    switchMicrophoneImpl(enable)
+  }
+
+  static getCurrentStatus(): CallStatus {
+    return _currentStatus as CallStatus
+  }
+
+  static isLocalCameraOn(): boolean {
+    return _localCameraOn
+  }
+
+  static isLocalMicOn(): boolean {
+    return _localMicOn
+  }
+
+  static setLocalVideoView(tv: any | null): void {
+    _localVideoView = tv
+    rebindLocalVideoImpl()
+  }
+
+  static setRemoteVideoView(userId: string, tv: any | null): void {
+    bindRemoteVideoViewImpl(userId, tv)
+  }
+}

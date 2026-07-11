@@ -1,0 +1,86 @@
+// ========== hs-trtc UTS插件 - iOS平台入口 ==========
+// iOS 暂未实现，所有方法返回空值
+
+export const CallStatusConst = {
+  Idle: 0,
+  Connecting: 1,
+  Connected: 2,
+  Disconnected: 3
+}
+
+export type CallStatus = number
+
+export type TrtcConfig = {
+  sdkAppId: number
+  userId: string
+  userSig: string
+  roomId: string
+}
+
+export type RemoteUserInfo = {
+  userId: string
+  hasVideo: boolean
+  hasAudio: boolean
+}
+
+export type VideoViewTag = {
+  type: 'local' | 'remote'
+}
+
+export class TrtcService {
+  static onStatusChange(callback: (status: CallStatus) => void): void {
+    console.log('TRTC iOS: onStatusChange 待实现')
+  }
+
+  static onRemoteUserEnter(callback: (userId: string) => void): void {
+    console.log('TRTC iOS: onRemoteUserEnter 待实现')
+  }
+
+  static onRemoteUserLeave(callback: (userId: string) => void): void {
+    console.log('TRTC iOS: onRemoteUserLeave 待实现')
+  }
+
+  static onUserVideoAvailable(callback: (userId: string, available: boolean) => void): void {
+    console.log('TRTC iOS: onUserVideoAvailable 待实现')
+  }
+
+  static onError(callback: (code: number, msg: string) => void): void {
+    console.log('TRTC iOS: onError 待实现')
+  }
+
+  static enterRoom(config: TrtcConfig): void {
+    console.log('TRTC iOS: enterRoom 待实现')
+  }
+
+  static leaveRoom(): void {
+    console.log('TRTC iOS: leaveRoom 待实现')
+  }
+
+  static switchCamera(enable: boolean): void {
+    console.log('TRTC iOS: switchCamera 待实现')
+  }
+
+  static switchMicrophone(enable: boolean): void {
+    console.log('TRTC iOS: switchMicrophone 待实现')
+  }
+
+  static getCurrentStatus(): CallStatus {
+    return 0
+  }
+
+  static isLocalCameraOn(): boolean {
+    return false
+  }
+
+  static isLocalMicOn(): boolean {
+    return false
+  }
+
+  static setLocalVideoView(tv: any | null): void {
+    console.log('TRTC iOS: setLocalVideoView 待实现')
+  }
+
+  static setRemoteVideoView(userId: string, tv: any | null): void {
+    console.log('TRTC iOS: setRemoteVideoView 待实现')
+  }
+}

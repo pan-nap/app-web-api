@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSCameraUsageDescription</key>
+	<string>IM 发送图片和视频消息需要使用相机权限</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>IM 发送语音和视频消息需要使用麦克风权限</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>IM 选择相册图片需要访问相册权限</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>IM 保存图片到相册需要相册写入权限</string>
+</dict>
+</plist>

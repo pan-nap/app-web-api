@@ -1,0 +1,108 @@
+import config from '../config.json'
+import { showToast } from '@/utils/tool.uts'
+import { useUserStore } from '@/store/user.uts'
+
+const systermInfo = uni.getSystemInfoSync()
+
+function buildRequestData(data : any | null) : UTSJSONObject {
+	let requestData = new UTSJSONObject()
+	if (data != null) {
+		const jsonString = JSON.stringify(data)
+		const parsed = JSON.parseObject(jsonString)
+		if (parsed != null) {
+			requestData = parsed
+		}
+	}
+	UTSJSONObject.assign(requestData, {
+		device: systermInfo.browserName,
+		browser: systermInfo.deviceModel,
+		os: systermInfo.deviceType,
+		version: systermInfo.osVersion
+	})
+	return requestData
+}
+
+function getRequestUrl(url : string) : string {
+	// #ifdef WEB
+	return '/sf-web' + url
+	// #endif
+	// #ifndef WEB
+	const baseUrl = config["baseUrl"] as string
+	return baseUrl + url
+	// #endif
+}
+
+function getAuthorizationHeader() : string | null {
+	const userStore = useUserStore()
+	return userStore.isLogin() ? 'Bearer ' + userStore.state.access_token : null
+}
+
+export default function (url : string, data : any | null, method : RequestMethod = 'GET') : Promise<any> {
+	return new Promise<any>((reslove, reject) => {
+		const requestData = buildRequestData(data)
+		uni.request({
+			url: getRequestUrl(url),
+			data: requestData,
+			method,
+			header: {
+				'Content-Type': 'application/json',
+				'Authorization': getAuthorizationHeader()
+			},
+			success(res) {
+				const result = res.data as UTSJSONObject
+				const code = result.getNumber('code')
+				if (code == 1) {
+					const responseData = result.getAny('data')
+					reslove(responseData != null ? responseData : new UTSJSONObject())
+				} else {
+					const msg = result.getString('msg')
+					const errorMessage = msg != null ? msg : '接口异常'
+					showToast(errorMessage)
+					reject(errorMessage)
+				}
+			},
+			fail(err : RequestFail) {
+				const errMsg = err.errMsg
+				showToast(errMsg)
+				reject(err)
+			}
+		})
+	})
+}
+
+export function uploadFile(data : any | null) : Promise<any> {
+	return new Promise<any>((reslove, reject) => {
+		uni.uploadFile({
+			url: getRequestUrl('/upload'),
+			filePath: data,
+			name: 'file',
+			formData: {
+				path: 'app'
+			},
+			header: {
+				'Authorization': getAuthorizationHeader()
+			},
+			success(res) {
+				const result = JSON.parse(res.data) as UTSJSONObject
+				const code = result.getNumber('code')
+				if (code == 1) {
+					const responseData = result.getAny('data')
+					reslove(responseData != null ? {
+						...responseData,
+						fullUrl: config["baseUrl"] + responseData.url
+					} : new UTSJSONObject())
+				} else {
+					const msg = result.getString('msg')
+					const errorMessage = msg != null ? msg : '接口异常'
+					showToast(errorMessage)
+					reject(errorMessage)
+				}
+			},
+			fail(err : RequestFail) {
+				const errMsg = err.errMsg
+				showToast(errMsg)
+				reject(err)
+			}
+		})
+	})
+}

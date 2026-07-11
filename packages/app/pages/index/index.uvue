@@ -1,0 +1,22 @@
+<template>
+	<hs-screen hide-back title="首页">
+			<hs-card @tap="jumpTo('/pages/student/index')">跳转学生页面</hs-card>
+			<hs-card @tap="jumpTo('/pages/mqtt/index')">跳转mqtt页面</hs-card>
+			<hs-card @tap="jumpTo('/pages/stomp/index')">跳转stomp页面</hs-card>
+			<hs-card @tap="jumpTo('/pages/bluetooth/index')">跳转蓝牙页面</hs-card>
+			<hs-card @tap="jumpTo('/page_room/room/index')">跳转视频通话页面</hs-card>
+			<hs-card @tap="jumpTo('/page_im/login/index')">跳转即时通讯页面</hs-card>
+	</hs-screen>
+</template>
+
+<script setup>
+	const jumpTo = (url: string) => {
+		uni.navigateTo({
+			url
+		})
+	}
+</script>
+
+<style>
+
+</style>

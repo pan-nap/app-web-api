@@ -1,0 +1,35 @@
+<template>
+	<hs-screen title="mqtt页">
+    <button @tap="initMqtt">连接MQTT</button>
+		<button @tap="sendMsg">发送消息</button>
+		<text>收到消息：{{receiveMsg}}</text>
+	</hs-screen>
+</template>
+
+<script setup lang="uts">
+import { mqttClient, useMqttMessage } from '@/utils/mqtt.uts'
+
+const receiveMsg = ref("")
+
+// 注册监听，页面销毁时自动注销事件，避免内存泄漏
+useMqttMessage((topic: string, msg: string) => {
+  console.log(`[收到消息] topic=${topic}, msg=${msg}`)
+  receiveMsg.value = `[${topic}] ${msg}`
+})
+
+async function initMqtt() {
+  await mqttClient()
+}
+
+// 发送消息
+async function sendMsg() {
+  const c = await mqttClient()
+  if (c != null) {
+    await c.publish("uniappx/test/topic", "Hello UniApp X MQTT")
+  }
+}
+</script>
+
+<style>
+
+</style>

@@ -1,0 +1,92 @@
+<template>
+	<hs-screen title="学生页">
+			<hs-card class="index-card">
+				<text class="text-lg font-bold text-gray-800 mb-20">学生信息查询</text>
+				<view class="flex flex-col index-form-layout">
+					<view class="flex flex-col index-form-field">
+						<text class="text-sm text-gray-500 mb-10">身份证号</text>
+						<hs-input 
+							class="border border-gray-200 rounded-lg px-20 py-15 text-base"
+							v-model="studentStore.state.idCard"
+							placeholder="请输入身份证号"
+							:maxlength="18"
+							type="idcard"
+						/>
+					</view>
+					<hs-button 
+						type="primary"
+						class="index-search-button"
+						@tap="handleSearch"
+					>
+						查询
+					</hs-button>
+					<hs-button 
+						type="primary"
+						class="mt-20  index-search-button"
+						@tap="handleLogout"
+					>
+						退出登录
+					</hs-button>
+				</view>
+			</hs-card>
+
+			<hs-card class="index-card flex flex-col" v-for="(item,key) in studentStore.state.list" :key="key">
+				<view class="flex flex-row index-result-row">
+						<text class="text-gray-500 basis-[150rpx]">姓名</text>
+						<text class="text-gray-800">{{ item?.name }}</text>
+					</view>
+					<view class="flex flex-row index-result-row">
+						<text class="text-gray-500 basis-[150rpx]">身份证号</text>
+						<text class="text-gray-800">{{ item?.idCard }}</text>
+					</view>
+					<view class="flex flex-row index-result-row">
+						<text class="text-gray-500 basis-[150rpx]">性别</text>
+						<text class="text-gray-800">{{ item?.gender }}</text>
+					</view>
+					<view class="flex flex-row index-result-row">
+						<text class="text-gray-500 basis-[150rpx]">年龄</text>
+						<text class="text-gray-800">{{ item?.age }}</text>
+					</view>
+					<view class="flex flex-row index-result-row">
+						<text class="text-gray-500 basis-[150rpx]">班级</text>
+						<text class="text-gray-800">{{ item?.className }}</text>
+					</view>
+					<view class="flex flex-row">
+						<text class="text-gray-500 basis-[150rpx]">学号</text>
+						<text class="text-gray-800">{{ item?.studentNo }}</text>
+					</view>
+				</hs-card>
+	</hs-screen>
+</template>
+
+<script setup>
+	import { useStudentStore } from '@/store/student.uts'
+	import { useUserStore } from '@/store/user.uts'
+	import { showToast } from '@/utils/tool.uts'
+
+	const userStore = useUserStore()
+	const studentStore = useStudentStore()
+
+	const handleLogout = async () => {
+		userStore.logout()
+	}
+
+	const handleSearch = async () => {
+		await studentStore.queryByIdCard(studentStore.state.idCard)
+	}
+</script>
+
+<style>
+	.index-form-layout {
+		margin-bottom: 20rpx;
+	}
+
+	.index-form-field {
+		margin-bottom: 20rpx;
+	}
+
+
+	.index-result-row {
+		margin-bottom: 20rpx;
+	}
+</style>

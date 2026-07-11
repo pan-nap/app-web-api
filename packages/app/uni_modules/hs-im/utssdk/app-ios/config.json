@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "TencentCloudIM": "~> 8.7"
+  }
+}

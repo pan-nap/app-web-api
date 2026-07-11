@@ -1,0 +1,82 @@
+<template>
+  <hs-screen title2="IM 聊天">
+    <template #title>
+      <text class="text-34 fw-600 text-[#333] mr-12">IM 聊天</text>
+      <text :class="imStore.state.loginStatus == 2 ? 'text-[#4caf50]' : 'text-[#bbb]'" class="text-20 mr-8">●</text>
+      <text class="text-24 text-[#888]">{{ imStore.state.statusText }}</text>
+    </template>
+
+    <!-- 未登录：登录表单 -->
+    <view class="flex-1 flex flex-col px-32 pt-40 pb-40" v-if="!imStore.state.isLoggedIn">
+      <view class="mb-40">
+        <text class="text-40 fw-700 text-[#333]">登录 IM</text>
+        <view class="mt-12">
+          <text class="text-26 text-[#888]">输入 SDK 应用 ID、用户 ID 和签名，完成登录后即可收发消息。</text>
+        </view>
+      </view>
+
+      <view class="mb-28">
+        <text class="text-26 text-[#555] mb-10">SDK AppID</text>
+        <input
+          class="h-88 bg-white rd-16 px-24 text-30 text-[#333]"
+          style="border: 1rpx solid #e0e0e0"
+          type="number"
+          placeholder="请输入 SDK AppID"
+          v-model="sdkAppId"
+        />
+      </view>
+
+      <view class="mb-28">
+        <text class="text-26 text-[#555] mb-10">用户 ID</text>
+        <input
+          class="h-88 bg-white rd-16 px-24 text-30 text-[#333]"
+          style="border: 1rpx solid #e0e0e0"
+          type="text"
+          placeholder="请输入登录用户 ID"
+          v-model="loginUserId"
+        />
+      </view>
+
+      <view class="mb-28">
+        <text class="text-26 text-[#555] mb-10">UserSig</text>
+        <input
+          class="h-88 bg-white rd-16 px-24 text-30 text-[#333]"
+          style="border: 1rpx solid #e0e0e0"
+          type="text"
+          placeholder="请输入 UserSig 签名"
+          v-model="loginUserSig"
+        />
+      </view>
+
+      <view
+        class="h-96 bg-[#1976d2] rd-16 flex items-center justify-center mt-20"
+        :class="imStore.state.loginStatus == 1 ? 'bg-[#ccc]' : ''"
+        @tap="handleLogin"
+      >
+        <text class="text-32 text-white fw-600">{{ imStore.state.loginStatus == 1 ? "登录中..." : "登录" }}</text>
+      </view>
+
+      <button type="primary" class="mt-20" v-if="imStore.state.errorText.length > 0">
+      {{ imStore.state.errorText }}
+      </button>
+    </view>
+  </hs-screen>
+</template>
+
+<script setup>
+import { useIMStore } from "@/store/im.uts";
+
+const imStore = useIMStore();
+
+// ========== 表单输入 ==========
+const sdkAppId = ref("1600052292");
+const loginUserId = ref("456");
+const loginUserSig = ref("eJwtzMEKgkAUheF3ueuQcezqKLSIQCIKwspqWcxNbqEMajYRvXuTujzfgf8D*-XO66iGBKQnYNJv1lS1fOOepxiO3OjHxRjWkPihEAKljOXwkDVck3NElO4atOXyb5GSgYqVj2OFC1etzHNpzuWbCK*r3C5SWwZ3kWfFZvtqIsZTeuhIHzM9FzP4-gB3LDDA");
+
+// ========== 登录 ==========
+
+function handleLogin(): void {
+  if(imStore.state.loginStatus == 1) return;
+  imStore.login(sdkAppId.value, loginUserId.value, loginUserSig.value);
+}
+</script>

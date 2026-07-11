@@ -1,0 +1,23 @@
+/**
+ * unierror.uts
+ * hs-trtc UTS 插件错误码定义
+ */
+
+/** TRTC 错误码常量 */
+export const TRTCErrorCode = {
+  /** 进入房间失败 */
+  EnterRoomFailed: 9020001,
+  /** SDK 初始化失败 */
+  InitFailed: 9020002,
+  /** 未进入房间 */
+  NotInRoom: 9020003,
+  /** 参数错误 */
+  InvalidParams: 9020004
+}
+
+/** TRTC 错误实现 */
+export class TRTCErrorImpl extends UniError {
+  constructor(code: number, msg: string) {
+    super(code, msg)
+  }
+}

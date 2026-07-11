@@ -1,0 +1,49 @@
+/**
+ * interface.uts
+ * hs-trtc-floating UTS 插件接口定义文件
+ * 用于在 HBuilderX 中提供语法提示
+ * 实际实现在各平台目录的 index.uts 中
+ */
+
+/** 悬浮窗配置 */
+export type FloatWindowConfig = {
+  width: number
+  height: number
+  x: number
+  y: number
+}
+
+/** 悬浮窗状态常量 */
+export const FloatWindowStatusConst = {
+  Hidden: 0,
+  Showing: 1,
+  Destroyed: 2
+}
+
+/** 悬浮窗状态 */
+export type FloatWindowStatus = number
+
+/** 设置小窗显示本地或远程画面 */
+export function setFloatVideoSource(isLocal: boolean, remoteUserId: string): void
+/** 检查悬浮窗权限是否已授权 */
+export function checkFloatPermission(): boolean
+/** 打开悬浮窗权限设置页 */
+export function requestFloatPermission(): void
+
+/** 悬浮窗服务类 */
+export class FloatWindowService {
+  /** 注册显示回调 */
+  static onShow(callback: () => void): void
+  /** 注册隐藏回调 */
+  static onHide(callback: () => void): void
+  /** 注册点击回调 */
+  static onClick(callback: () => void): void
+  /** 显示悬浮窗 */
+  static show(): void
+  /** 隐藏悬浮窗 */
+  static hide(): void
+  /** 销毁悬浮窗 */
+  static destroy(): void
+  /** 获取当前状态 */
+  static getStatus(): FloatWindowStatus
+}

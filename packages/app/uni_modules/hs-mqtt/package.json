@@ -1,0 +1,45 @@
+{
+  "id": "hs-mqtt",
+  "displayName": "hs-mqtt",
+  "version": "1.0.0",
+  "description": "MQTT客户端组件（基于uni.connectSocket自实现MQTT 3.1.1协议）",
+  "keywords": [
+    "mqtt",
+    "iot",
+    "websocket"
+  ],
+  "repository": "",
+  "engines": {
+    "HBuilderX": "^3.9.0",
+    "uni-app-x": "^3.9.0"
+  },
+  "dcloudext": {
+    "type": "uts",
+    "sale": {
+      "regular": {
+        "price": "0.00"
+      },
+      "sourcecode": {
+        "price": "0.00"
+      }
+    }
+  },
+  "uni_modules": {
+    "dependencies": [],
+    "encrypt": [],
+    "platforms": {
+      "client": {
+        "uni-app-x": {
+          "web": {
+            "chrome": "-",
+            "safari": "-"
+          },
+          "app": {
+            "android": "-",
+            "ios": "-"
+          }
+        }
+      }
+    }
+  }
+}

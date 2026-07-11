@@ -1,0 +1,382 @@
+// ========== hs-stomp UTS插件 - STOMP协议实现 ==========
+// 基于 uni.connectSocket 的 STOMP 客户端，兼容 ActiveMQ
+// v1.0.1 - added WebSocket sub-protocols for ActiveMQ compatibility
+import { StompConfig, StompMessage } from './interface.uts'
+export { StompConfig, StompMessage }
+
+// 内部订阅记录
+class SubRecord {
+  id: string = ""
+  destination: string = ""
+  selector: string = ""
+  onMessage: (msg: StompMessage) => void = (msg) => {}
+}
+
+// ========== STOMP常量 ==========
+const NULL_CHAR = "\x00"
+const NEWLINE = "\n"
+
+// ========== STOMP工具函数 ==========
+
+/** 构建STOMP帧 */
+function buildFrame(command: string, headers: string[], body: string = ""): string {
+  let frame = command + NEWLINE
+  for (let i = 0; i < headers.length; i++) {
+    frame += headers[i] as string + NEWLINE
+  }
+  frame += NEWLINE
+  frame += body
+  frame += NULL_CHAR
+  return frame
+}
+
+/** 解析STOMP帧 */
+class StompFrame {
+  command: string = ""
+  headerMap: Map<string, string> = new Map()
+  body: string = ""
+}
+
+function parseFrame(data: string): StompFrame | null {
+  const nullIdx = data.indexOf(NULL_CHAR)
+  const frameStr = nullIdx >= 0 ? data.substring(0, nullIdx) : data
+  if (frameStr.length == 0) return null
+
+  const lines: string[] = []
+  let start = 0
+  while (true) {
+    const idx = frameStr.indexOf(NEWLINE, start)
+    if (idx < 0) {
+      const last = frameStr.substring(start)
+      if (last.length > 0) lines.push(last)
+      break
+    }
+    lines.push(frameStr.substring(start, idx))
+    start = idx + 1
+  }
+
+  if (lines.length == 0) return null
+
+  const result = new StompFrame()
+  result.command = lines[0] as string
+
+  let bodyStart = 1
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i] as string
+    if (line.length == 0) {
+      bodyStart = i + 1
+      break
+    }
+    const sepIdx = line.indexOf(":")
+    if (sepIdx > 0) {
+      result.headerMap.set(line.substring(0, sepIdx), line.substring(sepIdx + 1))
+    }
+    bodyStart = i + 1
+  }
+
+  if (bodyStart < lines.length) {
+    let bodyStr = ""
+    for (let i = bodyStart; i < lines.length; i++) {
+      if (i > bodyStart) bodyStr += NEWLINE
+      bodyStr += lines[i] as string
+    }
+    result.body = bodyStr
+  }
+
+  return result
+}
+
+// ========== STOMP客户端实现 ==========
+
+export class StompClient {
+  private socketTask: SocketTask | null = null
+  private reconnectTimer: number | null = null
+  private heartbeatTimer: number | null = null
+  private readonly RECONNECT_INTERVAL = 5000
+  private config: StompConfig | null = null
+  private connected: boolean = false
+  private pendingResolve: ((value: boolean) => void) | null = null
+  private subIdCounter: number = 0
+  private subscriptions: SubRecord[] = []
+  private buffer: string = ""
+
+  /** 是否已连接 */
+  isConnected(): boolean {
+    return this.connected
+  }
+
+  /** 初始化连接 */
+  connect(config: StompConfig): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      if (this.connected) {
+        resolve(true)
+        return
+      }
+
+      this.config = config
+      this.pendingResolve = resolve
+
+      const protocol = config.protocol ?? "wss"
+      const path = config.path ?? "/stomp"
+      const url = `${protocol}://${config.host}:${config.port}${path}`
+
+      try {
+        this.socketTask = uni.connectSocket({
+          url,
+          protocols: ["v12.stomp", "v11.stomp", "v10.stomp"],
+          success: () => {
+            console.log("WebSocket连接已建立")
+          },
+          fail: (err: any) => {
+            console.error("WebSocket连接失败", err)
+            reject(false)
+            this.startReconnect()
+          }
+        })
+      } catch (err) {
+        console.error("WebSocket创建异常", err)
+        reject(false)
+        this.startReconnect()
+        return
+      }
+
+      const socket = this.socketTask
+      if (socket == null) {
+        reject(false)
+        return
+      }
+
+      socket.onOpen(() => {
+        console.log("WebSocket已打开，发送STOMP CONNECT")
+        const hdrs: string[] = []
+        hdrs.push("accept-version:1.2")
+        hdrs.push("host:" + config.host)
+        if (config.login != null && config.login.length > 0) {
+          hdrs.push("login:" + config.login)
+        }
+        if (config.passcode != null && config.passcode.length > 0) {
+          hdrs.push("passcode:" + config.passcode)
+        }
+        const hbIn = config.heartbeatIncoming ?? 4000
+        const hbOut = config.heartbeatOutgoing ?? 4000
+        hdrs.push("heart-beat:" + hbOut + "," + hbIn)
+
+        const frame = buildFrame("CONNECT", hdrs)
+        socket.send({ data: frame })
+      })
+
+      socket.onMessage((res) => {
+        let data = res.data as string
+        this.handleData(data)
+      })
+
+      socket.onError((err: any) => {
+        console.error("WebSocket错误", err)
+        this.connected = false
+        this.startReconnect()
+      })
+
+      socket.onClose(() => {
+        console.log("WebSocket已关闭")
+        this.connected = false
+        this.clearTimers()
+        this.startReconnect()
+      })
+    })
+  }
+
+  /** 处理接收到的数据 */
+  private handleData(data: string) {
+    this.buffer += data
+
+    while (true) {
+      const nullIdx = this.buffer.indexOf(NULL_CHAR)
+      if (nullIdx < 0) break
+
+      const frameStr = this.buffer.substring(0, nullIdx)
+      this.buffer = this.buffer.substring(nullIdx + 1)
+
+      if (frameStr.trim().length == 0) continue
+
+      const frame = parseFrame(frameStr + NULL_CHAR)
+      if (frame == null) continue
+
+      this.handleFrame(frame)
+    }
+  }
+
+  /** 获得header值 */
+  private getHeader(frame: StompFrame, name: string): string {
+    return frame.headerMap.get(name) ?? ""
+  }
+
+  /** 处理解析后的STOMP帧 */
+  private handleFrame(frame: StompFrame) {
+    const command = frame.command
+    if (command == "CONNECTED") {
+      console.log("STOMP连接成功（CONNECTED）")
+      this.connected = true
+      this.clearReconnect()
+      this.startHeartbeat()
+      if (this.pendingResolve != null) {
+        this.pendingResolve(true)
+        this.pendingResolve = null
+      }
+    } else if (command == "MESSAGE") {
+      const destination = this.getHeader(frame, "destination")
+      const body = frame.body
+
+      const msg: StompMessage = {
+        destination,
+        body
+      }
+
+      // 遍历所有订阅，匹配目标主题
+      for (let i = 0; i < this.subscriptions.length; i++) {
+        const sub = this.subscriptions[i] as SubRecord
+        if (sub.destination == destination) {
+          sub.onMessage(msg)
+        }
+      }
+
+      // this.onMessageReceive(msg)
+    } else if (command == "ERROR") {
+      const errMsg = this.getHeader(frame, "message")
+      console.error("STOMP错误:", errMsg, frame.body)
+      if (this.pendingResolve != null) {
+        this.pendingResolve(false)
+        this.pendingResolve = null
+      }
+    }
+  }
+
+  /** 订阅主题 */
+  subscribe(destination: string, onMessage: (msg: StompMessage) => void, selector: string | null = null): string | null {
+    if (this.socketTask == null || !this.connected) {
+      console.error("STOMP客户端未连接，无法订阅")
+      return null
+    }
+
+    this.subIdCounter++
+    const subId = "sub-" + this.subIdCounter
+
+    const hdrs: string[] = []
+    hdrs.push("id:" + subId)
+    hdrs.push("destination:" + destination)
+    if (selector != null && selector.length > 0) {
+      hdrs.push("selector:" + selector)
+    }
+
+    const frame = buildFrame("SUBSCRIBE", hdrs)
+    this.socketTask.send({ data: frame })
+
+    const sub = new SubRecord()
+    sub.id = subId
+    sub.destination = destination
+    sub.selector = selector ?? ""
+    sub.onMessage = onMessage
+    this.subscriptions.push(sub)
+
+    console.log("STOMP已订阅:", destination, subId)
+    return subId
+  }
+
+  /** 取消订阅 */
+  unsubscribe(subId: string): void {
+    if (this.socketTask == null) return
+
+    const hdrs: string[] = ["id:" + subId]
+    const frame = buildFrame("UNSUBSCRIBE", hdrs)
+    this.socketTask.send({ data: frame })
+
+    // 从数组中移除
+    const newSubs: SubRecord[] = []
+    for (let i = 0; i < this.subscriptions.length; i++) {
+      const sub = this.subscriptions[i] as SubRecord
+      if (sub.id != subId) {
+        newSubs.push(sub)
+      }
+    }
+    this.subscriptions = newSubs
+  }
+
+  /** 发送消息 */
+  send(destination: string, body: string = ""): void {
+    if (this.socketTask == null || !this.connected) return
+
+    const hdrs: string[] = []
+    hdrs.push("destination:" + destination)
+    hdrs.push("content-type:application/json")
+    const frame = buildFrame("SEND", hdrs, body)
+    this.socketTask.send({ data: frame })
+  }
+
+  /** 断开连接 */
+  disconnect(): void {
+    this.clearTimers()
+    this.connected = false
+    if (this.socketTask != null) {
+      try {
+        const hdrs: string[] = ["receipt:disconnect-1"]
+        const frame = buildFrame("DISCONNECT", hdrs)
+        this.socketTask.send({ data: frame })
+      } catch (_e) {}
+      this.socketTask.close({})
+      this.socketTask = null
+    }
+    this.subscriptions = []
+    this.buffer = ""
+  }
+
+  // ========== 心跳管理 ==========
+
+  private startHeartbeat(): void {
+    this.clearHeartbeat()
+    const config = this.config
+    if (config == null) return
+    const interval = config.heartbeatOutgoing ?? 4000
+    this.heartbeatTimer = setTimeout(() => {
+      this.sendHeartbeat()
+    }, interval) as number
+  }
+
+  private sendHeartbeat(): void {
+    if (this.socketTask != null && this.connected) {
+      this.socketTask.send({ data: NEWLINE })
+    }
+    this.startHeartbeat()
+  }
+
+  private clearHeartbeat(): void {
+    if (this.heartbeatTimer != null) {
+      clearTimeout(this.heartbeatTimer as number)
+      this.heartbeatTimer = null
+    }
+  }
+
+  // ========== 重连管理 ==========
+
+  private startReconnect(): void {
+    this.clearTimers()
+    if (this.reconnectTimer != null) return
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null
+      if (this.config != null) {
+        console.log("STOMP正在重连...")
+        this.connect(this.config)
+      }
+    }, this.RECONNECT_INTERVAL) as number
+  }
+
+  private clearReconnect(): void {
+    if (this.reconnectTimer != null) {
+      clearTimeout(this.reconnectTimer as number)
+      this.reconnectTimer = null
+    }
+  }
+
+  private clearTimers(): void {
+    this.clearHeartbeat()
+    this.clearReconnect()
+  }
+}

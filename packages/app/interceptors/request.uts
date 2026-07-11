@@ -1,0 +1,42 @@
+import { storage } from '@/utils/storage.uts'
+import { useUserStore } from '@/store/user.uts'
+
+function getAuthorizationHeader() : string | null {
+	const userStore = useUserStore()
+	return userStore.isLogin() ? 'Bearer ' + userStore.state.access_token : null
+}
+
+/** 请求拦截器 */
+const requestToInterceptor : AddInterceptorOptions = {
+	invoke: (options : RequestOptions<UTSJSONObject>) => {
+		const header = UTSJSONObject.assign(options.header != null ? options.header : {}, {
+			'Content-Type': 'application/json',
+			'Authorization': getAuthorizationHeader()
+		})
+		options.header = header
+		return options
+	},
+	success(args : RequestOptions<UTSJSONObject>) {
+		return args
+	}
+}
+
+/** 上传拦截器 */
+const uploadFileToInterceptor : AddInterceptorOptions = {
+	invoke: (options : UploadFileOptions) => {
+		const newHeader = UTSJSONObject.assign(options.header != null ? options.header : {}, {
+			'Content-Type': 'multipart/form-data',
+			'Authorization': getAuthorizationHeader()
+		})
+		options.header = newHeader
+		return options
+	},
+	success(response : UploadFileSuccess) {
+		return response
+	},
+}
+
+export function useRequest() {
+	// uni.addInterceptor('request', requestToInterceptor)
+	// uni.addInterceptor('uploadFile', uploadFileToInterceptor)
+}

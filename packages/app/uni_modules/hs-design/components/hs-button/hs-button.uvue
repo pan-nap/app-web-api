@@ -1,0 +1,30 @@
+<template>
+	<button class="hs-button" v-bind="attrs" :loading="loading" @tap="handleClick">
+		<slot></slot>
+	</button>
+</template>
+
+<script setup>
+defineOptions({
+	inheritAttrs: false
+})
+
+const props = withDefaults(defineProps<{
+	onClick?: () => Promise<void>
+}>(), {})
+
+const attrs = useAttrs()
+const loading = ref(false)
+
+async function handleClick() {
+	if (loading.value) return
+	loading.value = true
+	try {
+		if (props.onClick != null) {
+			await props.onClick()
+		}
+	} finally {
+		loading.value = false
+	}
+}
+</script>

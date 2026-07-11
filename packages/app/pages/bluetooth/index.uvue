@@ -1,0 +1,290 @@
+<template>
+	<hs-screen :scroll="false" title="蓝牙设备">
+		<!-- 顶部状态栏 -->
+		<template #header>
+			<view class="flex flex-row items-center justify-between px-16 py-16 bg-white">
+				<view class="flex flex-col">
+					<text class="text-28 fw-600 text-mainGray-500">蓝牙设备</text>
+					<view class="flex flex-row items-center mt-4">
+						<text :class="['status-dot', bluetoothOn ? 'active' : '']"></text>
+						<text class="text-22 text-mainGray-450 ml-6">{{ bluetoothOn ? '已开启' : '未开启' }}</text>
+					</view>
+				</view>
+				<view class="rd-full px-20 py-8" :class="isScanning ? 'bg-mainGray-300' : 'bg-main'" @tap="toggleScan">
+					<button class="text-24 text-white">{{ isScanning ? '停止' : '搜索' }}</button>
+				</view>
+			</view>
+		</template>
+
+		<!-- 已配对设备 -->
+		<hs-card class="mt-12">
+			<view class="flex flex-row items-center pb-12" style="border-bottom: 1rpx solid #f0f0f0;">
+				<text class="text-24 fw-600 text-mainGray-500">已配对设备</text>
+				<text class="text-22 text-mainGray-400 ml-6">({{ bondedList.length }})</text>
+			</view>
+			<view v-if="bondedList.length == 0" class="flex flex-row items-center justify-center py-32">
+				<text class="text-24 text-mainGray-300">暂无已配对设备</text>
+			</view>
+			<view v-for="(device, index) in bondedList" :key="index" class="device-item" @tap="selectDevice(device)">
+				<view class="flex flex-col flex-1">
+					<text class="text-26 fw-500 text-mainGray-500">{{ device.name != null && device.name.length > 0 ? device.name : '未知设备' }}</text>
+					<text class="text-22 text-mainGray-400 mt-4">{{ device.address }}</text>
+				</view>
+				<text :class="['connect-status', isConnected(device) ? 'connected' : '']">
+					{{ isConnected(device) ? '已连接' : '点击连接' }}
+				</text>
+			</view>
+		</hs-card>
+
+		<!-- 附近设备 -->
+		<hs-card class="mt-12" style="flex: 1;">
+			<view class="flex flex-row items-center pb-12" style="border-bottom: 1rpx solid #f0f0f0;">
+				<text class="text-24 fw-600 text-mainGray-500">附近设备</text>
+				<text class="text-22 text-mainGray-400 ml-6">({{ discoveredList.length }})</text>
+			</view>
+			<view v-if="isScanning && discoveredList.length == 0" class="flex flex-row items-center justify-center py-32">
+				<text class="text-24 text-main">正在搜索...</text>
+			</view>
+			<view v-if="!isScanning && discoveredList.length == 0" class="flex flex-row items-center justify-center py-32">
+				<text class="text-24 text-mainGray-300">点击「搜索」查找附近设备</text>
+			</view>
+			<view v-for="(device, index) in discoveredList" :key="index" class="device-item" @tap="pairDevice(device)">
+				<view class="flex flex-col flex-1">
+					<text class="text-26 fw-500 text-mainGray-500">{{ device.name != null && device.name.length > 0 ? device.name : '未知设备' }}</text>
+					<text class="text-22 text-mainGray-400 mt-4">{{ device.address }}</text>
+				</view>
+				<text class="text-22 text-mainGray-400">{{ device.rssi }}dBm</text>
+			</view>
+		</hs-card>
+
+		<!-- 数据传输区（连接后显示） -->
+		<hs-card v-if="connectedDevice != null" class="mt-12" style="border-top: 1rpx solid #e0e0e0;">
+			<view class="flex flex-row items-center pb-8">
+				<text class="text-24 fw-600 text-mainGray-500 flex-1">
+					数据传输 — {{ connectedDevice!.name != null && connectedDevice!.name!.length > 0 ? connectedDevice!.name : connectedDevice!.address }}
+				</text>
+				<view class="rd-full px-16 py-6 bg-red" @tap="disconnectDevice">
+					<text class="text-22 text-white">断开</text>
+				</view>
+			</view>
+			<view class="flex flex-row items-center mt-8">
+				<input class="data-input flex-1" v-model="sendText" placeholder="输入发送内容" @confirm="sendData" />
+				<view class="ml-12 rd-8 px-20 py-10 bg-main" @tap="sendData">
+					<text class="text-24 text-white">发送</text>
+				</view>
+			</view>
+			<scroll-view class="data-log mt-12" scroll-y>
+				<view v-for="(log, index) in dataLogs" :key="index" class="log-item">
+					<text :class="['text-22', log.type == 'sent' ? 'text-main' : 'text-green']">
+						{{ log.type == 'sent' ? '📤' : '📥' }} {{ log.content }}
+					</text>
+				</view>
+			</scroll-view>
+		</hs-card>
+	</hs-screen>
+</template>
+
+<script setup lang="uts">
+	import { BluetoothService, BTDevice, ConnectionStateConst } from '@/uni_modules/hs-bluetooth'
+	import type { ConnectionState } from '@/uni_modules/hs-bluetooth'
+
+	// ========== 页面状态 ==========
+	const bluetoothOn = ref(false)
+	const isScanning = ref(false)
+	const sendText = ref('')
+
+	class LogItem {
+		type : string
+		content : string
+		constructor(type : string, content : string) {
+			this.type = type
+			this.content = content
+		}
+	}
+
+	const bondedList = ref<BTDevice[]>([])
+	const discoveredList = ref<BTDevice[]>([])
+	const connectedDevice = ref<BTDevice | null>(null)
+	const dataLogs = ref<LogItem[]>([])
+
+	// ========== 页面生命周期 ==========
+	onLoad(() => {
+		// 注册回调
+		BluetoothService.onDeviceFound = function (device : BTDevice) : void {
+			const exists = discoveredList.value.some((d) => d.address == device.address)
+			if (!exists) {
+				discoveredList.value.push(device)
+			}
+		}
+
+		BluetoothService.onScanStateChanged = function (scanning : boolean) : void {
+			isScanning.value = scanning
+		}
+
+		BluetoothService.onBondedListLoaded = function (devices : BTDevice[]) : void {
+			bondedList.value = devices
+		}
+
+		BluetoothService.onConnectionChanged = function (state : ConnectionState, device : BTDevice | null) : void {
+			if (state == ConnectionStateConst.Connected) {
+				connectedDevice.value = device
+				uni.hideLoading()
+				uni.showToast({ title: '连接成功', icon: 'success' })
+			} else if (state == ConnectionStateConst.Connecting) {
+				uni.showLoading({ title: '连接中...' })
+			} else {
+				connectedDevice.value = null
+				uni.hideLoading()
+			}
+		}
+
+		BluetoothService.onDataReceived = function (data : string) : void {
+			dataLogs.value.push(new LogItem('received', data))
+		}
+
+		BluetoothService.onError = function (message : string) : void {
+			console.error('蓝牙:', message)
+			uni.showToast({ title: message, icon: 'none' })
+		}
+
+		// 初始化蓝牙
+		BluetoothService.init()
+		bluetoothOn.value = BluetoothService.isEnabled()
+		if (BluetoothService.isEnabled()) {
+			BluetoothService.loadBondedDevices()
+		}
+	})
+
+	onUnload(() => {
+		BluetoothService.destroy()
+	})
+
+	// ========== 搜索 ==========
+
+	const REQUEST_BLUETOOTH_PERMS = 1001
+
+	function hasBluetoothPermissions(): boolean {
+		const act = UTSAndroid.getUniActivity()
+		if (act == null) return false
+		const pkg = act.getPackageManager()
+		if (android.os.Build.VERSION.SDK_INT >= 31) {
+			if (pkg.checkPermission('android.permission.BLUETOOTH_SCAN', act.getPackageName()) != android.content.pm.PackageManager.PERMISSION_GRANTED) return false
+			if (pkg.checkPermission('android.permission.BLUETOOTH_CONNECT', act.getPackageName()) != android.content.pm.PackageManager.PERMISSION_GRANTED) return false
+		}
+		if (pkg.checkPermission('android.permission.ACCESS_FINE_LOCATION', act.getPackageName()) != android.content.pm.PackageManager.PERMISSION_GRANTED) return false
+		return true
+	}
+
+	function requestBluetoothPermissions(callback: () => void): void {
+		if (hasBluetoothPermissions()) {
+			callback()
+			return
+		}
+    console.log('需要蓝牙权限')
+	}
+
+	function toggleScan() : void {
+		if (!BluetoothService.isEnabled()) {
+			bluetoothOn.value = true
+		}
+		if (isScanning.value) {
+			BluetoothService.stopScan()
+		} else {
+			discoveredList.value = []
+			requestBluetoothPermissions(function (): void {
+				BluetoothService.startScan()
+			})
+		}
+	}
+
+	// ========== 配对 & 连接 ==========
+	function pairDevice(device : BTDevice) : void {
+		BluetoothService.pair(device.address)
+	}
+
+	function selectDevice(device : BTDevice) : void {
+		if (connectedDevice.value != null && connectedDevice.value.address == device.address) {
+			BluetoothService.disconnect()
+		} else {
+			BluetoothService.connect(device.address)
+		}
+	}
+
+	function disconnectDevice() : void {
+		BluetoothService.disconnect()
+	}
+
+	// ========== 数据传输 ==========
+	function sendData() : void {
+		const text = sendText.value
+		if (text.length == 0) {
+			uni.showToast({ title: '请输入内容', icon: 'none' })
+			return
+		}
+		BluetoothService.send(text)
+		dataLogs.value.push(new LogItem('sent', text))
+		sendText.value = ''
+	}
+
+	// ========== 辅助 ==========
+	function isConnected(device : BTDevice) : boolean {
+		return connectedDevice.value != null && connectedDevice.value.address == device.address
+	}
+</script>
+
+<style>
+	/* 状态圆点 */
+	.status-dot {
+		width: 12rpx;
+		height: 12rpx;
+		border-radius: 6rpx;
+		background-color: #ccc;
+	}
+
+	.status-dot.active {
+		background-color: #4caf50;
+	}
+
+	/* 设备列表项 */
+	.device-item {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		padding: 16rpx 0;
+	}
+
+	.device-item+.device-item {
+		border-top: 1rpx solid #f5f5f5;
+	}
+
+	/* 连接状态 */
+	.connect-status {
+		font-size: 22rpx;
+		color: #999;
+	}
+
+	.connect-status.connected {
+		color: #4caf50;
+	}
+
+	/* 输入框 */
+	.data-input {
+		height: 72rpx;
+		border: 1rpx solid #ddd;
+		border-radius: 12rpx;
+		padding: 0 20rpx;
+		font-size: 26rpx;
+	}
+
+	/* 数据日志 */
+	.data-log {
+		height: 240rpx;
+		background-color: #f9f9f9;
+		border-radius: 12rpx;
+		padding: 16rpx;
+	}
+
+	.log-item+.log-item {
+		margin-top: 8rpx;
+	}
+</style>

@@ -1,0 +1,105 @@
+<template>
+	<view v-if="!hideBar" :style="[{height: `${44+statusBarHeight}px`, paddingTop: `${statusBarHeight}px`}]" class="page-nav-bar">
+		<view class="page-nav-bar__left">
+			<view v-if="!hideBack" @click="navBack" hover-class="hover-class" class="page-nav-bar__left-bar">
+				<text class="text-40 text-[#333]">←</text>
+			</view>
+		</view>
+		<view class="page-nav-bar__content">
+			<text v-if="title != ''" class="font-bold">
+				{{title}}
+			</text>
+			<slot v-else name="title"></slot>
+		</view>
+		<view class="page-nav-bar__right">
+			<slot name="right"></slot>
+		</view>
+	</view>
+	<slot name="header"></slot>
+	<!-- 内容滚动区域 -->
+	<scroll-view v-if="scroll" :scroll-y="true" class="page-shell">
+		<slot></slot>
+	</scroll-view>
+	<view v-else class="page-shell">
+		<slot></slot>
+	</view>
+</template>
+
+<script setup>
+	import { useUserStore } from '@/store/user.uts'
+
+	type Props = {
+		hideBar ?: boolean
+		hideBack ?: boolean
+		title ?: string
+		title2? : string
+		verifyLogin ?: boolean
+		scroll ?: boolean
+	}
+
+	const props = withDefaults(defineProps<Props>(), {
+		hideBar: false,
+		hideBack: false,
+		title: '',
+		title2: '',
+		verifyLogin: true,
+		scroll: true,
+	})
+	const slots = useSlots()
+	const userStore = useUserStore()
+	const { statusBarHeight = 0 } = uni.getWindowInfo()
+
+	onLoad(() => {
+		if (props.verifyLogin) {
+			userStore.toLogin()
+		}
+	})
+	onPageShow(() => {
+		userStore.setTitle(props.title2 != '' ? props.title2 : props.title)
+	})
+
+	const navBack = () => {
+		// #ifdef H5
+		window.history.go(-1)
+		// #endif
+		// #ifndef H5
+		uni.navigateBack();
+		// #endif
+	}
+</script>
+
+<style>
+	.page-nav-bar {
+		background-color: #fff;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.page-nav-bar__left,
+	.page-nav-bar__right {
+		flex: 0 0 100rpx;
+		padding: 0 20rpx;
+		height: 44px;
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+	}
+	.page-nav-bar__left-bar,
+	.page-nav-bar__content{
+		flex:1;
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.page-shell {
+		flex: 1;
+		padding: 10rpx 0;
+		display: flex;
+		flex-direction: column;
+		background-color: #eef1f7;
+	}
+</style>

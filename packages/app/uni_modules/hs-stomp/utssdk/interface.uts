@@ -1,0 +1,27 @@
+// ========== hs-stomp UTS插件 - 接口声明 ==========
+// STOMP 客户端，基于 uni.connectSocket 实现，全平台兼容
+
+// STOMP连接配置
+export type StompConfig = {
+  host: string          // 服务器ip/域名
+  port: number          // ws端口
+  protocol?: string     // 协议，默认"wss"，可传"ws"或"wss"
+  path?: string         // 路径，默认"/stomp"
+  login?: string        // 用户名（STOMP login header）
+  passcode?: string     // 密码（STOMP passcode header）
+  heartbeatIncoming?: number  // 接收心跳间隔毫秒，默认4000
+  heartbeatOutgoing?: number  // 发送心跳间隔毫秒，默认4000
+}
+
+// STOMP消息
+export type StompMessage = {
+  destination: string   // 主题
+  body: string          // 消息体（JSON字符串）
+}
+
+// 订阅配置
+export type StompSubscription = {
+  destination: string   // 主题
+  selector?: string     // 选择器
+  onMessage: (msg: StompMessage) => void  // 消息回调
+}

@@ -1,0 +1,524 @@
+// ========== MQTT协议常量 ==========
+import { MqttConfig } from './interface.uts'
+export { MqttConfig }
+const CONNECT = 1
+const CONNACK = 2
+const PUBLISH = 3
+const SUBSCRIBE = 8
+const SUBACK = 9
+const UNSUBSCRIBE = 10
+const UNSUBACK = 11
+const PINGREQ = 12
+const PINGRESP = 13
+const DISCONNECT = 14
+
+const PROTOCOL_NAME = 'MQTT'
+const PROTOCOL_LEVEL = 4 // MQTT 3.1.1
+
+// ========== 二进制工具函数 ==========
+
+/** 字符串转UTF-8字节数组 */
+function stringToBytes(str: string): Uint8Array {
+  const len = str.length
+  const bytes: number[] = []
+  for (let i = 0; i < len; i++) {
+    let code: number = str.charCodeAt(i) as number
+    if (code < 0x80) {
+      bytes.push(code)
+    } else if (code < 0x800) {
+      bytes.push(0xC0 | (code >> 6))
+      bytes.push(0x80 | (code & 0x3F))
+    } else if (code < 0xD800 || code >= 0xE000) {
+      bytes.push(0xE0 | (code >> 12))
+      bytes.push(0x80 | ((code >> 6) & 0x3F))
+      bytes.push(0x80 | (code & 0x3F))
+    } else {
+      i++
+      const code2: number = str.charCodeAt(i) as number
+      code = 0x10000 + (((code & 0x3FF) << 10) | (code2 & 0x3FF))
+      bytes.push(0xF0 | (code >> 18))
+      bytes.push(0x80 | ((code >> 12) & 0x3F))
+      bytes.push(0x80 | ((code >> 6) & 0x3F))
+      bytes.push(0x80 | (code & 0x3F))
+    }
+  }
+  return new Uint8Array(bytes)
+}
+
+/** 合并多个Uint8Array */
+function concatArrays(...arrays: Uint8Array[]): Uint8Array {
+  let totalLen = 0
+  for (let i = 0; i < arrays.length; i++) totalLen += (arrays[i] as Uint8Array).length
+  const result = new Uint8Array(totalLen)
+  let offset = 0
+  for (let i = 0; i < arrays.length; i++) {
+    const arr = arrays[i] as Uint8Array
+    for (let j = 0; j < arr.length; j++) {
+      result[offset + j] = arr[j] as number
+    }
+    offset += arr.length
+  }
+  return result
+}
+
+/** 编码MQTT剩余长度（变长编码） */
+function encodeRemainingLength(length: number): Uint8Array {
+  const bytes: number[] = []
+  do {
+    let digit = length % 128
+    length = Math.floor(length / 128)
+    if (length > 0) digit |= 128
+    bytes.push(digit)
+  } while (length > 0)
+  return new Uint8Array(bytes)
+}
+
+/** 编码MQTT字符串（2字节长度前缀 + UTF-8内容） */
+function encodeString(str: string): Uint8Array {
+  const strBytes = stringToBytes(str)
+  const len = strBytes.length
+  const result = new Uint8Array(2 + len)
+  result[0] = (len >> 8) & 0xFF
+  result[1] = len & 0xFF
+  result.set(strBytes, 2)
+  return result
+}
+
+/** 构建MQTT报文 */
+function buildPacket(type: number, flags: number, variableHeader: Uint8Array, payload: Uint8Array): ArrayBuffer {
+  const combined = concatArrays(variableHeader, payload)
+  const remainingLen = encodeRemainingLength(combined.length)
+  const fixedHeader = new Uint8Array([(type << 4) | flags])
+  const packet = concatArrays(fixedHeader, remainingLen, combined)
+  return packet.buffer as ArrayBuffer
+}
+
+/** 剩余长度解析结果 */
+class ReadResult {
+  value: number = 0
+  bytes: number = 0
+}
+
+/** 读取MQTT剩余长度 */
+function readRemainingLength(data: Uint8Array, offset: number): ReadResult {
+  let multiplier = 1
+  let value = 0
+  let bytes = 0
+  while (true) {
+    const digit: number = data[offset + bytes] as number
+    value += (digit & 127) * multiplier
+    multiplier *= 128
+    bytes++
+    if ((digit & 128) == 0) break
+  }
+  const result = new ReadResult()
+  result.value = value
+  result.bytes = bytes
+  return result
+}
+
+// ========== MQTT报文构建 ==========
+
+/** 构建CONNECT报文 */
+function buildConnect(clientId: string, username?: string, password?: string, clean: boolean = true, keepalive: number = 60): ArrayBuffer {
+  const protocolName = encodeString(PROTOCOL_NAME)
+  const protocolLevel = new Uint8Array([PROTOCOL_LEVEL])
+
+  let flags = 0
+  if (clean) flags |= 2
+  if (username != null && username.length > 0) flags |= 128
+  if (password != null && password.length > 0) flags |= 64
+
+  const connectFlags = new Uint8Array([flags])
+  const keepaliveBytes = new Uint8Array([(keepalive >> 8) & 0xFF, keepalive & 0xFF])
+  const variableHeader = concatArrays(protocolName, protocolLevel, connectFlags, keepaliveBytes)
+
+  let payload = encodeString(clientId)
+  if (username != null && username.length > 0) {
+    payload = concatArrays(payload, encodeString(username))
+  }
+  if (password != null && password.length > 0) {
+    payload = concatArrays(payload, encodeString(password))
+  }
+
+  return buildPacket(CONNECT, 0, variableHeader, payload)
+}
+
+/** 构建SUBSCRIBE报文 */
+function buildSubscribe(packetId: number, topic: string, qos: number = 0): ArrayBuffer {
+  const packetIdBytes = new Uint8Array([(packetId >> 8) & 0xFF, packetId & 0xFF])
+  const topicBytes = encodeString(topic)
+  const qosByte = new Uint8Array([qos])
+  const payload = concatArrays(topicBytes, qosByte)
+  return buildPacket(SUBSCRIBE, 2, packetIdBytes, payload)
+}
+
+/** 构建UNSUBSCRIBE报文 */
+function buildUnsubscribe(packetId: number, topic: string): ArrayBuffer {
+  const packetIdBytes = new Uint8Array([(packetId >> 8) & 0xFF, packetId & 0xFF])
+  const payload = encodeString(topic)
+  return buildPacket(UNSUBSCRIBE, 2, packetIdBytes, payload)
+}
+
+/** 构建PUBLISH报文 */
+function buildPublish(topic: string, message: string, qos: number = 0, packetId: number | null = null): ArrayBuffer {
+  let variableHeader = encodeString(topic)
+  if (qos > 0 && packetId != null) {
+    const packetIdBytes = new Uint8Array([(packetId >> 8) & 0xFF, packetId & 0xFF])
+    variableHeader = concatArrays(variableHeader, packetIdBytes)
+  }
+  const payload = stringToBytes(message)
+  return buildPacket(PUBLISH, qos << 1, variableHeader, payload)
+}
+
+/** 构建PINGREQ报文 */
+function buildPingReq(): ArrayBuffer {
+  return buildPacket(PINGREQ, 0, new Uint8Array(0), new Uint8Array(0))
+}
+
+/** 构建DISCONNECT报文 */
+function buildDisconnect(): ArrayBuffer {
+  return buildPacket(DISCONNECT, 0, new Uint8Array(0), new Uint8Array(0))
+}
+
+// ========== 报文解析 ==========
+
+/** MQTT报文解析结果 */
+class ParsedPacket {
+  type: number = 0
+  payload: Uint8Array = new Uint8Array(0)
+}
+
+/** 解析接收到的MQTT报文 */
+function parsePacket(data: ArrayBuffer): ParsedPacket {
+  const bytes = new Uint8Array(data)
+  const type = (bytes[0] >> 4) & 0x0F
+  const remainingInfo = readRemainingLength(bytes, 1)
+  const headerLen = 1 + remainingInfo.bytes
+  const payload = bytes.slice(headerLen)
+  const result = new ParsedPacket()
+  result.type = type
+  result.payload = payload
+  return result
+}
+
+// ========== MQTT客户端实现 ==========
+
+export class MqttClient {
+  private socketTask: SocketTask | null = null
+  private reconnectTimer: number | null = null
+  private pingTimer: number | null = null
+  private packetIdCounter: number = 1
+  private readonly RECONNECT_INTERVAL = 5000
+  private config: MqttConfig | null = null
+  private connected: boolean = false
+  private pendingResolve: ((value: boolean) => void) | null = null
+
+  /** 是否已连接 */
+  isConnected(): boolean {
+    return this.connected
+  }
+
+  /** 初始化连接 */
+  connect(config: MqttConfig): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      if (this.connected) {
+        resolve(true)
+        return
+      }
+
+      this.config = config
+      this.pendingResolve = resolve
+
+      const clientId = config.clientId ?? `uninx_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+      const protocol = config.protocol ?? "wss"
+      const path = config.path ?? "/mqtt"
+      const url = `${protocol}://${config.host}:${config.port}${path}`
+
+      try {
+        this.socketTask = uni.connectSocket({
+          url,
+          success: () => {
+            console.log("WebSocket连接已建立")
+          },
+          fail: (err: any) => {
+            console.error("WebSocket连接失败", err)
+            reject(false)
+            this.startReconnect()
+          }
+        })
+      } catch (err) {
+        console.error("WebSocket创建异常", err)
+        reject(false)
+        this.startReconnect()
+        return
+      }
+
+      const socket = this.socketTask
+      if (socket == null) {
+        reject(false)
+        return
+      }
+
+      socket.onOpen(() => {
+        console.log("WebSocket已打开，发送MQTT CONNECT")
+        const connectPacket = buildConnect(
+          clientId,
+          config.username,
+          config.password,
+          config.clean ?? true,
+          config.keepalive ?? 60
+        )
+        socket.send({
+          data: connectPacket,
+          fail(err: any) {
+            console.error("发送CONNECT失败", err)
+          }
+        })
+      })
+
+      socket.onMessage((res) => {
+        const raw = res.data as ArrayBuffer
+        if (raw == null) return
+        this.handleMessage(raw)
+      })
+
+      socket.onError((err: any) => {
+        console.error("WebSocket错误", err)
+        this.connected = false
+        this.startReconnect()
+      })
+
+      socket.onClose(() => {
+        console.log("WebSocket已关闭")
+        this.connected = false
+        this.clearTimers()
+        this.startReconnect()
+      })
+    })
+  }
+
+  /** 处理接收到的MQTT报文 */
+  private handleMessage(data: ArrayBuffer) {
+    const parsed = parsePacket(data)
+    const type = parsed.type
+    const payload = parsed.payload
+
+    switch (type) {
+      case CONNACK:
+        const returnCode = payload[1]
+        if (returnCode == 0) {
+          console.log("MQTT连接成功（CONNACK）")
+          this.connected = true
+          this.clearReconnect()
+          this.startPing()
+          if (this.pendingResolve != null) {
+            this.pendingResolve(true)
+            this.pendingResolve = null
+          }
+        } else {
+          console.error("MQTT连接拒绝，code:", returnCode)
+          if (this.pendingResolve != null) {
+            this.pendingResolve(false)
+            this.pendingResolve = null
+          }
+        }
+        break
+
+      case SUBACK:
+        console.log("MQTT订阅确认")
+        break
+
+      case PUBLISH:
+        const bytes = new Uint8Array(data)
+        const remainingInfo = readRemainingLength(bytes, 1)
+        let offset = 1 + remainingInfo.bytes
+
+        const topicLen = (bytes[offset] << 8) | bytes[offset + 1]
+        offset += 2
+        const topic = this.bytesToString(bytes.slice(offset, offset + topicLen))
+        offset += topicLen
+
+        const msgBytes = bytes.slice(offset)
+        const msg = this.bytesToString(msgBytes)
+
+        this.onMessageReceive(topic, msg)
+        break
+
+      case PINGRESP:
+        break
+
+      case UNSUBACK:
+        console.log("MQTT取消订阅确认")
+        break
+    }
+  }
+
+  /** Uint8Array转字符串 */
+  private bytesToString(bytes: Uint8Array): string {
+    let result = ''
+    let i = 0
+    while (i < bytes.length) {
+      const b1: number = bytes[i] as number
+      let code: number
+      if (b1 < 0x80) {
+        code = b1
+        i++
+      } else if (b1 < 0xE0) {
+        code = (b1 & 0x1F) << 6
+        if (i + 1 < bytes.length) code |= (bytes[i + 1] as number) & 0x3F
+        i += 2
+      } else if (b1 < 0xF0) {
+        code = (b1 & 0x0F) << 12
+        if (i + 2 < bytes.length) {
+          code |= ((bytes[i + 1] as number) & 0x3F) << 6
+          code |= (bytes[i + 2] as number) & 0x3F
+        }
+        i += 3
+      } else {
+        code = (b1 & 0x07) << 18
+        if (i + 3 < bytes.length) {
+          code |= ((bytes[i + 1] as number) & 0x3F) << 12
+          code |= ((bytes[i + 2] as number) & 0x3F) << 6
+          code |= (bytes[i + 3] as number) & 0x3F
+        }
+        i += 4
+      }
+      if (code >= 0x10000) {
+        const cp = code - 0x10000
+        result += String.fromCharCode(0xD800 + (cp >> 10)) + String.fromCharCode(0xDC00 + (cp & 0x3FF))
+      } else {
+        result += String.fromCharCode(code)
+      }
+    }
+    return result
+  }
+
+  /** 收到消息回调，外部可重写 */
+  onMessageReceive: (topic: string, msg: string) => void = (topic: string, msg: string) : void => {
+    uni.$emit("mqttMsg", {
+      topic,
+      message: msg
+    })
+  }
+
+  /** 订阅主题 */
+  subscribe(topic: string, qos: number = 0): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      if (this.socketTask == null || !this.connected) {
+        reject("客户端未连接")
+        return
+      }
+      const packetId = this.nextPacketId()
+      const packet = buildSubscribe(packetId, topic, qos)
+      this.socketTask.send({
+        data: packet,
+        success() { resolve(true) },
+        fail(err: any) { reject(err) }
+      })
+    })
+  }
+
+  /** 发布消息 */
+  publish(topic: string, msg: string, qos: number = 0): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      if (this.socketTask == null || !this.connected) {
+        reject("客户端未连接")
+        return
+      }
+      const packet = buildPublish(topic, msg, qos)
+      this.socketTask.send({
+        data: packet,
+        success() { resolve(true) },
+        fail(err: any) { reject(err) }
+      })
+    })
+  }
+
+  /** 取消订阅 */
+  unsubscribe(topic: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      if (this.socketTask == null || !this.connected) {
+        reject("客户端未连接")
+        return
+      }
+      const packetId = this.nextPacketId()
+      const packet = buildUnsubscribe(packetId, topic)
+      this.socketTask.send({
+        data: packet,
+        success() { resolve(true) },
+        fail(err: any) { reject(err) }
+      })
+    })
+  }
+
+  /** 断开连接 */
+  disconnect(): void {
+    this.clearTimers()
+    this.connected = false
+    if (this.socketTask != null) {
+      try {
+        const packet = buildDisconnect()
+        this.socketTask.send({ data: packet })
+      } catch (_e) {}
+      this.socketTask.close({})
+      this.socketTask = null
+    }
+  }
+
+  /** 获取下一个报文ID */
+  private nextPacketId(): number {
+    this.packetIdCounter++
+    if (this.packetIdCounter > 65535) this.packetIdCounter = 1
+    return this.packetIdCounter
+  }
+
+  /** 启动心跳 */
+  private startPing(): void {
+    this.clearPing()
+    const keepaliveSec = this.config != null ? this.config.keepalive : null
+    const interval = (keepaliveSec ?? 60) * 1000
+    this.pingTimer = setTimeout(() => {
+      if (this.connected && this.socketTask != null) {
+        const packet = buildPingReq()
+        this.socketTask.send({ data: packet })
+        this.startPing()
+      }
+    }, interval)
+  }
+
+  /** 清除心跳定时器 */
+  private clearPing(): void {
+    if (this.pingTimer != null) {
+      clearTimeout(this.pingTimer as number)
+      this.pingTimer = null
+    }
+  }
+
+  /** 开启重连 */
+  private startReconnect(): void {
+    this.clearTimers()
+    if (this.reconnectTimer != null) return
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null
+      if (this.config != null) {
+        console.log("MQTT正在重连...")
+        this.connect(this.config)
+      }
+    }, this.RECONNECT_INTERVAL)
+  }
+
+  /** 清除重连定时器 */
+  private clearReconnect(): void {
+    if (this.reconnectTimer != null) {
+      clearTimeout(this.reconnectTimer as number)
+      this.reconnectTimer = null
+    }
+  }
+
+  /** 清除所有定时器 */
+  private clearTimers(): void {
+    this.clearPing()
+    this.clearReconnect()
+  }
+}

@@ -1,0 +1,323 @@
+// ========== hs-im UTS插件 - iOS平台入口 ==========
+// 基于腾讯 TIM SDK iOS 封装
+// 底层使用 OC 桥接类 IMBridgeHelper
+
+// ========== 消息类型常量 ==========
+export class MessageType {
+  static Text: number = 0
+  static Image: number = 1
+  static Video: number = 2
+  static Voice: number = 3
+  static Custom: number = 4
+}
+
+// ========== 类型定义 ==========
+export type IMLoginConfig = {
+  sdkAppId: number
+  userId: string
+  userSig: string
+}
+
+export type ChatMessage = {
+  msgId: string
+  sender: string
+  type: number
+  text: string
+  extra: string
+  timestamp: number
+  isSelf: boolean
+}
+
+export type IMMessageListResult = {
+  messages: ChatMessage[]
+  total: number
+  error: string
+}
+
+// ========== 连接状态常量 ==========
+export class IMStatusConst {
+  static Disconnected: number = 0
+  static Connecting: number = 1
+  static Connected: number = 2
+}
+
+// ========== 内部状态 ==========
+let _isLogined: boolean = false
+let _loginUserId: string = ''
+let _loginSdkAppId: number = 0
+let _loginStatus: number = 0
+let _callbacksRegistered: boolean = false
+
+let _onLoginStatusChange: ((status: number) => void) | null = null
+let _onMessageReceived: ((msg: ChatMessage) => void) | null = null
+let _onMessageRevoked: ((msgId: string) => void) | null = null
+let _onError: ((code: number, msg: string) => void) | null = null
+
+function triggerLoginStatus(status: number): void {
+  _loginStatus = status
+  const cb = _onLoginStatusChange
+  if (cb != null) cb(status)
+}
+
+function triggerError(code: number, msg: string): void {
+  const cb = _onError
+  if (cb != null) cb(code, msg)
+}
+
+function triggerMessage(msg: ChatMessage): void {
+  const cb = _onMessageReceived
+  if (cb != null) cb(msg)
+}
+
+function triggerMessageRevoked(msgId: string): void {
+  const cb = _onMessageRevoked
+  if (cb != null) cb(msgId)
+}
+
+// ========== iOS 辅助函数 ==========
+
+function ensureIMInit(): boolean {
+  if (IMBridgeHelper.isInitialized()) return true
+  const ok = IMBridgeHelper.initWithSdkAppId(_loginSdkAppId)
+  if (ok && !_callbacksRegistered) {
+    _callbacksRegistered = true
+    registerNativeCallbacks()
+  }
+  return ok
+}
+
+function registerNativeCallbacks(): void {
+  IMBridgeHelper.setOnLoginSuccess(function (): void {
+    console.log('IM iOS: 登录成功')
+    _isLogined = true
+    triggerLoginStatus(2)
+  })
+
+  IMBridgeHelper.setOnLoginFailed(function (code: number, desc: string): void {
+    console.log('IM iOS: 登录失败 code=' + code + ', desc=' + desc)
+    triggerError(code, desc)
+    triggerLoginStatus(0)
+  })
+
+  IMBridgeHelper.setOnLogoutSuccess(function (): void {
+    console.log('IM iOS: 登出成功')
+    _isLogined = false
+    _loginUserId = ''
+    triggerLoginStatus(0)
+  })
+
+  IMBridgeHelper.setOnMessageReceived(function (msgId: string, sender: string, type: number, text: string, extra: string, timestamp: number, isSelf: boolean): void {
+    triggerMessage({
+      msgId: msgId,
+      sender: sender,
+      type: type,
+      text: text,
+      extra: extra,
+      timestamp: timestamp,
+      isSelf: isSelf
+    })
+  })
+
+  IMBridgeHelper.setOnMessageRevoked(function (msgId: string): void {
+    console.log('IM iOS: 消息撤回 msgId=' + msgId)
+    triggerMessageRevoked(msgId)
+  })
+
+  IMBridgeHelper.setOnKickedOffline(function (): void {
+    console.log('IM iOS: 被踢下线')
+    _isLogined = false
+    _loginUserId = ''
+    triggerLoginStatus(0)
+  })
+}
+
+// ========== IMService ==========
+
+export class IMService {
+
+  static onLoginStatusChange(callback: (status: number) => void): void {
+    _onLoginStatusChange = callback
+  }
+
+  static onMessageReceived(callback: (msg: ChatMessage) => void): void {
+    _onMessageReceived = callback
+  }
+
+  static onMessageRevoked(callback: (msgId: string) => void): void {
+    _onMessageRevoked = callback
+  }
+
+  static onError(callback: (code: number, msg: string) => void): void {
+    _onError = callback
+  }
+
+  static login(config: IMLoginConfig): void {
+    if (config == null) {
+      triggerError(-1, '配置为空')
+      return
+    }
+    _loginSdkAppId = config.sdkAppId
+    _loginUserId = config.userId
+
+    if (!ensureIMInit()) {
+      triggerError(-1, 'TIM SDK 初始化失败')
+      return
+    }
+
+    triggerLoginStatus(1)
+    IMBridgeHelper.login(config.userId, config.userSig)
+  }
+
+  static logout(): void {
+    if (!IMBridgeHelper.isInitialized()) return
+    IMBridgeHelper.logout()
+  }
+
+  static sendTextMessage(toUserId: string, text: string): string {
+    if (!IMBridgeHelper.isLoggedIn()) {
+      console.error('IM iOS: 未登录')
+      return ''
+    }
+    if (text.length == 0) return ''
+    return IMBridgeHelper.sendTextMessage(toUserId, text)
+  }
+
+  static sendImageMessage(toUserId: string, imagePath: string): string {
+    if (!IMBridgeHelper.isLoggedIn()) {
+      console.error('IM iOS: 未登录')
+      return ''
+    }
+    if (imagePath.length == 0) return ''
+    return IMBridgeHelper.sendImageMessage(toUserId, imagePath)
+  }
+
+  static sendVideoMessage(toUserId: string, videoPath: string, videoType: number, duration: number, snapshotPath: string): string {
+    if (!IMBridgeHelper.isLoggedIn()) {
+      console.error('IM iOS: 未登录')
+      return ''
+    }
+    if (videoPath.length == 0) return ''
+    return IMBridgeHelper.sendVideoMessage(toUserId, videoPath, videoType, duration, snapshotPath)
+  }
+
+  static sendVoiceMessage(toUserId: string, voicePath: string, duration: number): string {
+    if (!IMBridgeHelper.isLoggedIn()) {
+      console.error('IM iOS: 未登录')
+      return ''
+    }
+    if (voicePath.length == 0) return ''
+    return IMBridgeHelper.sendVoiceMessage(toUserId, voicePath, duration)
+  }
+
+  static sendCustomMessage(toUserId: string, data: string, desc: string, extension: string): string {
+    if (!IMBridgeHelper.isLoggedIn()) {
+      console.error('IM iOS: 未登录')
+      return ''
+    }
+    return IMBridgeHelper.sendCustomMessage(toUserId, data, desc, extension)
+  }
+
+  static getC2CMessageList(peerUserId: string, count: number, lastMsgId: string, callback: (messages: Array<ChatMessage>, total: number, error: string) => void): void {
+    if (!IMBridgeHelper.isInitialized()) {
+      callback([], 0, '未初始化')
+      return
+    }
+    if (!IMBridgeHelper.isLoggedIn()) {
+      callback([], 0, '未登录')
+      return
+    }
+
+    const messages: Array<ChatMessage> = []
+    IMBridgeHelper.getC2CMessageList(peerUserId, count, lastMsgId,
+      (msgId: string, sender: string, type: number, text: string, extra: string, timestamp: number, isSelf: boolean): void => {
+        messages.push({
+          msgId: msgId,
+          sender: sender,
+          type: type,
+          text: text,
+          extra: extra,
+          timestamp: timestamp,
+          isSelf: isSelf
+        })
+      },
+      (total: number, error: string): void => {
+        callback(messages, total, error)
+      }
+    )
+  }
+
+  static loadMessages(peerUserId: string, count: number, callback: (messages: Array<ChatMessage>, error: string) => void): void {
+    if (!IMBridgeHelper.isInitialized()) {
+      callback([], '未初始化')
+      return
+    }
+    if (!IMBridgeHelper.isLoggedIn()) {
+      callback([], '未登录')
+      return
+    }
+
+    const messages: Array<ChatMessage> = []
+    IMBridgeHelper.loadMessages(peerUserId, count,
+      (msgId: string, sender: string, type: number, text: string, extra: string, timestamp: number, isSelf: boolean): void => {
+        messages.push({
+          msgId: msgId,
+          sender: sender,
+          type: type,
+          text: text,
+          extra: extra,
+          timestamp: timestamp,
+          isSelf: isSelf
+        })
+      },
+      (total: number, error: string): void => {
+        callback(messages, error)
+      }
+    )
+  }
+
+  static deleteMessage(msgId: string): boolean {
+    if (!IMBridgeHelper.isLoggedIn()) return false
+    return IMBridgeHelper.deleteMessage(msgId)
+  }
+
+  static revokeMessage(msgId: string): boolean {
+    if (!IMBridgeHelper.isLoggedIn()) return false
+    return IMBridgeHelper.revokeMessage(msgId)
+  }
+
+  static markC2CMessageAsRead(userId: string): boolean {
+    if (!IMBridgeHelper.isInitialized()) return false
+    return IMBridgeHelper.markC2CMessageAsRead(userId)
+  }
+
+  static markGroupMessageAsRead(groupId: string): boolean {
+    if (!IMBridgeHelper.isInitialized()) return false
+    return IMBridgeHelper.markGroupMessageAsRead(groupId)
+  }
+
+  static sendMessageReadReceipts(msgIds: string[]): boolean {
+    if (!IMBridgeHelper.isLoggedIn()) return false
+    return IMBridgeHelper.sendMessageReadReceipts(msgIds.join(','))
+  }
+
+  static getLoginStatus(): number {
+    return _loginStatus
+  }
+
+  static getCurrentUserId(): string {
+    return _loginUserId
+  }
+
+  static isLoggedIn(): boolean {
+    return _isLogined
+  }
+
+  static destroy(): void {
+    IMBridgeHelper.destroy()
+    _isLogined = false
+    _loginUserId = ''
+    _loginSdkAppId = 0
+    _callbacksRegistered = false
+    triggerLoginStatus(0)
+  }
+}

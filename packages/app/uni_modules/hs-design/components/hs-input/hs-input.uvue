@@ -1,0 +1,40 @@
+<template>
+  <input class="hs-input" :value="modelValue" @input="onInput" />
+</template>
+<script setup lang="uts">
+import type { FormItemContext } from '../../types/form'
+
+const injectedFormItem = inject<FormItemContext | null>('hsFormItem', null)
+type Props = {
+  modelValue: any
+}
+
+const emit = defineEmits(['update:modelValue'])
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: ''
+})
+const getFormItemContext = (): FormItemContext | null => {
+  return injectedFormItem
+}
+
+const getValidateHandler = (): (() => boolean) | null => {
+  const formItemContext = getFormItemContext()
+  if (formItemContext == null) {
+    return null
+  }
+  return formItemContext.validate
+}
+
+const onInput = (event: UniInputEvent) => {
+  emit('update:modelValue', event.detail.value)
+  const validate = getValidateHandler()
+  if (validate != null) {
+    validate()
+  }
+}
+</script>
+<style>
+.hs-input {
+  width: 100%;
+}
+</style>

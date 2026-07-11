@@ -1,0 +1,94 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "首页"
+      }
+    },
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/student/index",
+      "style": {
+        "navigationBarTitleText": "学生页"
+      }
+    },
+    {
+      "path": "pages/mqtt/index",
+      "style": {
+        "navigationBarTitleText": "mqtt页"
+      }
+    },
+    {
+      "path": "pages/stomp/index",
+      "style": {
+        "navigationBarTitleText": "stomp测试页"
+      }
+    },
+    // #ifdef APP
+    {
+      "path": "pages/bluetooth/index",
+      "style": {
+        "navigationBarTitleText": "蓝牙"
+      }
+    }
+    // #endif
+  ],
+  "subPackages": [
+    {
+      "root": "page_im",
+      "pages": [
+        {
+          "path": "login/index",
+          "style": {
+            "navigationBarTitleText": "IM 登录"
+          }
+        },
+        {
+          "path": "chat/index",
+          "style": {
+            "navigationBarTitleText": "IM 聊天"
+          }
+        },
+        {
+          "path": "video-player/index",
+          "style": {
+            "navigationBarTitleText": "视频播放"
+          }
+        },
+        {
+          "path": "image-preview/index",
+          "style": {
+            "navigationBarTitleText": "图片预览"
+          }
+        }
+      ]
+    },
+    // #ifdef APP
+    {
+      "root": "page_room",
+      "pages": [
+        {
+          "path": "room/index",
+          "style": {
+            "navigationBarTitleText": "视频通话"
+          }
+        }
+      ]
+    }
+    // #endif
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "uni-app x",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8",
+    "navigationStyle": "custom"
+  },
+  "uniIdRouter": {}
+}

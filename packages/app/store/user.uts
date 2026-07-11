@@ -1,0 +1,86 @@
+﻿import request from '@/utils/request.uts'
+import { storage } from '@/utils/storage.uts'
+
+const TOKEN = 'TOKEN'
+export type LoginFormData = {
+	username : string
+	password : string
+}
+export type User = {
+	access_token : string
+	username : string
+	pageTitle : string
+	id : string
+}
+
+const storedToken = storage.get(TOKEN) as string | null
+
+const userInfo = reactive<User>({
+	access_token: storedToken != null ? storedToken : '',
+	username: '',
+	pageTitle: '',
+	id: ''
+})
+
+function toUser(data: UTSJSONObject): User {
+	return {
+		access_token: data.getString('access_token', ''),
+		username: data.getString('username', ''),
+		pageTitle: data.getString('pageTitle', ''),
+		id: data.getString('id', '')
+	}
+}
+
+class UserStore {
+	state : User = userInfo
+
+	isLogin() : boolean {
+		const token = storage.get(TOKEN) as string | null
+		const hasLogin = !storage.isExpired(TOKEN) && token != null && token.length > 0
+		return hasLogin
+	}
+
+	setTitle(title : string) : void {
+		userInfo.pageTitle = title
+	}
+
+	setUserInfo(info : User) {
+		UTSJSONObject.assign(userInfo, info)
+		const expires = 24 * 60 * 60
+		storage.set(TOKEN, info.access_token, expires)
+		return nextTick()
+	}
+
+	toLogin() : void {
+		if (!this.isLogin()) {
+			uni.reLaunch({
+				url: '/pages/login/index'
+			})
+		}
+	}
+
+	async login(data : LoginFormData) : Promise<void> {
+		try {
+			const res = await request('/login', data, 'POST')
+			this.setUserInfo(toUser(res as UTSJSONObject))
+			uni.reLaunch({
+				url: '/pages/index/index'
+			})
+		} catch (err) {
+			console.log('登录失败=>>>>>', err)
+		}
+	}
+
+	logout() : void {
+		storage.remove(TOKEN)
+		uni.reLaunch({
+			url: '/pages/login/index'
+		})
+	}
+}
+
+const userStore = new UserStore()
+
+export function useUserStore() : UserStore {
+	return userStore
+}

@@ -1,0 +1,60 @@
+import request from '@/utils/request.uts'
+import { showToast } from '@/utils/tool.uts'
+
+export type Student = {
+	id : string
+	name : string
+	idCard : string
+	gender : string
+	age : number
+	className : string
+	studentNo : string
+}
+
+export type StudentInfo = {
+	idCard : string;
+	list : Student[]
+}
+
+const studentInfo = reactive<StudentInfo>({
+	idCard: '',
+	list: []
+})
+
+function toStudent(data : UTSJSONObject) : Student {
+	return {
+		id: data.getString('id', ''),
+		name: data.getString('name', ''),
+		idCard: data.getString('idCard', ''),
+		gender: data.getString('gender', ''),
+		age: data.getNumber('age', 0) as number,
+		className: data.getString('className', ''),
+		studentNo: data.getString('studentNo', '')
+	}
+}
+
+class StudentStore {
+	state : StudentInfo = studentInfo
+
+	async queryByIdCard(idCard : string) : Promise<Student[]> {
+		try {
+			const res = await request('/student', { idCard }, 'GET')
+			const rawArray = res as UTSJSONObject[]
+			const list = rawArray.map((item) : Student => {
+				return toStudent(item)
+			})
+			this.state.list = list
+			return list
+		} catch (err) {
+			console.log('查询学生失败=>>>>>', err)
+			showToast('查询学生失败')
+			return []
+		}
+	}
+}
+
+const studentStore = new StudentStore()
+
+export function useStudentStore() : StudentStore {
+	return studentStore
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@cashier/app",
+  "version": "1.0.0",
+  "description": "收银系统移动端应用",
+  "private": true,
+  "scripts": {
+    "dev1": "node scripts/hx.js launch web --project . --browser Edge",
+    "dev:web:compile": "pnpm dev --compile true",
+    "dev:app-android": "node scripts/hx.js launch app-android --project . --playground custom",
+    "dev:app-android:compile": "node scripts/hx.js launch app-android --project . --compile true",
+    "dev:app-ios": "node scripts/hx.js launch app-ios --project . --iosTarget simulator",
+    "dev:app-ios:compile": "pnpm dev:app-ios --compile true",
+    "dev:app-harmony": "node scripts/hx.js launch app-harmony --project .",
+    "dev:app-harmony:compile": "pnpm dev:app-harmony --compile true",
+    "dev:mp-weixin": "uni-launch mp-weixin",
+    "dev:mp-weixin:compile": "node scripts/hx.js launch mp-weixin --project . --compile true",
+    "build:web": "node scripts/hx.js publish web --project .",
+    "build:web:sourcemap": "node scripts/hx.js publish web --project . --sourceMap true",
+    "build:app-android": "node scripts/hx.js publish app-android --project . --type appResource",
+    "build:app-android:custom-base": "node scripts/hx.js publish app-android --project .",
+    "build:app-ios": "node scripts/hx.js publish app-ios --project . --type appResource",
+    "build:app-harmony": "node scripts/hx.js publish app-harmony --project . --type appResource",
+    "test:web": "node scripts/uni-test.js web --browser Edge",
+    "test:app-android": "node scripts/uni-test.js app-android",
+    "test:app-ios": "node scripts/uni-test.js app-ios",
+    "test:app-harmony": "node scripts/uni-test.js app-harmony",
+    "test:mp-weixin": "node scripts/uni-test.js mp-weixin"
+  },
+  "keywords": [
+    "uniapp",
+    "mobile",
+    "cashier"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "tim-js-sdk": "^2.27.6",
+    "tim-upload-plugin": "^1.4.3"
+  }
+}

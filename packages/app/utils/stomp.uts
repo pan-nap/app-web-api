@@ -1,0 +1,96 @@
+import { StompClient, StompConfig, StompMessage } from '@/uni_modules/hs-stomp'
+import config from '../config.json'
+
+// 全局单例
+let stompClientInstance : StompClient | null = null
+
+// 订阅主题列表（参考 web 项目）
+const TOPICS = [
+	'/topic/topic.destination.system',
+	'/topic/topic.destination.topcompany',
+	'/topic/topic.destination.company',
+	'/topic/topic.destination.business',
+	'/topic/topic.destination.user',
+	'/topic/topic.destination.treatment',
+]
+
+function getBaseUrl() : string {
+	// #ifdef WEB
+	return location.hostname
+	// #endif
+
+	// #ifndef WEB
+	const baseUrl = config["stompUrl"] as string
+	return baseUrl
+	// #endif
+}
+function getBasePort() : number {
+	// #ifdef WEB
+	return location.port
+	// #endif
+	
+	// #ifndef WEB
+	return config['stompPort'] as number
+	// #endif
+}
+function getBaseProtocol() : string {
+	// #ifdef WEB
+	return process.env.NODE_ENV === 'development' ? 'ws' : 'wss'
+	// #endif
+	
+	// #ifndef WEB
+	return 'wss'
+	// #endif
+}
+
+/**
+ * 获取 STOMP 客户端单例
+ * 首次调用时自动连接并订阅预设主题
+ * 收到消息后通过 uni.$emit("stompMsg", msg) 广播给所有页面
+ */
+export async function stompClient() {
+	if (stompClientInstance != null) {
+		return stompClientInstance
+	}
+	const config : StompConfig = {
+		host: getBaseUrl(),
+		port: getBasePort(),
+		protocol: getBaseProtocol(),
+		path: "/stomp",
+		login: "admin",
+		passcode: "hsACTIVEMQ@520"
+	}
+	try {
+		const instance = new StompClient()
+		stompClientInstance = instance
+		await instance.connect(config)
+		// 订阅所有预设主题，收到消息通过全局事件广播
+		for (let i = 0; i < TOPICS.length; i++) {
+			instance.subscribe(TOPICS[i] as string, (msg : StompMessage) => {
+				uni.$emit("stompMsg", msg)
+			})
+		}
+	} catch (e) {
+		console.error("STOMP客户端创建失败", e)
+	}
+	return stompClientInstance
+}
+
+/**
+ * 页面 hook：监听 STOMP 消息
+ * 返回 cleanup 函数，页面销毁时调用可自动注销事件，避免内存泄漏
+ */
+export function useStompMessage(callback : (msg : StompMessage) => void) : void {
+	const handler = (data : any) => {
+		const raw = data as StompMessage
+		const msg : StompMessage = {
+			destination: raw.destination,
+			body: raw.body
+		}
+		callback(msg)
+	}
+	uni.$on("stompMsg", handler)
+	onUnmounted(() => {
+		uni.$off("stompMsg", handler)
+	})
+}

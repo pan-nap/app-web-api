@@ -1,0 +1,294 @@
+// ========== hs-trtc-floating UTS插件 - Android平台入口 ==========
+// 依赖 hs-trtc，通过 TrtcService 管理视频渲染，负责悬浮窗 UI 和手势
+
+import { TrtcService } from '@/uni_modules/hs-trtc'
+import Context from 'android.content.Context'
+import { UTSAndroid } from 'io.dcloud.uts'
+
+// ========== 类型定义 ==========
+
+export type FloatWindowConfig = {
+  width: number
+  height: number
+  x: number
+  y: number
+}
+
+export const FloatWindowStatusConst = {
+  Hidden: 0,
+  Showing: 1,
+  Destroyed: 2
+}
+
+export type FloatWindowStatus = number
+
+// ========== 内部状态 ==========
+
+let _status: number = 0
+let _onShow: (() => void) | null = null
+let _onHide: (() => void) | null = null
+let _onClick: (() => void) | null = null
+
+// ========== 视频源控制 ==========
+
+let _showLocal: boolean = true
+let _remoteUserId: string = ''
+
+export function setFloatVideoSource(isLocal: boolean, remoteUserId: string = ''): void {
+  _showLocal = isLocal
+  _remoteUserId = remoteUserId
+}
+
+// ========== Android 原生实现 ==========
+
+let _wm: android.view.WindowManager | null = null
+let _dragLastX: number = 0
+let _dragLastY: number = 0
+let _downX: number = 0
+let _downY: number = 0
+let _container: android.widget.FrameLayout | null = null
+let _textureView: android.view.TextureView | null = null
+let _layoutParams: android.view.WindowManager.LayoutParams | null = null
+let _floatShowing: boolean = false
+
+function getWM(): android.view.WindowManager | null {
+  if (_wm != null) return _wm
+  try {
+    const act = UTSAndroid.getUniActivity()
+    if (act == null) return null
+    const ctx = act as Context
+    _wm = ctx.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+  } catch (e: any) {
+    console.error('FLOAT: 获取WindowManager失败 - ' + (e != null ? e.toString() : ''))
+  }
+  return _wm
+}
+
+function bindVideoToTrtc(container: android.view.ViewGroup): void {
+  if (_showLocal) {
+    TrtcService.setLocalVideoView(container)
+  } else if (_remoteUserId.length > 0) {
+    TrtcService.setRemoteVideoView(_remoteUserId, container)
+  }
+}
+
+function unbindVideoFromTrtc(): void {
+  if (_showLocal) {
+    TrtcService.setLocalVideoView(null)
+  } else if (_remoteUserId.length > 0) {
+    TrtcService.setRemoteVideoView(_remoteUserId, null)
+  }
+}
+
+function checkOverlayPermission(): boolean {
+  try {
+    const act = UTSAndroid.getUniActivity()
+    if (act == null) return false
+    const ctx = act as Context
+    const SettingsClass = java.lang.Class.forName('android.provider.Settings')
+    const canDrawMethod = SettingsClass.getMethod('canDrawOverlays', java.lang.Class.forName('android.content.Context'))
+    const result = canDrawMethod.invoke(null, ctx) as boolean
+    return result != null ? result : false
+  } catch (_e: any) {
+    return true
+  }
+}
+
+function openOverlaySettings(): void {
+  try {
+    const act = UTSAndroid.getUniActivity()
+    if (act == null) return
+    const intent = new android.content.Intent(
+      android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION
+    )
+    const pkg = act.getPackageName()
+    intent.setData(android.net.Uri.parse('package:' + pkg))
+    act.startActivity(intent)
+  } catch (_e: any) {
+    console.error('FLOAT: 无法打开悬浮窗权限设置')
+  }
+}
+
+function floatShow(): void {
+  if (_floatShowing) return
+
+  if (!checkOverlayPermission()) {
+    console.log('FLOAT: 未获得悬浮窗权限，引导开启')
+    openOverlaySettings()
+    return
+  }
+
+  try {
+    const wm = getWM()
+    if (wm == null) {
+      console.error('FLOAT: WindowManager不可用')
+      return
+    }
+
+    const act = UTSAndroid.getUniActivity()
+    if (act == null) return
+    const density = act.getResources().getDisplayMetrics().density
+
+    const w = (120 * density).toInt()
+    const h = (160 * density).toInt()
+
+    const container = new android.widget.FrameLayout(act)
+    const tv = new android.view.TextureView(act)
+
+    container.setBackgroundColor(android.graphics.Color.parseColor('#CC1A1A1A'))
+
+    const tvLayout = new android.widget.FrameLayout.LayoutParams(
+      android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+      android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+    )
+    tv.setLayoutParams(tvLayout)
+    container.addView(tv)
+
+    container.setOnTouchListener(function (v: android.view.View, event: android.view.MotionEvent): boolean {
+      const actEvent = event as android.view.MotionEvent
+      const action = actEvent.getAction()
+      const rawX = actEvent.getRawX()
+      const rawY = actEvent.getRawY()
+
+      if (action == android.view.MotionEvent.ACTION_DOWN) {
+        _dragLastX = rawX
+        _dragLastY = rawY
+        _downX = rawX
+        _downY = rawY
+        return true
+      } else if (action == android.view.MotionEvent.ACTION_MOVE) {
+        const dx = rawX - _dragLastX
+        const dy = rawY - _dragLastY
+        _dragLastX = rawX
+        _dragLastY = rawY
+        if (dx != 0 || dy != 0) {
+          const curLp = _layoutParams
+          const curWm = _wm
+          if (curLp != null && curWm != null) {
+            curLp.x = (curLp.x as number + (dx as number)).toInt()
+            curLp.y = (curLp.y as number + (dy as number)).toInt()
+            try { curWm.updateViewLayout(v, curLp) } catch (_e: any) {}
+          }
+        }
+        return true
+      } else if (action == android.view.MotionEvent.ACTION_UP) {
+        let distX = rawX - _downX
+        if (distX < 0) distX = -distX
+        let distY = rawY - _downY
+        if (distY < 0) distY = -distY
+        if (distX < 20 && distY < 20) {
+          const cb = _onClick
+          if (cb != null) cb()
+        }
+        return true
+      }
+      return false
+    })
+
+    let type: number
+    try {
+      type = android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+    } catch (_e: any) {
+      type = 2038
+    }
+
+    const lp = new android.view.WindowManager.LayoutParams(
+      w, h,
+      type,
+      android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+        android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+      android.graphics.PixelFormat.TRANSLUCENT
+    )
+
+    lp.gravity = android.view.Gravity.TOP | android.view.Gravity.LEFT
+    lp.x = 50
+    lp.y = 100
+
+    wm.addView(container, lp)
+
+    bindVideoToTrtc(container)
+
+    _container = container
+    _textureView = tv
+    _layoutParams = lp
+    _floatShowing = true
+
+    console.log('FLOAT: 悬浮窗已显示')
+  } catch (e: any) {
+    console.error('FLOAT: 显示失败 - ' + (e != null ? e.toString() : ''))
+  }
+}
+
+export function checkFloatPermission(): boolean {
+  return checkOverlayPermission()
+}
+
+export function requestFloatPermission(): void {
+  openOverlaySettings()
+}
+
+function floatHide(): void {
+  if (!_floatShowing) return
+  try {
+    const wm = getWM()
+    const container = _container
+
+    if (container != null && wm != null) {
+      unbindVideoFromTrtc()
+      wm.removeView(container)
+    }
+
+    _container = null
+    _textureView = null
+    _layoutParams = null
+    _floatShowing = false
+    console.log('FLOAT: 悬浮窗已隐藏')
+  } catch (e: any) {
+    console.error('FLOAT: 隐藏失败')
+  }
+}
+
+function floatDestroy(): void {
+  floatHide()
+  _wm = null
+  console.log('FLOAT: 悬浮窗已销毁')
+}
+
+// ========== 对外服务 ==========
+
+export class FloatWindowService {
+  static onShow(callback: () => void): void {
+    _onShow = callback
+  }
+
+  static onHide(callback: () => void): void {
+    _onHide = callback
+  }
+
+  static onClick(callback: () => void): void {
+    _onClick = callback
+  }
+
+  static show(): void {
+    floatShow()
+    _status = 1
+    const cb = _onShow
+    if (cb != null) cb()
+  }
+
+  static hide(): void {
+    floatHide()
+    _status = 0
+    const cb = _onHide
+    if (cb != null) cb()
+  }
+
+  static destroy(): void {
+    floatDestroy()
+    _status = 2
+  }
+
+  static getStatus(): FloatWindowStatus {
+    return _status as FloatWindowStatus
+  }
+}

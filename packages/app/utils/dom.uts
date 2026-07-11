@@ -1,0 +1,37 @@
+/**
+ * 获取所有dom元素
+ * @param el 元素类名
+ * @param that 当前实例对象
+ */
+export function getAllDomRect(el : string, that : ComponentPublicInstance) : Promise<NodeInfo[][]> {
+	return new Promise((
+		resolve : (res : NodeInfo[][]) => void,
+		reject : (err : any) => void
+	) => {
+		try {
+			uni.createSelectorQuery().in(that).selectAll(el).boundingClientRect().exec((rects) => {
+				resolve(rects as NodeInfo[][])
+			})
+		} catch (error) {
+			reject(error)
+		}
+	})
+}
+/** 获取指定dom元素
+ * @param el 元素类名
+ * @param that 当前实例对象
+ */
+export function getDomRect(el : string, that : ComponentPublicInstance) : Promise<NodeInfo> {
+	return new Promise((
+		resolve : (res : NodeInfo) => void,
+		reject : (err : any) => void
+	) => {
+		try {
+			uni.createSelectorQuery().in(that).select(el).boundingClientRect().exec((rects) => {
+				resolve((rects as NodeInfo[])[0])
+			})
+		} catch (error) {
+			reject(error)
+		}
+	})
+}

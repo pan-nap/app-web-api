@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="uts.sdk.modules.hsTrtcFloating">
+
+    <!-- 悬浮窗权限（Android 6.0+ 需要运行时申请） -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+</manifest>

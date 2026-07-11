@@ -1,0 +1,36 @@
+<template>
+	<hs-screen title="stomp测试页">
+    <button @tap="initStomp">连接STOMP</button>
+		<button @tap="sendMsg">发送消息</button>
+		<text>收到消息：{{receiveMsg}}</text>
+	</hs-screen>
+</template>
+
+<script setup lang="uts">
+import { stompClient, useStompMessage } from '@/utils/stomp.uts'
+import { StompMessage } from '@/uni_modules/hs-stomp'
+
+const receiveMsg = ref("")
+
+// 注册监听，页面销毁时自动注销事件，避免内存泄漏
+useStompMessage((msg: StompMessage) => {
+  console.log(`[${msg.destination}] ${msg.body}`)
+  receiveMsg.value = `[${msg.destination}] ${msg.body}`
+})
+
+async function initStomp() {
+  await stompClient()
+}
+
+// 发送消息
+async function sendMsg() {
+  const c = await stompClient()
+  if (c != null) {
+    c.send("/topic/topic.destination.business", JSON.stringify({ test: "Hello STOMP" }))
+  }
+}
+</script>
+
+<style>
+
+</style>

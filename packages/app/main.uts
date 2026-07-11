@@ -1,0 +1,16 @@
+import App from './App.uvue'
+import { useInterceptors } from '@/interceptors/index.uts'
+import { createSSRApp } from 'vue'
+import { stompClient } from '@/utils/stomp.uts'
+import { mqttClient } from '@/utils/mqtt.uts'
+
+export function createApp() {
+	const app = createSSRApp(App)
+	useInterceptors(app)
+	// 全局注入消息客户端实例，应用启动时自动连接
+	// stompClient()
+	// mqttClient()
+	return {
+		app
+	}
+}

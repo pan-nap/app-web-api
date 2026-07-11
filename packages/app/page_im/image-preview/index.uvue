@@ -1,0 +1,28 @@
+<template>
+	<view class="flex-1 bg-black flex items-center justify-center">
+			<image
+				:src="imagePath"
+				mode="aspectFit"
+				class="w-full h-full"
+				@click="handleImageClick"
+			></image>
+		</view>
+</template>
+
+<script setup lang="uts">
+	let imagePath: string = ''
+
+	onLoad(function (options : UTSJSONObject) : void {
+		const src = options.getString('src')
+		if (src != null && src.length > 0) {
+			imagePath = src
+		}
+	})
+
+	function handleImageClick() : void {
+		uni.navigateBack()
+	}
+</script>
+
+<style scoped>
+</style>

@@ -1,0 +1,148 @@
+// ========== hs-im UTS插件 - Harmony平台入口 ==========
+// 当前状态：腾讯云 IM 官方暂未提供完整的 HarmonyOS 原生 SDK
+//
+// TODO: 方案一（推荐）：WebView 集成
+// 1. 在 app-harmony 创建 WebView 组件加载 H5 IM 页面
+// 2. 配置 WebView 权限（javaScriptAccess、domStorageAccess）
+// 3. 通过 JS 桥接实现双向通信
+//
+// TODO: 方案二：等待官方 SDK
+// 关注 https://cloud.tencent.com/product/im 等待 HarmonyOS SDK 发布
+//
+// 集成文档：参考 .agents/skills/uts-plugin/references/platform-hybrid-harmony.md
+
+export const MessageType = {
+  Text: 0,
+  Image: 1,
+  Video: 2,
+  Voice: 3,
+  Custom: 4
+}
+
+export type IMLoginConfig = {
+  sdkAppId: number
+  userId: string
+  userSig: string
+}
+
+export type ChatMessage = {
+  msgId: string
+  sender: string
+  type: number
+  text: string
+  extra: string
+  timestamp: number
+  isSelf: boolean
+}
+
+export type IMMessageListResult = {
+  messages: ChatMessage[]
+  total: number
+  error: string
+}
+
+export const IMStatusConst = {
+  Disconnected: 0,
+  Connecting: 1,
+  Connected: 2
+}
+
+export class IMService {
+  static onLoginStatusChange(callback: (status: number) => void): void {
+    console.log('IM Harmony: onLoginStatusChange 待实现')
+  }
+
+  static onMessageReceived(callback: (msg: ChatMessage) => void): void {
+    console.log('IM Harmony: onMessageReceived 待实现')
+  }
+
+  static onMessageRevoked(callback: (msgId: string) => void): void {
+    console.log('IM Harmony: onMessageRevoked 待实现')
+  }
+
+  static onError(callback: (code: number, msg: string) => void): void {
+    console.log('IM Harmony: onError 待实现')
+  }
+
+  static login(config: IMLoginConfig): void {
+    console.log('IM Harmony: login 待实现')
+  }
+
+  static logout(): void {
+    console.log('IM Harmony: logout 待实现')
+  }
+
+  static sendTextMessage(toUserId: string, text: string): string {
+    console.log('IM Harmony: sendTextMessage 待实现')
+    return ''
+  }
+
+  static sendImageMessage(toUserId: string, imagePath: string): string {
+    console.log('IM Harmony: sendImageMessage 待实现')
+    return ''
+  }
+
+  static sendVideoMessage(toUserId: string, videoPath: string, videoType: number, duration: number, snapshotPath: string): string {
+    console.log('IM Harmony: sendVideoMessage 待实现')
+    return ''
+  }
+
+  static sendVoiceMessage(toUserId: string, voicePath: string, duration: number): string {
+    console.log('IM Harmony: sendVoiceMessage 待实现')
+    return ''
+  }
+
+  static sendCustomMessage(toUserId: string, data: string, desc: string, extension: string): string {
+    console.log('IM Harmony: sendCustomMessage 待实现')
+    return ''
+  }
+
+  static getC2CMessageList(peerUserId: string, count: number, lastMsgId: string, callback: (messages: Array<ChatMessage>, total: number, error: string) => void): void {
+    callback([], 0, 'Harmony 未实现')
+  }
+
+  static loadMessages(peerUserId: string, count: number, callback: (messages: Array<ChatMessage>, error: string) => void): void {
+    callback([], 'Harmony 未实现')
+  }
+
+  static deleteMessage(msgId: string): boolean {
+    console.log('IM Harmony: deleteMessage 待实现')
+    return false
+  }
+
+  static revokeMessage(msgId: string): boolean {
+    console.log('IM Harmony: revokeMessage 待实现')
+    return false
+  }
+
+  static markC2CMessageAsRead(userId: string): boolean {
+    console.log('IM Harmony: markC2CMessageAsRead 待实现')
+    return false
+  }
+
+  static markGroupMessageAsRead(groupId: string): boolean {
+    console.log('IM Harmony: markGroupMessageAsRead 待实现')
+    return false
+  }
+
+  static sendMessageReadReceipts(msgIds: string[]): boolean {
+    console.log('IM Harmony: sendMessageReadReceipts 待实现')
+    return false
+  }
+
+  static getLoginStatus(): number {
+    return 0
+  }
+
+  static getCurrentUserId(): string {
+    return ''
+  }
+
+  static isLoggedIn(): boolean {
+    return false
+  }
+
+  static destroy(): void {
+    console.log('IM Harmony: destroy 待实现')
+  }
+}

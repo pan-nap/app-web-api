@@ -1,0 +1,5 @@
+nohup: ignoring input
+Thu, 28 May 2026 05:47:56 GMT koa deprecated Support for generators will be removed in v3. See the documentation for examples of how to convert old middleware https://github.com/koajs/koa/blob/master/docs/migration.md at file:\C:\workspace\%E6%94%B6%E9%93%B6\packages\backend\src\index.js:16:5
+数据库初始化完成
+服务器运行在 http://localhost:3001
+服务器已启动，按 Ctrl+C 停止

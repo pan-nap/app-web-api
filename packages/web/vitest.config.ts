@@ -1,0 +1,22 @@
+import { fileURLToPath } from "node:url";
+import { defineConfig } from "vitest/config";
+import vue from "@vitejs/plugin-vue";
+
+export default defineConfig({
+  plugins: [vue()],
+  test: {
+    globals: true,
+    environment: "jsdom",
+    include: ["src/**/*.{test,spec}.{js,ts}", "tests/**/*.{test,spec}.{js,ts}"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      exclude: ["node_modules/**", "src/main.ts", "**/*.d.ts", "src/router/**", "src/types/**"]
+    }
+  },
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url))
+    }
+  }
+});

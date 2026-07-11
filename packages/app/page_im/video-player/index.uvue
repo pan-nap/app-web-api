@@ -1,0 +1,28 @@
+<template>
+  <view class="flex-1 bg-black">
+    <video
+      :src="videoSrc"
+      class="flex-1"
+      :controls="true"
+      :autoplay="true"
+      object-fit="contain"
+      @ended="onVideoEnded"
+    />
+  </view>
+</template>
+
+<script setup>
+const videoSrc = ref("");
+
+onLoad(function (options : UTSJSONObject) : void {
+  const src = options.getString('src', '');
+  if (src.length > 0) {
+    videoSrc.value = src;
+    console.log('视频播放 src=', src);
+  }
+})
+
+function onVideoEnded(): void {
+  uni.navigateBack({ delta: 1 });
+}
+</script>

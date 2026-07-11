@@ -1,0 +1,15 @@
+// ========== hs-mqtt UTS插件 - 接口声明 ==========
+// MQTT 3.1.1 客户端，基于 uni.connectSocket 实现，全平台兼容
+
+// MQTT连接配置
+export type MqttConfig = {
+  host: string          // 服务器ip/域名
+  port: number          // ws端口
+  clientId?: string     // 客户端ID，不传则自动生成
+  username?: string     // 用户名
+  password?: string     // 密码
+  clean?: boolean       // 是否清除会话，默认true
+  keepalive?: number    // 心跳秒数，默认60
+  protocol?: string     // 协议，默认"wss"，可传"ws"或"wss"
+  path?: string         // 路径，默认"/mqtt"
+}

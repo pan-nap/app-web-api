@@ -1,0 +1,101 @@
+<template>
+	<hs-screen :verify-login="false" hide-back hide-bar title="登录页">
+		<view class="mb-28 flex flex-col p-8 pt-18">
+			<view class="flex flex-row items-center justify-center rd-full bg-mainGray-950 px-18 py-10">
+				<text class="text-22 tracking-2">HS CASHIER</text>
+			</view>
+			<text class="mt-26 text-56 fw-700 text-mainGray-500">欢迎回来</text>
+			<text class="mt-16 text-28 text-mainGray-450">使用新表单组件完成账号登录，快速进入收银与门店运营工作台。</text>
+		</view>
+
+		<hs-card>
+			<view class="mb-8 flex flex-col">
+				<text class="text-34 fw-700 text-mainGray-500">账号登录</text>
+				<text class="mt-12 text-24 text-mainGray-450">请输入账号与密码，字段校验由 `hs-form` 统一处理。</text>
+			</view>
+
+			<hs-form ref="formRef" class="login-form" :model="formData" :rules="formRules">
+				<hs-form-item class="login-account-item" label="账号" prop="username">
+					<hs-input class="login-account-input h-88 border-l-0 border-r-0 border-t-0 border-b-1 border-solid border-mainGray-150 bg-white px-24 text-30 text-mainGray-500" type="text" confirm-type="next" placeholder="请输入账号 / 手机号" :maxlength="32" v-model="formData.username" />
+				</hs-form-item>
+
+				<hs-form-item class="login-password-item" label="密码" prop="password">
+					<hs-input class="login-password-input h-88 border-l-0 border-r-0 border-t-0 border-b-1 border-solid border-mainGray-150 bg-white px-24 text-30 text-mainGray-500" type="text" :password="true" confirm-type="go" placeholder="请输入登录密码" :maxlength="20" v-model="formData.password" @confirm="handleLogin" />
+				</hs-form-item>
+			</hs-form>
+
+			<hs-button type="primary" class="login-submit-btn mt-8" @tap="handleLogin">
+				立即登录
+			</hs-button>
+
+			<view class="mt-22 flex flex-row rd-18 bg-warn-50 p-20">
+				<text class="flex-1 text-24 text-warn-650">建议使用门店分配的正式账号登录，避免共用账号导致审计信息混乱。</text>
+			</view>
+		</hs-card>
+	</hs-screen>
+</template>
+
+<script setup>
+	import type { FormRule } from '@/uni_modules/hs-design/types/form'
+	import { type User, type LoginFormData, useUserStore } from '@/store/user.uts'
+	import { showToast } from '@/utils/tool.uts'
+
+	const formRef = ref<HsFormComponentPublicInstance | null>(null)
+	const userStore = useUserStore()
+	const formData = reactive<LoginFormData>({
+		username: 'admin',
+		password: '123456'
+	})
+
+	onLoad((options : OnLoadOptions) => {
+		const testMode = options['testMode'] as string | null
+		if (testMode == 'empty') {
+			formData.username = ''
+			formData.password = ''
+		}
+	})
+
+	const usernameRules : FormRule[] = [
+		{
+			required: true,
+			message: '请输入登录账号'
+		},
+		{
+			pattern: /^[A-Za-z0-9_@.-]{4,32}$/,
+			message: '账号需为4-32位字母、数字或常用符号'
+		}
+	]
+
+	const passwordRules : FormRule[] = [
+		{
+			required: true,
+			message: '请输入登录密码'
+		},
+		{
+			pattern: /^[\s\S]{6,20}$/,
+			message: '密码长度需在6-20位之间'
+		}
+	]
+
+	const formRules = new UTSJSONObject()
+	formRules['username'] = usernameRules
+	formRules['password'] = passwordRules
+
+	const handleLogin = async () => {
+		const formInstance = formRef.value
+		if (formInstance == null) {
+			return
+		}
+		await formInstance.validate()
+		await userStore.login(formData)
+	}
+</script>
+
+<style>
+	.login-form {
+		padding-left: 0rpx;
+		padding-right: 0rpx;
+		padding-bottom: 12rpx;
+		padding-top: 24rpx;
+	}
+</style>

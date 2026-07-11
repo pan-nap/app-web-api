@@ -1,0 +1,380 @@
+<template>
+	<hs-screen :scroll="false" title2="IM 聊天">
+		<template #title>
+			<text class="text-34 fw-600 text-[#333] mr-12">IM 聊天</text>
+			<text :class="imStore.state.loginStatus == 2 ? 'text-[#4caf50]' : 'text-[#bbb]'" class="text-20 mr-8">●</text>
+			<text class="text-24 text-[#888]">{{ imStore.state.statusText }}</text>
+		</template>
+		<template #right>
+			<text @tap="imStore.state.isLoggedIn ? handleLogout() : null" class="text-28 text-[#e53935]" v-if="imStore.state.isLoggedIn">登出</text>
+		</template>
+
+		<!-- 错误提示 -->
+		<view v-if="imStore.state.errorText.length > 0" class="px-24 pt-16">
+			<view class="bg-[#fff3f3] rd-12 px-24 py-16 flex flex-row items-center justify-between">
+				<text class="text-26 text-[#e53935] flex-1">{{ imStore.state.errorText }}</text>
+				<text class="text-28 text-[#999] ml-16" @tap="clearError">✕</text>
+			</view>
+		</view>
+
+		<!-- 已登录：聊天界面 -->
+		<view class="flex-1 flex flex-col" v-if="imStore.state.isLoggedIn">
+			<!-- 聊天对象设置 -->
+			<view class="flex flex-row items-center px-24 py-16 bg-white" style="border-bottom: 1rpx solid #e5e5e5">
+				<text class="text-26 text-[#555] mr-12">聊天对象：</text>
+				<input class="flex-1 h-72 bg-[#f5f5f5] rd-12 px-20 text-28 text-[#333]" type="text" placeholder="输入对方用户 ID" v-model="imStore.state.peerUserId" />
+				<view class="ml-16 px-24 py-12 bg-[#e3f2fd] rd-12" @tap="loadHistory">
+					<text class="text-24 text-[#1976d2]">加载记录</text>
+				</view>
+			</view>
+
+			<!-- 消息列表 -->
+			<scroll-view class="flex-1 px-24" :scroll-y="true" :scroll-into-view="imStore.state.scrollAnchor" @scrolltolower="loadMoreHistory">
+				<view class="pt-20">
+					<view v-if="imStore.state.messages.length == 0" class="flex items-center justify-center pt-200">
+						<text class="text-28 text-[#bbb]">暂无消息，输入对方 ID 后发送第一条消息吧</text>
+					</view>
+					<view v-for="(msg, index) in imStore.state.messages" :key="index" :id="'msg-' + index" class="flex flex-col mb-20" :class="msg.isSelf ? 'items-flex-end' : 'items-flex-start'">
+						<!-- 消息发送者 -->
+						<text class="text-22 text-[#999] mb-6 px-8" v-if="!msg.isSelf">{{ msg.sender }}</text>
+
+						<!-- 根据消息类型渲染不同气泡 -->
+						<!-- 文本消息 -->
+						<view v-if="msg.type == 0" :class="msg.isSelf ? 'bg-[#1976d2]' : 'bg-white'" class="max-w-500 px-24 py-18 rd-20 relative group" :style="msg.isSelf ? 'border-bottom-right-radius: 4rpx;' : 'border-bottom-left-radius: 4rpx; border: 1rpx solid #e5e5e5;'" @longpress="showMessageActions(msg.msgId, $event)">
+							<text class="text-30" :class="msg.isSelf ? 'text-white' : 'text-[#333]'" style="line-height: 44rpx">{{ msg.text }}</text>
+						</view>
+
+						<!-- 图片消息 -->
+						<view v-if="msg.type == 1" class="rd-16 overflow-hidden relative" @tap="previewImage(msg.extra)">
+							<view class="w-300 h-300 bg-[#e0e0e0] flex items-center justify-center">
+								<image :src="getExtraPath(msg.extra)" class="flex-1" mode="widthFix"  />
+							</view>
+							<text class="absolute bottom-8 right-12 text-22 text-white bg-black/40 px-8 rd-4">{{ msg.text }}</text>
+						</view>
+
+						<!-- 视频消息 -->
+						<view v-if="msg.type == 2" class="rd-16 overflow-hidden relative" @tap="previewVideo(msg.extra)">
+							<view class="w-300 h-300 bg-[#e0e0e0] flex items-center justify-center">
+								<image :src="getSnapshotPath(msg.extra)" class="flex-1" mode="widthFix"  />
+							</view>
+							<text class="absolute bottom-8 right-12 text-22 text-white bg-black/40 px-8 rd-4">{{ msg.text }}</text>
+						</view>
+
+						<!-- 语音消息 -->
+						<view v-if="msg.type == 3" :class="msg.isSelf ? 'bg-[#1976d2]' : 'bg-white'" class="max-w-400 px-24 py-16 rd-20 flex flex-row items-center" :style="msg.isSelf ? 'border-bottom-right-radius: 4rpx;' : 'border-bottom-left-radius: 4rpx; border: 1rpx solid #e5e5e5;'" @tap="playVoice(msg.extra)">
+							<text class="text-28 mr-12">🎤</text>
+							<text class="text-26" :class="msg.isSelf ? 'text-white' : 'text-[#555]'">{{ msg.text }}</text>
+							<text class="text-22 ml-12" :class="msg.isSelf ? 'text-white/70' : 'text-[#999]'">{{ getVoiceDuration(msg.extra) }}″</text>
+						</view>
+
+						<!-- 自定义消息 -->
+						<view v-if="msg.type == 4" :class="msg.isSelf ? 'bg-[#9c27b0]' : 'bg-[#f3e5f5]'" class="max-w-500 px-24 py-16 rd-20">
+							<text class="text-24 fw-600 mb-6" :class="msg.isSelf ? 'text-white/90' : 'text-[#7b1fa2]'">{{ msg.text }}</text>
+							<text class="text-26" :class="msg.isSelf ? 'text-white/80' : 'text-[#555]'" style="line-height: 40rpx">{{ msg.extra }}</text>
+						</view>
+
+						<!-- 消息时间戳 -->
+						<text class="text-20 text-[#ccc] mt-4 px-8">{{ formatTime(msg.timestamp) }}</text>
+					</view>
+				</view>
+				<!-- 滚动锚点 -->
+				<view id="msg-bottom" class="h-2"></view>
+			</scroll-view>
+
+			<!-- 输入栏 -->
+			<view class="flex flex-col bg-white" style="border-top: 1rpx solid #e5e5e5">
+				<!-- 快捷操作栏 -->
+				<view class="flex flex-row items-center px-16 pt-8 pb-4">
+					<view class="px-16 py-12 bg-[#f5f5f5] rd-8 mr-12" @tap="pickAndSendImage">
+						<text class="text-24 text-[#555]">🖼 图片</text>
+					</view>
+					<view class="px-16 py-12 bg-[#f5f5f5] rd-8 mr-12" @tap="pickAndSendVideo">
+						<text class="text-24 text-[#555]">🎬 视频</text>
+					</view>
+					<view class="px-16 py-12 bg-[#f5f5f5] rd-8" @tap="toggleVoiceRecording">
+						<text class="text-24 text-[#555]">{{ isRecording ? '⏹ 停止' : '🎤 语音' }}</text>
+					</view>
+				</view>
+
+				<!-- 输入行 -->
+				<view class="flex flex-row items-center px-24 pt-8 pb-24">
+					<input class="flex-1 h-72 bg-[#f5f5f5] rd-36 px-28 text-28 text-[#333]" type="text" placeholder="输入消息..." v-model="inputText" confirm-type="send" @confirm="handleSendText" />
+					<view class="ml-16 px-32 py-14 bg-[#1976d2] rd-36" :class="inputText.length == 0 ? 'bg-[#ccc]' : ''" @tap="handleSendText">
+						<text class="text-28 text-white fw-500">发送</text>
+					</view>
+				</view>
+
+				<!-- 录音状态提示 -->
+				<view v-if="isRecording" class="px-24 pb-16">
+					<view class="flex flex-row items-center bg-[#fff3f3] rd-12 px-24 py-12">
+						<text class="text-32 text-[#e53935] animate-bounce">●</text>
+						<text class="text-26 text-[#e53935] ml-12">正在录音... {{ recordDuration }}″</text>
+						<text class="text-24 text-[#999] ml-auto">点击"停止"结束录音</text>
+					</view>
+				</view>
+			</view>
+		</view>
+
+		<!-- 未登录 -->
+		<view v-if="!imStore.state.isLoggedIn" class="flex-1 flex items-center justify-center">
+			<text class="text-28 text-[#999]">请先登录 IM</text>
+		</view>
+	</hs-screen>
+</template>
+
+<script setup>
+	import { useIMStore } from "@/store/im.uts";
+	import { uploadFile } from "@/utils/request.uts";
+
+	const imStore = useIMStore();
+
+	// ========== 表单输入 ==========
+	const inputText = ref("");
+	const isRecording = ref(false);
+	const recordDuration = ref(0);
+	let recordTimer : number | null = null;
+	let recorderManager : RecorderManager | null = null;
+
+	// ==========  登出 ==========
+	function handleLogout() : void {
+		imStore.logout();
+		uni.navigateBack();
+	}
+
+	function clearError() : void {
+		imStore.state.errorText = "";
+	}
+
+	// ========== 消息收发 ==========
+
+	function handleSendText() : void {
+		const text = inputText.value.trim();
+		if (text.length == 0) return;
+		imStore.sendTextMessage(text);
+		inputText.value = "";
+	}
+
+	function pickAndSendImage() : void {
+		uni.chooseImage({
+			count: 1,
+			sizeType: ["compressed"],
+			sourceType: ["album", "camera"],
+			success: function (res) : void {
+				// #ifdef WEB|MP
+				imStore.sendImageMessage(res)
+				// #endif
+				// #ifdef APP-ANDROID|APP-HARMONY|APP-IOS
+				const result = res as ChooseImageSuccess;
+				const tempFilePaths = result.tempFilePaths as string[]
+				const tempPath = tempFilePaths != null && tempFilePaths.length > 0 ? tempFilePaths[0] as string : "";
+				imStore.sendImageMessage(tempPath)
+				// #endif
+			}
+		});
+	}
+
+	function pickAndSendVideo() : void {
+		uni.chooseVideo({
+			sourceType: ["album", "camera"],
+			maxDuration: 60,
+			camera: "back",
+			success: function (res) : void {
+				const result = res as ChooseVideoSuccess;
+				const tempFilePath = result.tempFilePath as string;
+				const durationVal = result.duration as number;
+				const duration = durationVal != null ? durationVal : 0;
+				if (tempFilePath != null && tempFilePath.length > 0) {
+					imStore.sendVideoMessage(tempFilePath, 0, duration, '');
+				}
+			}
+		});
+	}
+
+	function startVoiceRecording() : void {
+		// #ifdef APP-ANDROID|APP-HARMONY|APP-IOS
+		recorderManager = uni.getRecorderManager();
+		recorderManager.onStop(function (res) : void {
+			const result = res as UTSJSONObject;
+			const tempFilePath = result.getString('tempFilePath');
+			const durationVal = result.getNumber('duration');
+			const duration = durationVal != null ? durationVal : 0;
+			if (tempFilePath != null && tempFilePath.length > 0) {
+				imStore.sendVoiceMessage(tempFilePath, duration);
+			}
+			isRecording.value = false;
+			recordDuration.value = 0;
+			const timer = recordTimer;
+			if (timer != null) {
+				clearInterval(timer);
+				recordTimer = null;
+			}
+		});
+		const options: RecorderManagerStartOptions = {
+			duration: 60000,
+			sampleRate: 16000,
+			numberOfChannels: 1,
+			encodeBitRate: 48000,
+			format: 'mp3'
+		};
+		recorderManager.start(options);
+		isRecording.value = true;
+		recordDuration.value = 0;
+		recordTimer = setInterval(function () : void {
+			recordDuration.value++;
+		}, 1000);
+		// #endif
+		// #ifdef WEB|MP
+		uni.showToast({ title: '语音录制暂不支持', icon: 'none' });
+		// #endif
+	}
+
+	function stopVoiceRecording() : void {
+		// #ifdef APP-ANDROID|APP-HARMONY|APP-IOS
+		if (recorderManager != null) {
+			recorderManager.stop();
+		}
+		// #endif
+	}
+
+	function toggleVoiceRecording() : void {
+		if (isRecording.value) {
+			stopVoiceRecording();
+		} else {
+			startVoiceRecording();
+		}
+	}
+
+	function sendCustomDemo() : void {
+		imStore.sendCustomMessage(
+			JSON.stringify({ type: "order", id: "12345", amount: "99.00" }),
+			"[自定义订单消息]",
+			"order"
+		);
+	}
+
+	// ========== 消息管理 ==========
+
+	function showMessageActions(msgId : string, event : any) : void {
+		uni.showActionSheet({
+			itemList: ["撤回消息", "删除消息"],
+			success: function (res) : void {
+				const result = res as UTSJSONObject
+				const tapIndex = result.getNumber('tapIndex')
+				if (tapIndex == 0) {
+					imStore.revokeMessage(msgId);
+				} else if (tapIndex == 1) {
+					imStore.deleteMessage(msgId);
+				}
+			}
+		});
+	}
+
+	function getExtraPath(extra : string) : string {
+		const parts = extra.split("|");
+		return parts.length > 0 ? parts[0] : "";
+	}
+
+	function getSnapshotPath(extra : string) : string {
+		const parts = extra.split("|");
+		return parts.length > 1 ? parts[1] : "";
+	}
+
+	function previewImage(extra : string) : void {
+		const path = getExtraPath(extra);
+		if (path.length > 0) {
+			// #ifdef WEB|MP
+			uni.previewImage({ urls: [path], current: path });
+			// #endif
+			// #ifdef APP
+			uni.navigateTo({
+				url: '/page_im/image-preview/index?src=' + path,
+				animationType: 'zoom-out'
+			});
+			// #endif
+		}
+	}
+
+	function previewVideo(extra : string) : void {
+		const path = getExtraPath(extra);
+		if (path.length > 0) {
+			uni.navigateTo({
+				url: '/page_im/video-player/index?src=' + path,
+				animationType: 'zoom-out'
+			});
+		}
+	}
+
+	// ========== 历史消息 ==========
+
+	function loadHistory() : void {
+		imStore.loadMessages();
+	}
+
+	function loadMoreHistory() : void {
+		const msgs = imStore.state.messages;
+		if (msgs.length > 0) {
+			imStore.fetchC2CMessageList(msgs[0].msgId);
+		}
+	}
+
+	// ========== 语音播放 ==========
+
+	class AudioPlayer {
+		private _ctx : object | null = null
+
+		public play(path : string) : void {
+			// 停止前一个
+			if (this._ctx != null) {
+				this.stopAndDestroy()
+			}
+			try {
+				const ac = uni.createInnerAudioContext()
+				ac.src = path
+				ac.autoplay = true
+				ac.onEnded(function () : void {
+					ac.destroy()
+				})
+				this._ctx = ac
+			} catch (_e) {
+				console.error('播放语音失败')
+			}
+		}
+
+		private stopAndDestroy() : void {
+			if (this._ctx == null) return
+			try {
+				const ctx = this._ctx as InnerAudioContext
+				if (ctx != null) {
+					ctx.stop()
+					ctx.destroy()
+				}
+			} catch (_e) {
+				console.error('停止语音失败')
+			}
+			this._ctx = null
+		}
+	}
+
+	const _audioPlayer = new AudioPlayer()
+
+	function playVoice(extra : string) : void {
+		const parts = extra.split("|");
+		const path = parts.length > 0 ? parts[0] : "";
+		if (path.length == 0) return;
+		_audioPlayer.play(path);
+	}
+
+	// ========== 工具函数 ==========
+
+	function getVoiceDuration(extra : string) : string {
+		const parts = extra.split("|");
+		return parts.length > 1 ? parts[1] : "0";
+	}
+
+	function formatTime(ts : number) : string {
+		const date = new Date(ts);
+		const h = date.getHours().toString().padStart(2, "0");
+		const m = date.getMinutes().toString().padStart(2, "0");
+		return h + ":" + m;
+	}
+</script>

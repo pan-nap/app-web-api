@@ -1,0 +1,69 @@
+/**
+ * interface.uts
+ * hs-trtc UTS 插件接口定义文件
+ * 用于在 HBuilderX 中提供语法提示
+ * 实际实现在各平台目录的 index.uts 中
+ */
+
+/** TRTC 音视频配置 */
+export type TrtcConfig = {
+  sdkAppId: number
+  userId: string
+  userSig: string
+  roomId: number
+}
+
+/** 通话状态常量 */
+export const CallStatusConst = {
+  Idle: 0,
+  Connecting: 1,
+  Connected: 2,
+  Disconnected: 3
+}
+
+/** 通话状态 */
+export type CallStatus = number
+
+/** 远端用户信息 */
+export type RemoteUserInfo = {
+  userId: string
+  hasVideo: boolean
+  hasAudio: boolean
+}
+
+/** 视频视图标识 */
+export type VideoViewTag = {
+  type: 'local' | 'remote'
+}
+
+/** TRTC 服务类 */
+export class TrtcService {
+  /** 注册连接状态变化回调 */
+  static onStatusChange(callback: (status: CallStatus) => void): void
+  /** 注册远端用户进入房间回调（由 TRTC SDK 原生 onRemoteUserEnterRoom 触发） */
+  static onRemoteUserEnter(callback: (userId: string) => void): void
+  /** 注册远端用户离开房间回调（由 TRTC SDK 原生 onRemoteUserLeaveRoom 触发） */
+  static onRemoteUserLeave(callback: (userId: string) => void): void
+  /** 注册远端用户视频可用回调（由 SDK onUserVideoAvailable 触发，用于绑定远端视频） */
+  static onUserVideoAvailable(callback: (userId: string, available: boolean) => void): void
+  /** 注册错误回调 */
+  static onError(callback: (code: number, msg: string) => void): void
+  /** 进入房间 */
+  static enterRoom(config: TrtcConfig): void
+  /** 离开房间 */
+  static leaveRoom(): void
+  /** 切换本地摄像头 */
+  static switchCamera(enable: boolean): void
+  /** 切换本地麦克风 */
+  static switchMicrophone(enable: boolean): void
+  /** 获取当前连接状态 */
+  static getCurrentStatus(): CallStatus
+  /** 本地摄像头是否开启 */
+  static isLocalCameraOn(): boolean
+  /** 本地麦克风是否开启 */
+  static isLocalMicOn(): boolean
+  /** 设置本地视频渲染容器 */
+  static setLocalVideoView(tv: any | null): void
+  /** 设置远端视频渲染容器 */
+  static setRemoteVideoView(userId: string, tv: any | null): void
+}
