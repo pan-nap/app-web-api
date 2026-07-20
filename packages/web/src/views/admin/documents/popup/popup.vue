@@ -7,27 +7,31 @@
         <el-option label="模板" value="template" />
         <el-option label="实例" value="instance" />
       </el-select>
+      <!-- 实例类型时选择关联模板 -->
+      <el-select v-if="docType === 'instance'" v-model="templateId" placeholder="选择模板" class="w-[200px]" size="large">
+        <el-option v-for="tpl in templateList" :key="tpl.id" :label="tpl.name" :value="tpl.id" />
+      </el-select>
     </div>
 
     <!-- 编辑器 -->
-    <div class="flex-1 overflow-auto">
-      <EmrEditor ref="editorRef" v-model="editorContent" />
+    <div class="flex-1 overflow-hidden">
+      <EmrEditor ref="editorRef" />
     </div>
 
     <!-- 底部按钮 -->
     <footer class="flex items-center justify-end gap-3 px-4 py-3 border-t border-gray-200 bg-gray-50">
       <hs-button @click="close('cancel')">取消</hs-button>
-      <bc-button type="primary" @click="handleSubmit">保存</bc-button>
+      <bc-button type="primary">保存</bc-button>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { HsMessage } from "hs-admin-ui";
+import { EmrEditor } from "@cashier/emr";
+import type { EmrElement } from "@cashier/emr";
 import { useDocumentStore } from "@/stores/documents";
-import EmrEditor from "@/views/admin/documents/editor/EmrEditor.vue";
-import type { EmrElement } from "@/types/emr";
 
 const props = defineProps<{
   close: (data?: "confirm" | "cancel") => void;
@@ -37,6 +41,7 @@ const props = defineProps<{
     id: string;
     name: string;
     type: "template" | "instance";
+    templateId?: number;
     content: EmrElement[];
     patientId?: string;
   };
@@ -47,28 +52,18 @@ const editorRef = ref<InstanceType<typeof EmrEditor> | null>(null);
 
 const docName = ref(props.row?.name ?? props.name ?? "");
 const docType = ref(props.row?.type ?? props.docType ?? "template");
-const editorContent = ref<EmrElement[]>(props.row?.content ?? []);
-async function handleSubmit() {
-  if (!docName.value.trim()) {
-    HsMessage.warning("请输入文书名称");
-    return;
-  }
+const templateId = ref<number | undefined>(props.row?.templateId);
+const editorContent = ref<EmrElement[]>([]);
+const templateList = ref<{ id: number; name: string }[]>([]);
 
-  if (props.row?.id) {
-    await documentStore.update(props.row.id, {
-      name: docName.value,
-      type: docType.value,
-      content: editorContent.value
+onMounted(() => {
+  setTimeout(() => {
+    // 更新变量数据
+    editorRef.value?.updateVariables({
+      patientName: "李四",
+      patientAge: "28",
+      diagnosis: "肺炎"
     });
-    HsMessage.success("保存成功");
-  } else {
-    await documentStore.create({
-      name: docName.value,
-      type: docType.value,
-      content: editorContent.value
-    });
-    HsMessage.success("创建成功");
-  }
-  props.close("confirm");
-}
+  }, 3000);
+});
 </script>

@@ -1,6 +1,6 @@
 ---
 name: "vxe-table-usage"
-description: "Standardizes vxe-table usage with useGridTableMethods. Invoke when creating or modifying any table/list page to ensure consistent patterns across the project."
+description: "通过 useGridTableMethods 标准化 vxe-table 的使用方式。在创建或修改任何表格/列表页面时调用，以确保项目中各页面的样式一致。"
 ---
 
 # Vxe-Table 表格使用规范

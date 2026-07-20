@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { Utils } from "hs-admin-ui";
-import type { DocumentRecord } from "@/types/emr";
+import type { DocumentRecord } from "@cashier/emr";
 
 export const useDocumentStore = defineStore("document", () => {
   const getList = async (params: any = {}) => {
@@ -27,5 +27,20 @@ export const useDocumentStore = defineStore("document", () => {
     return Utils.useRequest("/sf-web/document/batch/delete", { ids }, "post");
   };
 
-  return { getList, getById, create, update, deleteById, batchDelete };
+  /** 获取文书变量值映射 { varKey: varValue } */
+  const getValues = async (id: string): Promise<Record<string, string>> => {
+    return Utils.useRequest(`/sf-web/document/${id}/values`, {}, "get");
+  };
+
+  /** 获取实例关联的模板结构内容 */
+  const getTemplate = async (id: string): Promise<any> => {
+    return Utils.useRequest(`/sf-web/document/${id}/template`, {}, "get");
+  };
+
+  /** 批量保存文书变量值 */
+  const saveValues = async (id: string, values: Record<string, string>) => {
+    return Utils.useRequest(`/sf-web/document/${id}/values`, values, "put");
+  };
+
+  return { getList, getById, create, update, deleteById, batchDelete, getValues, getTemplate, saveValues };
 });

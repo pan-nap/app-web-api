@@ -1,16 +1,8 @@
 use:
-  - "pnpm dev:mz" #门诊项目开发运行
-  - "pnpm build:mz" #门诊项目部署
-  - "pnpm -w [add|remove] hs-admin-ui" #全局[安装|卸载]node包
-  - "pnpm --filter hs-admin-config remove hs-admin-ui" #单独项目[安装|卸载]独立node包
-  - "pnpm --filter hs-test add hs-admin-ui@workspace:*" #hs-test项目中安装hs-components项目包
-  - "git rm --cached vite.config.ts" #删除.gitignore文件屏蔽的文件
-  - "pnpm link --global" #进入hs-admin-ui项目目录下执行命令,升级全局node包
-  - "pnpm uninstall --global hs-admin-ui" #删除卸载全局hs-admin-ui包
-  - "pnpm link hs-admin-ui" #进入指定项目安装该全局node包
-  - "pnpm --filter hs-test exec pnpm link --global hs-admin-ui" #进入指定项目安装该全局node包
+  - "pnpm dev" #所有端统一执行开发命令
 projects:
-  - "hs-admin-ui" #插件系统
-  - "hs-components" #公共组件库
-  - "hs-admin-config" #配置系统
-  - "hs-test" #测试系统
+  - "app" #移动端系统
+  - "backend" #后端系统
+  - "emr" #独立文书插件
+  - "mqtt-server" #mqtt服务器
+  - "web" #web端系统

@@ -113,11 +113,13 @@ const initDatabase = async () => {
         id INT PRIMARY KEY AUTO_INCREMENT,
         name VARCHAR(255) NOT NULL,
         type ENUM('template', 'instance') NOT NULL DEFAULT 'instance',
+        template_id INT NULL,
         content LONGTEXT,
         patient_id VARCHAR(100),
         status ENUM('draft', 'completed', 'archived') DEFAULT 'draft',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (template_id) REFERENCES documents(id) ON DELETE SET NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
@@ -130,6 +132,20 @@ const initDatabase = async () => {
       await connection.execute(`ALTER TABLE documents CHANGE title name VARCHAR(255) NOT NULL`);
       console.log('已将 documents.title 列重命名为 name');
     }
+
+    console.log('正在创建文书变量值表...');
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS document_values (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        document_id INT NOT NULL,
+        var_key VARCHAR(100) NOT NULL,
+        var_value TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_doc_var (document_id, var_key),
+        FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
 
     console.log('正在初始化字典表...');
     await connection.execute(`

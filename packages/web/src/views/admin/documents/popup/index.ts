@@ -1,6 +1,6 @@
 import { Utils } from "hs-admin-ui";
-import type { EmrElement } from "@/types/emr";
-import { DEFAULT_EDITOR_VALUE } from "@/types/emr";
+import type { EmrElement } from "@cashier/emr";
+import { DEFAULT_EDITOR_VALUE } from "@cashier/emr";
 import EditorPopup from "./popup.vue";
 
 export interface EditorPopupOptions {

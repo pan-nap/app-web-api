@@ -10,7 +10,7 @@ class DocumentValidator {
   }
 
   static validateUpdate(data) {
-    const hasUpdateField = ['name', 'type', 'content', 'patientId', 'status'].some(
+    const hasUpdateField = ['name', 'type', 'templateId', 'content', 'patientId', 'status'].some(
       key => data[key] !== undefined
     );
 

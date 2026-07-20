@@ -1,6 +1,6 @@
 ---
 name: "popup-component"
-description: "Creates popup/dialog components following the standard folder structure. Invoke when user asks to create a popup, dialog, or modal component, or needs to add edit/create/detail popup functionality."
+description: "标准弹窗组件开发规范，需要添加编辑/创建/详情弹出功能时调用该方法"
 ---
 
 # Popup Component Skill

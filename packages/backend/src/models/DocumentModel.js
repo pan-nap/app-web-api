@@ -44,10 +44,10 @@ class DocumentModel {
 
   static async create(data) {
     return getConnectionWithCharset(async (connection) => {
-      const { name, type = 'template', content, patientId, status = 'draft' } = data;
+      const { name, type = 'template', templateId, content, patientId, status = 'draft' } = data;
       const [result] = await connection.query(
-        'INSERT INTO documents (name, type, content, patient_id, status) VALUES (?, ?, ?, ?, ?)',
-        [name, type, content ? JSON.stringify(content) : null, patientId || null, status]
+        'INSERT INTO documents (name, type, template_id, content, patient_id, status) VALUES (?, ?, ?, ?, ?, ?)',
+        [name, type, templateId || null, content ? JSON.stringify(content) : null, patientId || null, status]
       );
       return result.insertId;
     });
@@ -55,13 +55,14 @@ class DocumentModel {
 
   static async update(id, data) {
     return getConnectionWithCharset(async (connection) => {
-      const { name, type, content, patientId, status } = data;
+      const { name, type, templateId, content, patientId, status } = data;
 
       const updateFields = [];
       const updateParams = [];
 
       if (name !== undefined) { updateFields.push('name = ?'); updateParams.push(name); }
       if (type !== undefined) { updateFields.push('type = ?'); updateParams.push(type); }
+      if (templateId !== undefined) { updateFields.push('template_id = ?'); updateParams.push(templateId || null); }
       if (content !== undefined) { updateFields.push('content = ?'); updateParams.push(JSON.stringify(content)); }
       if (patientId !== undefined) { updateFields.push('patient_id = ?'); updateParams.push(patientId); }
       if (status !== undefined) { updateFields.push('status = ?'); updateParams.push(status); }
