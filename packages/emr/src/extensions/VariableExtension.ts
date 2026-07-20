@@ -82,18 +82,21 @@ export const VariableExtension = Node.create({
       }
     }
 
+    const hasValue = !!node.attrs.extensionValue;
+
     if (!displayValue) {
-      displayValue = `[${label}]`;
+      displayValue = label;
     }
 
     return [
       "span",
       {
         ...HTMLAttributes,
-        class: "emr-variable",
+        class: `emr-variable ${hasValue ? "emr-variable-filled" : "emr-variable-empty"}`,
         contenteditable: "false"
       },
-      displayValue
+      // displayValue
+      ""
     ];
   }
 });

@@ -1,10 +1,10 @@
 <template>
   <div class="emr-editor flex flex-col h-full overflow-hidden bg-gray-100">
-    <EmrToolbar :editor="editor" />
-    <div class="flex-1 overflow-hidden mt-2 flex gap-2 items-start justify-between">
+    <emr-toolbar :editor="editor" />
+    <div class="flex-1 overflow-auto mt-2 flex gap-2 items-start justify-between">
       <slot name="left"></slot>
       <div class="emr-scroll overflow-auto flex-1 flex items-center justify-center">
-        <div class="emr-paper bg-white rounded-sm p-8 shadow-sm mb-2">
+        <div class="emr-paper bg-white shadow-sm mb-2">
           <editor-content :editor="editor" class="emr-content" />
         </div>
       </div>
@@ -205,6 +205,7 @@ defineExpose({
 
 <style scoped>
 .emr-editor {
+  color: #000;
   font-size: 15px;
   line-height: 1.5;
 }
@@ -212,6 +213,7 @@ defineExpose({
 .emr-paper {
   width: 210mm;
   min-height: 297mm;
+  padding: 15mm;
   box-sizing: border-box;
 }
 .emr-content {
@@ -251,7 +253,7 @@ defineExpose({
 
 .emr-content :deep(th),
 .emr-content :deep(td) {
-  border: 1px solid #ddd;
+  border: 1px solid #000;
   padding: 8px 12px;
   text-align: left;
 }
@@ -263,12 +265,17 @@ defineExpose({
 
 .emr-content :deep(.emr-variable) {
   display: inline-block;
-  background-color: #e0f2fe;
-  color: #0369a1;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid #7dd3fc;
+  text-align: center;
+  min-width: 49.5pt;
+  padding: 0 6px;
+  border-bottom: 1px solid #000;
   cursor: pointer;
+}
+.emr-content :deep(.emr-variable-filled) {
+  color: #000;
+}
+.emr-content :deep(.emr-variable-empty) {
+  color: #9ca3af;
 }
 
 .emr-content :deep(.emr-variable[contenteditable="false"]) {
