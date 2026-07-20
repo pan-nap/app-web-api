@@ -9,39 +9,45 @@ export const VariableExtension = Node.create({
 
   addAttributes() {
     return {
-      varKey: {
+      refKey: {
         default: "",
-        parseHTML: (element) => element.getAttribute("data-var-key"),
+        parseHTML: (element) => element.getAttribute("data-ref-key") || "",
         renderHTML: (attributes) => {
-          return { "data-var-key": attributes.varKey };
+          return { "data-ref-key": attributes.refKey };
         }
       },
-      varLabel: {
+      widgetName: {
         default: "",
-        parseHTML: (element) => element.getAttribute("data-var-label"),
+        parseHTML: (element) => element.getAttribute("data-widget-name") || "",
         renderHTML: (attributes) => {
-          return { "data-var-label": attributes.varLabel };
+          return { "data-widget-name": attributes.widgetName };
         }
       },
-      varDataType: {
+      widgetType: {
         default: "text",
-        parseHTML: (element) => element.getAttribute("data-var-type") || "text",
+        parseHTML: (element) => element.getAttribute("data-widget-type") || "text",
         renderHTML: (attributes) => {
-          return { "data-var-type": attributes.varDataType };
+          return { "data-widget-type": attributes.widgetType };
         }
       },
-      varValue: {
+      extensionValue: {
         default: "",
-        parseHTML: (element) => element.getAttribute("data-var-value"),
+        parseHTML: (element) => element.getAttribute("data-extension-value") || "",
         renderHTML: (attributes) => {
-          return { "data-var-value": attributes.varValue };
+          return { "data-extension-value": attributes.extensionValue };
         }
       },
       options: {
         default: [],
         parseHTML: (element) => {
           const optionsStr = element.getAttribute("data-options");
-          return optionsStr ? JSON.parse(optionsStr) : [];
+          if (!optionsStr) return [];
+          try {
+            const decoded = decodeURIComponent(optionsStr);
+            return JSON.parse(decoded);
+          } catch {
+            return [];
+          }
         },
         renderHTML: (attributes) => {
           return { "data-options": JSON.stringify(attributes.options) };
@@ -49,7 +55,10 @@ export const VariableExtension = Node.create({
       },
       required: {
         default: false,
-        parseHTML: (element) => element.getAttribute("data-required") === "true",
+        parseHTML: (element) => {
+          const required = element.getAttribute("data-required") || element.getAttribute("data-required-warning") || "";
+          return required !== "";
+        },
         renderHTML: (attributes) => {
           return { "data-required": attributes.required ? "true" : "false" };
         }
@@ -58,19 +67,16 @@ export const VariableExtension = Node.create({
   },
 
   parseHTML() {
-    return [
-      {
-        tag: "span[data-var-key]"
-      }
-    ];
+    return [{ tag: "span[data-ref-key]" }];
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    const label = node.attrs.varLabel || node.attrs.varKey;
-    let displayValue = node.attrs.varValue;
+    const label = node.attrs.widgetName || node.attrs.refKey;
+    let displayValue = node.attrs.extensionValue;
 
-    if (node.attrs.varDataType === "radio" && node.attrs.options && Array.isArray(node.attrs.options)) {
-      const option = node.attrs.options.find((opt: any) => opt.value === displayValue);
+    const options = node.attrs.options;
+    if (node.attrs.widgetType === "select" && options && Array.isArray(options)) {
+      const option = options.find((opt: any) => String(opt.value) === String(displayValue));
       if (option) {
         displayValue = option.label;
       }

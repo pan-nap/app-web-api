@@ -1,7 +1,7 @@
 <template>
   <div class="emr-editor flex flex-col h-full bg-gray-100">
     <EmrToolbar :editor="editor" />
-    <div class="flex-1 mt-2 overflow-hidden flex gap-2 items-start justify-between">
+    <div class="flex-1 overflow-hidden mt-2 flex gap-2 items-start justify-between">
       <slot name="left"></slot>
       <div class="emr-scroll flex-1 overflow-auto">
         <div class="emr-paper mx-auto bg-white rounded-sm p-8 shadow-sm mb-2">
@@ -15,85 +15,115 @@
 
 <script setup lang="ts">
 import { useEditor, EditorContent } from "@tiptap/vue-3";
-import EmrToolbar from "./EmrToolbar.vue";
 import StarterKit from "@tiptap/starter-kit";
 import { Table } from "@tiptap/extension-table";
 import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import Placeholder from "@tiptap/extension-placeholder";
+import { TextStyle } from "@tiptap/extension-text-style";
+import EmrToolbar from "./EmrToolbar.vue";
 import { VariableExtension } from "../extensions/VariableExtension";
+import { PageBreakExtension } from "../extensions/PageBreakExtension";
+import { getValueByPath, decodeOptions, normalizeTemplate } from "../utils/templateUtils";
 import type { InsertVariableOptions } from "../types/emr";
-import { temData, demoData } from "../data/data1.ts";
+import { temData2, data2 } from "../data/data2.ts";
 
-const applyDataToTemplate = (template: any, data: Record<string, string>) => {
+const applyDataToTemplate = (template: any, data: Record<string, any>) => {
+  const normalized = normalizeTemplate(template);
+
   const applyToNode = (node: any): any => {
     if (!node) return node;
-    if (node.type === "variable" && node.attrs?.varKey) {
+
+    if (node.type === "field" && node.attrs) {
+      const attrs = node.attrs;
+      const refKey = attrs["data-ref-key"] || "";
+      const widgetName = attrs["data-widget-name"] || "";
+      const widgetType = attrs["data-widget-type"] || "text";
+      const extensionValue = getValueByPath(data, refKey) || attrs["data-extension-value"] || "";
+      const optionsStr = attrs["data-options"] || "";
+
       return {
-        ...node,
+        type: "variable",
         attrs: {
-          ...node.attrs,
-          varValue: data[node.attrs.varKey] || ""
+          refKey,
+          widgetName,
+          widgetType,
+          extensionValue,
+          options: decodeOptions(optionsStr),
+          required: attrs["data-required"] !== "" || attrs["data-required-warning"] !== ""
         }
       };
     }
+
     if (node.content && Array.isArray(node.content)) {
       return {
         ...node,
         content: node.content.map(applyToNode)
       };
     }
+
     return node;
   };
-  return applyToNode(template);
+
+  return applyToNode(normalized);
 };
 
 const getTemplate = (): any => {
   if (!editor.value) return null;
   const json = editor.value.getJSON();
+
   const cleanNode = (node: any): any => {
     if (!node) return node;
+
     if (node.type === "variable" && node.attrs) {
       return {
         ...node,
         attrs: {
           ...node.attrs,
-          varValue: ""
+          extensionValue: ""
         }
       };
     }
+
     if (node.content && Array.isArray(node.content)) {
       return {
         ...node,
         content: node.content.map(cleanNode)
       };
     }
+
     return node;
   };
+
   return cleanNode(json);
 };
 
-const updateVariables = (data: Record<string, string>) => {
+const updateVariables = (data: Record<string, any>) => {
   if (!editor.value) return;
+
   editor.value
     .chain()
     .focus()
     .command(({ tr, state }) => {
       const { doc } = state;
       let modified = false;
+
       doc.descendants((node, pos) => {
         if (node.type.name === "variable") {
-          const varKey = node.attrs.varKey;
-          const newValue = data[varKey];
-          if (newValue !== undefined && newValue !== node.attrs.varValue) {
-            const attrs = { ...node.attrs, varValue: newValue };
+          const refKey = node.attrs.refKey;
+          const newValue = getValueByPath(data, refKey);
+
+          if (newValue !== undefined && String(newValue) !== node.attrs.extensionValue) {
+            const attrs = { ...node.attrs, extensionValue: String(newValue) };
             tr.setNodeMarkup(pos, undefined, attrs);
             modified = true;
           }
         }
+
         return true;
       });
+
       return modified;
     })
     .run();
@@ -101,13 +131,20 @@ const updateVariables = (data: Record<string, string>) => {
 
 const getVariables = (): Record<string, string> => {
   if (!editor.value) return {};
+
   const variables: Record<string, string> = {};
+
   editor.value.state.doc.descendants((node) => {
     if (node.type.name === "variable") {
-      variables[node.attrs.varKey] = node.attrs.varValue || "";
+      const refKey = node.attrs.refKey;
+      if (refKey) {
+        variables[refKey] = node.attrs.extensionValue || "";
+      }
     }
+
     return true;
   });
+
   return variables;
 };
 
@@ -120,10 +157,10 @@ const insertVariable = (options: InsertVariableOptions) => {
     .insertContent({
       type: "variable",
       attrs: {
-        varKey: options.varKey,
-        varLabel: options.varLabel,
-        varDataType: options.varDataType,
-        varValue: options.varValue || "",
+        refKey: options.refKey,
+        widgetName: options.widgetName,
+        widgetType: options.widgetType || "text",
+        extensionValue: options.extensionValue || "",
         options: options.options || [],
         required: options.required || false
       }
@@ -147,9 +184,11 @@ const editor = useEditor({
     TableHeader,
     Placeholder.configure({
       placeholder: "开始输入内容..."
-    })
+    }),
+    TextStyle,
+    PageBreakExtension
   ],
-  content: applyDataToTemplate(temData, demoData)
+  content: applyDataToTemplate(temData2, data2)
 });
 
 defineExpose({
@@ -174,7 +213,7 @@ defineExpose({
   box-sizing: border-box;
 }
 .emr-content {
-  height: 100%;
+  min-height: 100%;
 }
 .emr-content :deep(p) {
   margin: 0 0 1em 0;
@@ -237,5 +276,12 @@ defineExpose({
 .emr-content :deep(.ProseMirror-focused) {
   outline: none;
   border: none;
+}
+
+.emr-content :deep(.page-break) {
+  border: none;
+  border-top: 1px dashed #ddd;
+  margin: 1em 0;
+  page-break-after: always;
 }
 </style>

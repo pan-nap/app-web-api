@@ -10,12 +10,20 @@ export interface VariableOption {
 }
 
 export interface InsertVariableOptions {
-  varKey: string;
-  varLabel: string;
-  varDataType: "text" | "number" | "date" | "radio";
-  varValue?: string;
+  refKey: string;
+  widgetName: string;
+  widgetType?: "text" | "number" | "date" | "select";
+  extensionValue?: string;
   options?: VariableOption[];
   required?: boolean;
 }
 
 export type EmrElement = any;
+
+export interface DocumentRecord {
+  id: string;
+  name: string;
+  type: "template" | "instance";
+  content: EmrElement;
+  patientId?: string;
+}

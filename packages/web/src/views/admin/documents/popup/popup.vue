@@ -58,22 +58,25 @@ const templateList = ref<{ id: number; name: string }[]>([]);
 
 onMounted(() => {
   setTimeout(() => {
-    // 示例1：更新变量数据
+    // 示例1：更新变量数据（使用嵌套对象格式）
     editorRef.value?.updateVariables({
-      patientName: "李四",
-      patientAge: "28",
-      diagnosis: "肺炎",
-      patientSex: "2",
-      admissionTime: "2026-07-15",
-      bloodResult: "WBC 7.2×10⁹/L"
+      patient: {
+        patient_name: "李四",
+        patient_age: "28",
+        patient_sex: "2",
+        familyAddr: "上海市浦东新区"
+      },
+      patientOrder: {
+        admission_time: "2026-07-15 08:30:00"
+      }
     });
 
-    // 示例2：插入变量节点
+    // 示例2：插入变量节点（使用新的属性名）
     editorRef.value?.insertVariable({
-      varKey: "testVariable",
-      varLabel: "测试变量",
-      varDataType: "text",
-      varValue: "测试值"
+      refKey: "custom.test_var",
+      widgetName: "测试变量",
+      widgetType: "text",
+      extensionValue: "测试值"
     });
 
     // 示例3：获取模板数据（清除变量值）
