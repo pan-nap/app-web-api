@@ -15,7 +15,14 @@
 
     <!-- 编辑器 -->
     <div class="flex-1 overflow-hidden">
-      <EmrEditor ref="editorRef" />
+      <EmrEditor ref="editorRef">
+        <template #left>
+          <p>文书内容</p>
+        </template>
+        <template #right>
+          <p>文书内容</p>
+        </template>
+      </EmrEditor>
     </div>
 
     <!-- 底部按钮 -->

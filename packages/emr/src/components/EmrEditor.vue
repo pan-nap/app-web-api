@@ -1,11 +1,11 @@
 <template>
-  <div class="emr-editor flex flex-col h-full bg-gray-100">
+  <div class="emr-editor flex flex-col h-full overflow-hidden bg-gray-100">
     <EmrToolbar :editor="editor" />
     <div class="flex-1 overflow-hidden mt-2 flex gap-2 items-start justify-between">
       <slot name="left"></slot>
-      <div class="emr-scroll flex-1 overflow-auto">
-        <div class="emr-paper mx-auto bg-white rounded-sm p-8 shadow-sm mb-2">
-          <editor-content :editor="editor" class="emr-content outline-none" />
+      <div class="emr-scroll overflow-auto flex-1 flex items-center justify-center">
+        <div class="emr-paper bg-white rounded-sm p-8 shadow-sm mb-2">
+          <editor-content :editor="editor" class="emr-content" />
         </div>
       </div>
       <slot name="right"></slot>
@@ -22,6 +22,7 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import Placeholder from "@tiptap/extension-placeholder";
 import { TextStyle } from "@tiptap/extension-text-style";
+import { TextAlign } from "@tiptap/extension-text-align";
 import EmrToolbar from "./EmrToolbar.vue";
 import { VariableExtension } from "../extensions/VariableExtension";
 import { PageBreakExtension } from "../extensions/PageBreakExtension";
@@ -186,6 +187,9 @@ const editor = useEditor({
       placeholder: "开始输入内容..."
     }),
     TextStyle,
+    TextAlign.configure({
+      types: ["heading", "paragraph"]
+    }),
     PageBreakExtension
   ],
   content: applyDataToTemplate(temData2, data2)
@@ -201,8 +205,6 @@ defineExpose({
 
 <style scoped>
 .emr-editor {
-  height: 100%;
-  overflow: hidden;
   font-size: 15px;
   line-height: 1.5;
 }
