@@ -4,7 +4,18 @@
  * 数据结构以 ProseMirror JSON 为唯一真值
  */
 
-// ========== Tiptap 节点类型定义 ==========
+export interface VariableOption {
+  value: string;
+  label: string;
+}
 
-/** 编辑器元素联合类型 */
+export interface InsertVariableOptions {
+  varKey: string;
+  varLabel: string;
+  varDataType: "text" | "number" | "date" | "radio";
+  varValue?: string;
+  options?: VariableOption[];
+  required?: boolean;
+}
+
 export type EmrElement = any;

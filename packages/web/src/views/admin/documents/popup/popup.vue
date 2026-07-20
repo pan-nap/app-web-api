@@ -58,12 +58,31 @@ const templateList = ref<{ id: number; name: string }[]>([]);
 
 onMounted(() => {
   setTimeout(() => {
-    // 更新变量数据
+    // 示例1：更新变量数据
     editorRef.value?.updateVariables({
       patientName: "李四",
       patientAge: "28",
-      diagnosis: "肺炎"
+      diagnosis: "肺炎",
+      patientSex: "2",
+      admissionTime: "2026-07-15",
+      bloodResult: "WBC 7.2×10⁹/L"
     });
+
+    // 示例2：插入变量节点
+    editorRef.value?.insertVariable({
+      varKey: "testVariable",
+      varLabel: "测试变量",
+      varDataType: "text",
+      varValue: "测试值"
+    });
+
+    // 示例3：获取模板数据（清除变量值）
+    const template = editorRef.value?.getTemplate();
+    console.log("模板数据:", template);
+
+    // 示例4：获取变量数据
+    const variables = editorRef.value?.getVariables();
+    console.log("变量数据:", variables);
   }, 3000);
 });
 </script>

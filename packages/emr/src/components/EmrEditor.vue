@@ -1,10 +1,10 @@
 <template>
   <div class="emr-editor flex flex-col h-full bg-gray-100">
     <EmrToolbar :editor="editor" />
-    <div class="flex-1 mt-2 overflow-hidden flex gap-2">
+    <div class="flex-1 mt-2 overflow-hidden flex gap-2 items-start justify-between">
       <slot name="left"></slot>
       <div class="emr-scroll flex-1 overflow-auto">
-        <div class="emr-paper mx-auto bg-white rounded-sm min-h-[500px] p-8 shadow-sm mb-2">
+        <div class="emr-paper mx-auto bg-white rounded-sm p-8 shadow-sm mb-2">
           <editor-content :editor="editor" class="emr-content outline-none" />
         </div>
       </div>
@@ -23,6 +23,7 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import Placeholder from "@tiptap/extension-placeholder";
 import { VariableExtension } from "../extensions/VariableExtension";
+import type { InsertVariableOptions } from "../types/emr";
 import { temData, demoData } from "../data/data1.ts";
 
 const applyDataToTemplate = (template: any, data: Record<string, string>) => {
@@ -98,6 +99,38 @@ const updateVariables = (data: Record<string, string>) => {
     .run();
 };
 
+const getVariables = (): Record<string, string> => {
+  if (!editor.value) return {};
+  const variables: Record<string, string> = {};
+  editor.value.state.doc.descendants((node) => {
+    if (node.type.name === "variable") {
+      variables[node.attrs.varKey] = node.attrs.varValue || "";
+    }
+    return true;
+  });
+  return variables;
+};
+
+const insertVariable = (options: InsertVariableOptions) => {
+  if (!editor.value) return;
+
+  editor.value
+    .chain()
+    .focus()
+    .insertContent({
+      type: "variable",
+      attrs: {
+        varKey: options.varKey,
+        varLabel: options.varLabel,
+        varDataType: options.varDataType,
+        varValue: options.varValue || "",
+        options: options.options || [],
+        required: options.required || false
+      }
+    })
+    .run();
+};
+
 const editor = useEditor({
   extensions: [
     StarterKit.configure({
@@ -121,8 +154,9 @@ const editor = useEditor({
 
 defineExpose({
   getTemplate,
+  getVariables,
   updateVariables,
-  editor
+  insertVariable
 });
 </script>
 
@@ -139,7 +173,9 @@ defineExpose({
   min-height: 297mm;
   box-sizing: border-box;
 }
-
+.emr-content {
+  height: 100%;
+}
 .emr-content :deep(p) {
   margin: 0 0 1em 0;
 }
@@ -196,5 +232,10 @@ defineExpose({
 
 .emr-content :deep(.emr-variable[contenteditable="false"]) {
   pointer-events: none;
+}
+
+.emr-content :deep(.ProseMirror-focused) {
+  outline: none;
+  border: none;
 }
 </style>
