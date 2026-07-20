@@ -10,6 +10,22 @@
       </div>
       <slot name="right"></slot>
     </div>
+
+    <Teleport to="body">
+      <div v-if="showDropdown" class="emr-dropdown-overlay" @click.self="showDropdown = false">
+        <div class="emr-dropdown-menu" :style="dropdownStyle">
+          <div
+            v-for="option in dropdownOptions"
+            :key="option.value"
+            class="emr-dropdown-item"
+            :class="{ 'emr-dropdown-item-selected': String(option.value) === String(dropdownCurrentValue) }"
+            @click="handleDropdownSelect(option)"
+          >
+            {{ option.label }}
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -26,9 +42,21 @@ import { TextAlign } from "@tiptap/extension-text-align";
 import EmrToolbar from "./EmrToolbar.vue";
 import { VariableExtension } from "../extensions/VariableExtension";
 import { PageBreakExtension } from "../extensions/PageBreakExtension";
+import { ref, reactive, computed } from "vue";
 import { getValueByPath, decodeOptions, normalizeTemplate } from "../utils/templateUtils";
 import type { InsertVariableOptions } from "../types/emr";
 import { temData2, data2 } from "../data/data2.ts";
+
+const showDropdown = ref(false);
+const dropdownOptions = ref<{ value: string; label: string }[]>([]);
+const dropdownCurrentValue = ref("");
+const dropdownRefKey = ref("");
+const dropdownPosition = reactive({ x: 0, y: 0 });
+
+const dropdownStyle = computed(() => ({
+  left: `${dropdownPosition.x}px`,
+  top: `${dropdownPosition.y}px`
+}));
 
 const applyDataToTemplate = (template: any, data: Record<string, any>) => {
   const normalized = normalizeTemplate(template);
@@ -43,6 +71,7 @@ const applyDataToTemplate = (template: any, data: Record<string, any>) => {
       const widgetType = attrs["data-widget-type"] || "text";
       const extensionValue = getValueByPath(data, refKey) || attrs["data-extension-value"] || "";
       const optionsStr = attrs["data-options"] || "";
+      const placeholder = attrs["data-placeholder"] || "";
 
       return {
         type: "variable",
@@ -52,7 +81,8 @@ const applyDataToTemplate = (template: any, data: Record<string, any>) => {
           widgetType,
           extensionValue,
           options: decodeOptions(optionsStr),
-          required: attrs["data-required"] !== "" || attrs["data-required-warning"] !== ""
+          required: attrs["data-required"] !== "" || attrs["data-required-warning"] !== "",
+          placeholder
         }
       };
     }
@@ -163,10 +193,141 @@ const insertVariable = (options: InsertVariableOptions) => {
         widgetType: options.widgetType || "text",
         extensionValue: options.extensionValue || "",
         options: options.options || [],
-        required: options.required || false
+        required: options.required || false,
+        placeholder: options.placeholder || ""
       }
     })
     .run();
+};
+
+const handleVariableClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  const variableSpan = target.closest(".emr-variable");
+
+  if (!variableSpan || !editor.value) {
+    showDropdown.value = false;
+    return;
+  }
+
+  const refKey = variableSpan.getAttribute("data-ref-key");
+  if (!refKey) return;
+
+  editor.value.state.doc.descendants((node, pos) => {
+    if (node.type.name === "variable" && node.attrs.refKey === refKey) {
+      const widgetType = node.attrs.widgetType || "text";
+      const options = node.attrs.options || [];
+      const hasDropdown = widgetType === "select" && options.length > 0;
+
+      if (hasDropdown) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        dropdownOptions.value = options;
+        dropdownCurrentValue.value = node.attrs.extensionValue || "";
+        dropdownRefKey.value = refKey;
+
+        const rect = variableSpan.getBoundingClientRect();
+        dropdownPosition.x = rect.left;
+        dropdownPosition.y = rect.bottom;
+        showDropdown.value = true;
+      } else {
+        startInlineEdit(variableSpan as HTMLElement, refKey, node.attrs.extensionValue || "");
+      }
+
+      return false;
+    }
+    return true;
+  });
+};
+
+const startInlineEdit = (span: HTMLElement, refKey: string, currentValue: string) => {
+  const rect = span.getBoundingClientRect();
+  const computedStyle = window.getComputedStyle(span);
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = currentValue;
+
+  input.style.position = "fixed";
+  input.style.left = `${rect.left}px`;
+  input.style.top = `${rect.top}px`;
+  input.style.width = `${Math.max(rect.width, 30)}px`;
+  input.style.height = `${rect.height}px`;
+  input.style.zIndex = "9999";
+  input.style.border = "none";
+  input.style.borderBottom = "1px solid #000";
+  input.style.outline = "none";
+  input.style.background = "#fef3c7";
+  input.style.fontSize = computedStyle.fontSize;
+  input.style.fontFamily = computedStyle.fontFamily;
+  input.style.fontWeight = computedStyle.fontWeight;
+  input.style.lineHeight = computedStyle.lineHeight;
+  input.style.color = "#000";
+  input.style.textAlign = "center";
+  input.style.padding = "0 4px";
+  input.style.margin = "0";
+  input.style.boxSizing = "border-box";
+
+  const finishEdit = (save: boolean) => {
+    if (save) {
+      updateVariableValue(refKey, input.value.trim());
+    }
+    input.remove();
+  };
+
+  input.addEventListener("blur", () => finishEdit(true));
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      finishEdit(true);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      finishEdit(false);
+    }
+  });
+
+  document.body.appendChild(input);
+  input.focus();
+  input.select();
+};
+
+const updateVariableValue = (refKey: string, value: string) => {
+  if (!editor.value) return;
+
+  const transaction = editor.value.state.tr;
+
+  editor.value.state.doc.descendants((node, pos) => {
+    if (node.type.name === "variable" && node.attrs.refKey === refKey) {
+      transaction.setNodeMarkup(pos, undefined, {
+        ...node.attrs,
+        extensionValue: value
+      });
+      return false;
+    }
+    return true;
+  });
+
+  editor.value.view.dispatch(transaction);
+};
+
+const handleDropdownSelect = (option: { value: string; label: string }) => {
+  if (!editor.value || !dropdownRefKey.value) return;
+
+  const transaction = editor.value.state.tr;
+
+  editor.value.state.doc.descendants((node, pos) => {
+    if (node.type.name === "variable" && node.attrs.refKey === dropdownRefKey.value) {
+      transaction.setNodeMarkup(pos, undefined, {
+        ...node.attrs,
+        extensionValue: String(option.value)
+      });
+      return false;
+    }
+    return true;
+  });
+
+  editor.value.view.dispatch(transaction);
+  showDropdown.value = false;
 };
 
 const editor = useEditor({
@@ -192,7 +353,11 @@ const editor = useEditor({
     }),
     PageBreakExtension
   ],
-  content: applyDataToTemplate(temData2, data2)
+  content: applyDataToTemplate(temData2, data2),
+  onUpdate: ({ editor }) => {
+    const contentElement = editor.view.dom;
+    contentElement.addEventListener("click", handleVariableClick);
+  }
 });
 
 defineExpose({
@@ -249,13 +414,20 @@ defineExpose({
   border-collapse: collapse;
   width: 100%;
   margin: 1em 0;
+  table-layout: fixed;
 }
 
 .emr-content :deep(th),
 .emr-content :deep(td) {
   border: 1px solid #000;
-  padding: 8px 12px;
+  padding: 4px 6px;
   text-align: left;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow: hidden;
+  font-size: 11pt;
+  line-height: 1.4;
+  vertical-align: middle;
 }
 
 .emr-content :deep(th) {
@@ -265,21 +437,19 @@ defineExpose({
 
 .emr-content :deep(.emr-variable) {
   display: inline-block;
+  min-width: 30px;
   text-align: center;
-  min-width: 49.5pt;
-  padding: 0 6px;
+  padding: 0 4px;
   border-bottom: 1px solid #000;
   cursor: pointer;
+  line-height: inherit;
 }
 .emr-content :deep(.emr-variable-filled) {
   color: #000;
 }
 .emr-content :deep(.emr-variable-empty) {
-  color: #9ca3af;
-}
-
-.emr-content :deep(.emr-variable[contenteditable="false"]) {
-  pointer-events: none;
+  color: #7fbdff;
+  background: rgba(184, 218, 255, 0.23);
 }
 
 .emr-content :deep(.ProseMirror-focused) {
@@ -292,5 +462,55 @@ defineExpose({
   border-top: 1px dashed #ddd;
   margin: 1em 0;
   page-break-after: always;
+}
+
+.emr-content :deep(.emr-variable-select) {
+  padding-right: 18px;
+  position: relative;
+}
+
+.emr-content :deep(.emr-variable-select::after) {
+  content: "▼";
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 8px;
+  color: #999;
+}
+
+.emr-dropdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+.emr-dropdown-menu {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  min-width: 120px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.emr-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  white-space: nowrap;
+}
+
+.emr-dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+.emr-dropdown-item-selected {
+  background-color: #e0f2fe;
+  color: #0369a1;
 }
 </style>

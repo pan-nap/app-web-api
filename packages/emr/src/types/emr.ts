@@ -16,6 +16,7 @@ export interface InsertVariableOptions {
   extensionValue?: string;
   options?: VariableOption[];
   required?: boolean;
+  placeholder?: string;
 }
 
 export type EmrElement = any;

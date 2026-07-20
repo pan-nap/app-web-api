@@ -62,6 +62,13 @@ export const VariableExtension = Node.create({
         renderHTML: (attributes) => {
           return { "data-required": attributes.required ? "true" : "false" };
         }
+      },
+      placeholder: {
+        default: "",
+        parseHTML: (element) => element.getAttribute("data-placeholder") || "",
+        renderHTML: (attributes) => {
+          return { "data-placeholder": attributes.placeholder };
+        }
       }
     };
   },
@@ -72,6 +79,7 @@ export const VariableExtension = Node.create({
 
   renderHTML({ node, HTMLAttributes }) {
     const label = node.attrs.widgetName || node.attrs.refKey;
+    const placeholder = node.attrs.placeholder;
     let displayValue = node.attrs.extensionValue;
 
     const options = node.attrs.options;
@@ -85,18 +93,17 @@ export const VariableExtension = Node.create({
     const hasValue = !!node.attrs.extensionValue;
 
     if (!displayValue) {
-      displayValue = label;
+      displayValue = placeholder || label;
     }
 
     return [
       "span",
       {
         ...HTMLAttributes,
-        class: `emr-variable ${hasValue ? "emr-variable-filled" : "emr-variable-empty"}`,
+        class: `emr-variable ${hasValue ? "emr-variable-filled" : "emr-variable-empty"} ${node.attrs.widgetType === "select" ? "emr-variable-select" : ""}`,
         contenteditable: "false"
       },
-      // displayValue
-      ""
+      displayValue
     ];
   }
 });
