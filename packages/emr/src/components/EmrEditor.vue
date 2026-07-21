@@ -42,21 +42,10 @@ import { TextAlign } from "@tiptap/extension-text-align";
 import EmrToolbar from "./EmrToolbar.vue";
 import { VariableExtension } from "../extensions/VariableExtension";
 import { PageBreakExtension } from "../extensions/PageBreakExtension";
-import { ref, reactive, computed } from "vue";
 import { getValueByPath, decodeOptions, normalizeTemplate } from "../utils/templateUtils";
 import type { InsertVariableOptions } from "../types/emr";
 import { temData2, data2 } from "../data/data2.ts";
-
-const showDropdown = ref(false);
-const dropdownOptions = ref<{ value: string; label: string }[]>([]);
-const dropdownCurrentValue = ref("");
-const dropdownRefKey = ref("");
-const dropdownPosition = reactive({ x: 0, y: 0 });
-
-const dropdownStyle = computed(() => ({
-  left: `${dropdownPosition.x}px`,
-  top: `${dropdownPosition.y}px`
-}));
+import { useVariableEditing } from "../hooks/useVariableEditing";
 
 const applyDataToTemplate = (template: any, data: Record<string, any>) => {
   const normalized = normalizeTemplate(template);
@@ -130,55 +119,6 @@ const getTemplate = (): any => {
   return cleanNode(json);
 };
 
-const updateVariables = (data: Record<string, any>) => {
-  if (!editor.value) return;
-
-  editor.value
-    .chain()
-    .focus()
-    .command(({ tr, state }) => {
-      const { doc } = state;
-      let modified = false;
-
-      doc.descendants((node, pos) => {
-        if (node.type.name === "variable") {
-          const refKey = node.attrs.refKey;
-          const newValue = getValueByPath(data, refKey);
-
-          if (newValue !== undefined && String(newValue) !== node.attrs.extensionValue) {
-            const attrs = { ...node.attrs, extensionValue: String(newValue) };
-            tr.setNodeMarkup(pos, undefined, attrs);
-            modified = true;
-          }
-        }
-
-        return true;
-      });
-
-      return modified;
-    })
-    .run();
-};
-
-const getVariables = (): Record<string, string> => {
-  if (!editor.value) return {};
-
-  const variables: Record<string, string> = {};
-
-  editor.value.state.doc.descendants((node) => {
-    if (node.type.name === "variable") {
-      const refKey = node.attrs.refKey;
-      if (refKey) {
-        variables[refKey] = node.attrs.extensionValue || "";
-      }
-    }
-
-    return true;
-  });
-
-  return variables;
-};
-
 const insertVariable = (options: InsertVariableOptions) => {
   if (!editor.value) return;
 
@@ -198,136 +138,6 @@ const insertVariable = (options: InsertVariableOptions) => {
       }
     })
     .run();
-};
-
-const handleVariableClick = (event: MouseEvent) => {
-  const target = event.target as HTMLElement;
-  const variableSpan = target.closest(".emr-variable");
-
-  if (!variableSpan || !editor.value) {
-    showDropdown.value = false;
-    return;
-  }
-
-  const refKey = variableSpan.getAttribute("data-ref-key");
-  if (!refKey) return;
-
-  editor.value.state.doc.descendants((node, pos) => {
-    if (node.type.name === "variable" && node.attrs.refKey === refKey) {
-      const widgetType = node.attrs.widgetType || "text";
-      const options = node.attrs.options || [];
-      const hasDropdown = widgetType === "select" && options.length > 0;
-
-      if (hasDropdown) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        dropdownOptions.value = options;
-        dropdownCurrentValue.value = node.attrs.extensionValue || "";
-        dropdownRefKey.value = refKey;
-
-        const rect = variableSpan.getBoundingClientRect();
-        dropdownPosition.x = rect.left;
-        dropdownPosition.y = rect.bottom;
-        showDropdown.value = true;
-      } else {
-        startInlineEdit(variableSpan as HTMLElement, refKey, node.attrs.extensionValue || "");
-      }
-
-      return false;
-    }
-    return true;
-  });
-};
-
-const startInlineEdit = (span: HTMLElement, refKey: string, currentValue: string) => {
-  const rect = span.getBoundingClientRect();
-  const computedStyle = window.getComputedStyle(span);
-
-  const input = document.createElement("input");
-  input.type = "text";
-  input.value = currentValue;
-
-  input.style.position = "fixed";
-  input.style.left = `${rect.left}px`;
-  input.style.top = `${rect.top}px`;
-  input.style.width = `${Math.max(rect.width, 30)}px`;
-  input.style.height = `${rect.height}px`;
-  input.style.zIndex = "9999";
-  input.style.border = "none";
-  input.style.borderBottom = "1px solid #000";
-  input.style.outline = "none";
-  input.style.background = "#fef3c7";
-  input.style.fontSize = computedStyle.fontSize;
-  input.style.fontFamily = computedStyle.fontFamily;
-  input.style.fontWeight = computedStyle.fontWeight;
-  input.style.lineHeight = computedStyle.lineHeight;
-  input.style.color = "#000";
-  input.style.textAlign = "center";
-  input.style.padding = "0 4px";
-  input.style.margin = "0";
-  input.style.boxSizing = "border-box";
-
-  const finishEdit = (save: boolean) => {
-    if (save) {
-      updateVariableValue(refKey, input.value.trim());
-    }
-    input.remove();
-  };
-
-  input.addEventListener("blur", () => finishEdit(true));
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      finishEdit(true);
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      finishEdit(false);
-    }
-  });
-
-  document.body.appendChild(input);
-  input.focus();
-  input.select();
-};
-
-const updateVariableValue = (refKey: string, value: string) => {
-  if (!editor.value) return;
-
-  const transaction = editor.value.state.tr;
-
-  editor.value.state.doc.descendants((node, pos) => {
-    if (node.type.name === "variable" && node.attrs.refKey === refKey) {
-      transaction.setNodeMarkup(pos, undefined, {
-        ...node.attrs,
-        extensionValue: value
-      });
-      return false;
-    }
-    return true;
-  });
-
-  editor.value.view.dispatch(transaction);
-};
-
-const handleDropdownSelect = (option: { value: string; label: string }) => {
-  if (!editor.value || !dropdownRefKey.value) return;
-
-  const transaction = editor.value.state.tr;
-
-  editor.value.state.doc.descendants((node, pos) => {
-    if (node.type.name === "variable" && node.attrs.refKey === dropdownRefKey.value) {
-      transaction.setNodeMarkup(pos, undefined, {
-        ...node.attrs,
-        extensionValue: String(option.value)
-      });
-      return false;
-    }
-    return true;
-  });
-
-  editor.value.view.dispatch(transaction);
-  showDropdown.value = false;
 };
 
 const editor = useEditor({
@@ -353,18 +163,18 @@ const editor = useEditor({
     }),
     PageBreakExtension
   ],
-  content: applyDataToTemplate(temData2, data2),
-  onUpdate: ({ editor }) => {
-    const contentElement = editor.view.dom;
-    contentElement.addEventListener("click", handleVariableClick);
-  }
+  content: applyDataToTemplate(temData2, data2)
 });
+
+const { showDropdown, dropdownOptions, dropdownCurrentValue, dropdownStyle, handleDropdownSelect, compareVariables, getVariables, updateVariables } =
+  useVariableEditing(editor);
 
 defineExpose({
   getTemplate,
   getVariables,
   updateVariables,
-  insertVariable
+  insertVariable,
+  compareVariables
 });
 </script>
 
@@ -458,10 +268,18 @@ defineExpose({
 }
 
 .emr-content :deep(.page-break) {
-  border: none;
-  border-top: 1px dashed #ddd;
-  margin: 1em 0;
-  page-break-after: always;
+  position: relative;
+}
+.emr-content :deep(.page-break::after) {
+  content: "分页符";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #999;
+  font-size: 0.8rem;
+  background: white;
+  padding: 0 0.5rem;
 }
 
 .emr-content :deep(.emr-variable-select) {
