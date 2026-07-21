@@ -43,9 +43,9 @@ import EmrToolbar from "./EmrToolbar.vue";
 import { VariableExtension } from "../extensions/VariableExtension";
 import { PageBreakExtension } from "../extensions/PageBreakExtension";
 import { getValueByPath, decodeOptions, normalizeTemplate } from "../utils/templateUtils";
-import type { InsertVariableOptions } from "../types/emr";
 import { temData2, data2 } from "../data/data2.ts";
 import { useVariableEditing } from "../hooks/useVariableEditing";
+import { useEmrApi } from "../hooks/useEmrApi";
 
 const applyDataToTemplate = (template: any, data: Record<string, any>) => {
   const normalized = normalizeTemplate(template);
@@ -89,57 +89,6 @@ const applyDataToTemplate = (template: any, data: Record<string, any>) => {
   return applyToNode(normalized);
 };
 
-const getTemplate = (): any => {
-  if (!editor.value) return null;
-  const json = editor.value.getJSON();
-
-  const cleanNode = (node: any): any => {
-    if (!node) return node;
-
-    if (node.type === "variable" && node.attrs) {
-      return {
-        ...node,
-        attrs: {
-          ...node.attrs,
-          extensionValue: ""
-        }
-      };
-    }
-
-    if (node.content && Array.isArray(node.content)) {
-      return {
-        ...node,
-        content: node.content.map(cleanNode)
-      };
-    }
-
-    return node;
-  };
-
-  return cleanNode(json);
-};
-
-const insertVariable = (options: InsertVariableOptions) => {
-  if (!editor.value) return;
-
-  editor.value
-    .chain()
-    .focus()
-    .insertContent({
-      type: "variable",
-      attrs: {
-        refKey: options.refKey,
-        widgetName: options.widgetName,
-        widgetType: options.widgetType || "text",
-        extensionValue: options.extensionValue || "",
-        options: options.options || [],
-        required: options.required || false,
-        placeholder: options.placeholder || ""
-      }
-    })
-    .run();
-};
-
 const editor = useEditor({
   extensions: [
     StarterKit.configure({
@@ -166,8 +115,9 @@ const editor = useEditor({
   content: applyDataToTemplate(temData2, data2)
 });
 
-const { showDropdown, dropdownOptions, dropdownCurrentValue, dropdownStyle, handleDropdownSelect, compareVariables, getVariables, updateVariables } =
-  useVariableEditing(editor);
+const { showDropdown, dropdownOptions, dropdownCurrentValue, dropdownStyle, handleDropdownSelect } = useVariableEditing(editor);
+
+const { getTemplate, insertVariable, compareVariables, getVariables, updateVariables } = useEmrApi(editor);
 
 defineExpose({
   getTemplate,

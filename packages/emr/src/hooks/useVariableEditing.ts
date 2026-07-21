@@ -1,6 +1,5 @@
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import type { Editor } from "@tiptap/vue-3";
-import type { VariableChange } from "../types/emr";
 import { getValueByPath } from "../utils/templateUtils";
 
 export const useVariableEditing = (editor: { value: Editor | undefined }) => {
@@ -145,99 +144,9 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
     showDropdown.value = false;
   };
 
-  const compareVariables = (originalData: Record<string, any>): VariableChange[] => {
-    if (!editor.value) return [];
-
-    const changes: VariableChange[] = [];
-
-    editor.value.state.doc.descendants((node) => {
-      if (node.type.name === "variable") {
-        const refKey = node.attrs.refKey;
-        if (refKey) {
-          const currentValue = node.attrs.extensionValue || "";
-          const oldValue = getValueByPath(originalData, refKey) || "";
-
-          if (currentValue !== oldValue) {
-            changes.push({
-              refKey,
-              widgetName: node.attrs.widgetName || refKey,
-              oldValue,
-              newValue: currentValue
-            });
-          }
-        }
-      }
-
-      return true;
-    });
-
-    return changes;
-  };
-
-  const getVariables = (): Record<string, any> => {
-    if (!editor.value) return {};
-
-    const variables: Record<string, any> = {};
-
-    editor.value.state.doc.descendants((node) => {
-      if (node.type.name === "variable") {
-        const refKey = node.attrs.refKey;
-        if (refKey) {
-          const value = node.attrs.extensionValue || "";
-          const parts = refKey.split(".");
-          let current = variables;
-
-          for (let i = 0; i < parts.length; i++) {
-            const part = parts[i];
-            if (i === parts.length - 1) {
-              current[part] = value;
-            } else {
-              if (!current[part]) {
-                current[part] = {};
-              }
-              current = current[part];
-            }
-          }
-        }
-      }
-
-      return true;
-    });
-
-    return variables;
-  };
-
-  const updateVariables = (data: Record<string, any>) => {
-    if (!editor.value) return;
-
-    const transaction = editor.value.state.tr;
-
-    editor.value.state.doc.descendants((node, pos) => {
-      if (node.type.name === "variable") {
-        const refKey = node.attrs.refKey;
-        if (refKey) {
-          const newValue = getValueByPath(data, refKey);
-          if (newValue !== undefined && newValue !== node.attrs.extensionValue) {
-            transaction.setNodeMarkup(pos, undefined, {
-              ...node.attrs,
-              extensionValue: String(newValue)
-            });
-          }
-        }
-      }
-      return true;
-    });
-
-    editor.value.view.dispatch(transaction);
-  };
-
   onMounted(() => {
-    const contentElement = editor.value?.view?.dom;
+    const contentElement = editor.value?.view?.dom as HTMLElement | null;
     contentElement?.addEventListener("click", handleVariableClick);
-  });
-  onBeforeUnmount(() => {
-    const contentElement = editor.value?.view?.dom;
-    contentElement?.removeEventListener("click", handleVariableClick);
   });
 
   return {
@@ -245,10 +154,6 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
     dropdownOptions,
     dropdownCurrentValue,
     dropdownStyle,
-    handleVariableClick,
-    handleDropdownSelect,
-    compareVariables,
-    getVariables,
-    updateVariables
+    handleDropdownSelect
   };
 };
