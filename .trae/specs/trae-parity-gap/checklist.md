@@ -1,0 +1,6 @@
+- [x] 功能差距清单覆盖工作区工具、智能体系统、记忆系统、Web能力、Git集成、代码增强、MCP、上下文管理、内联功能 9 大功能领域
+- [x] P0（核心必要）包含工作区工具系统(Read/Write/Edit/Grep/Glob/LS/RunCommand/GetDiagnostics)、函数调用(Tool Use/Function Calling)、上下文感知
+- [x] P1（重要增强）包含智能体系统(Task/TodoWrite/Plan)、代码Diff预览、记忆系统
+- [x] P2（锦上添花）包含Web能力、Git集成、MCP、Skill系统、内联功能
+- [x] 总结报告包含三级分类和推荐实现路线图
+- [x] 路线图建议 P0 功能作为下一批实现目标

@@ -1,0 +1,130 @@
+{
+  "name": "ai-plugin",
+  "displayName": "[王欢欢]智能体",
+  "description": "可自定义接入各大模型的VSCode AI插件，只需配置API Key即可使用",
+  "version": "1.0.0",
+  "publisher": "huasu",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Productivity"
+  ],
+  "activationEvents": [
+    "onView:ai-plugin-chat",
+    "onCommand:ai-plugin.openChat",
+    "onCommand:ai-plugin.configureProvider",
+    "onCommand:ai-plugin.clearChat"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ai-plugin.openChat",
+        "title": "[王欢欢]聊天",
+        "category": "[王欢欢]智能体"
+      },
+      {
+        "command": "ai-plugin.configureProvider",
+        "title": "配置[王欢欢]提供者",
+        "category": "[王欢欢]智能体"
+      },
+      {
+        "command": "ai-plugin.clearChat",
+        "title": "清空聊天记录",
+        "category": "[王欢欢]智能体"
+      },
+      {
+        "command": "ai-plugin.openChat",
+        "title": "打开聊天面板",
+        "category": "[王欢欢]智能体"
+      },
+      {
+        "command": "ai-plugin.test",
+        "title": "测试命令",
+        "category": "[王欢欢]智能体"
+      },
+      {
+        "command": "ai-plugin.test2",
+        "title": "测试命令2",
+        "category": "[王欢欢]智能体"
+      }
+    ],
+    "configuration": {
+      "title": "[王欢欢]智能体配置",
+      "properties": {
+        "ai-plugin.activeProvider": {
+          "type": "string",
+          "default": "openai",
+          "description": "当前激活的[王欢欢]提供者",
+          "enum": [
+            "deepseek",
+            "openai",
+            "claude",
+            "gemini",
+            "doubao"
+          ]
+        },
+        "ai-plugin.defaultModel": {
+          "type": "string",
+          "default": "gpt-4o",
+          "description": "默认使用的模型"
+        },
+        "ai-plugin.temperature": {
+          "type": "number",
+          "default": 0.7,
+          "description": "温度参数，控制输出的随机性",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "ai-plugin.maxTokens": {
+          "type": "number",
+          "default": 4096,
+          "description": "最大生成token数",
+          "minimum": 1,
+          "maximum": 128000
+        },
+        "ai-plugin.apiBaseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "自定义API基础URL（为空时使用默认值）"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ai-plugin-sidebar",
+          "title": "[王欢欢]",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "ai-plugin-sidebar": [
+        {
+          "id": "ai-plugin-chat",
+          "name": "聊天"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "dev": "node esbuild.config.mjs --watch",
+    "build": "node esbuild.config.mjs",
+    "package": "vsce package",
+    "compile": "tsc -p .",
+    "watch": "tsc -p . -w"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@vscode/vsce": "^2.21.0",
+    "esbuild": "^0.21.0",
+    "typescript": "^5.3.3",
+    "vue": "^3.4.0",
+    "vite": "^5.0.0",
+    "@vitejs/plugin-vue": "^5.0.0"
+  }
+}
