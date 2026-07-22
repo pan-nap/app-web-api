@@ -10,22 +10,6 @@
       </div>
       <slot name="right"></slot>
     </div>
-
-    <Teleport to="body">
-      <div v-if="showDropdown" class="emr-dropdown-overlay" @click.self="showDropdown = false">
-        <div class="emr-dropdown-menu" :style="dropdownStyle">
-          <div
-            v-for="option in dropdownOptions"
-            :key="option.value"
-            class="emr-dropdown-item"
-            :class="{ 'emr-dropdown-item-selected': String(option.value) === String(dropdownCurrentValue) }"
-            @click="handleDropdownSelect(option)"
-          >
-            {{ option.label }}
-          </div>
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
@@ -115,7 +99,7 @@ const editor = useEditor({
   content: applyDataToTemplate(temData2, data2)
 });
 
-const { showDropdown, dropdownOptions, dropdownCurrentValue, dropdownStyle, handleDropdownSelect } = useVariableEditing(editor);
+const { showDropdown, dropdownOptions, dropdownCurrentValue, handleDropdownSelect } = useVariableEditing(editor);
 
 const { getTemplate, insertVariable, compareVariables, getVariables, updateVariables } = useEmrApi(editor);
 
@@ -245,40 +229,5 @@ defineExpose({
   transform: translateY(-50%);
   font-size: 8px;
   color: #999;
-}
-
-.emr-dropdown-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-}
-
-.emr-dropdown-menu {
-  position: absolute;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  min-width: 120px;
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 4px 0;
-}
-
-.emr-dropdown-item {
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #333;
-  white-space: nowrap;
-}
-
-.emr-dropdown-item:hover {
-  background-color: #f5f5f5;
-}
-
-.emr-dropdown-item-selected {
-  background-color: #e0f2fe;
-  color: #0369a1;
 }
 </style>
