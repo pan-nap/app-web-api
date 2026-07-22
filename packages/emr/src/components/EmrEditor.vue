@@ -99,8 +99,7 @@ const editor = useEditor({
   content: applyDataToTemplate(temData2, data2)
 });
 
-const { showDropdown, dropdownOptions, dropdownCurrentValue, handleDropdownSelect } = useVariableEditing(editor);
-
+useVariableEditing(editor);
 const { getTemplate, insertVariable, compareVariables, getVariables, updateVariables } = useEmrApi(editor);
 
 defineExpose({
