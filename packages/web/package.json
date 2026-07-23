@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@cashier/emr": "workspace:*",
-    "hs-admin-ui": "https://oss-cn-beijing.hserp.cn/scmp/920001/2026/07/21/2026072187197483.tgz",
+    "hs-admin-ui": "https://oss-cn-beijing.hserp.cn/scmp/920001/2026/07/22/2026072214046760.tgz",
     "lodash-es": "^4.18.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.32",

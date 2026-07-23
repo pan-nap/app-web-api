@@ -1,15 +1,7 @@
 <template>
-  <div class="emr-editor flex flex-col h-full overflow-hidden bg-gray-100">
+  <div class="emr-editor">
     <emr-toolbar :editor="editor" />
-    <div class="flex-1 overflow-auto mt-2 flex gap-2 items-start justify-between">
-      <slot name="left"></slot>
-      <div class="emr-scroll overflow-auto flex-1 flex items-center justify-center">
-        <div class="emr-paper bg-white shadow-sm mb-2">
-          <editor-content :editor="editor" class="emr-content" />
-        </div>
-      </div>
-      <slot name="right"></slot>
-    </div>
+    <editor-content :editor="editor" class="emr-content bg-white shadow-sm my-2" />
   </div>
 </template>
 
@@ -30,6 +22,7 @@ import { getValueByPath, decodeOptions, normalizeTemplate } from "../utils/templ
 import { temData2, data2 } from "../data/data2.ts";
 import { useVariableEditing } from "../hooks/useVariableEditing";
 import { useEmrApi } from "../hooks/useEmrApi";
+import { useTableContextMenu } from "../hooks/useTableContextMenu";
 
 const applyDataToTemplate = (template: any, data: Record<string, any>) => {
   const normalized = normalizeTemplate(template);
@@ -100,6 +93,7 @@ const editor = useEditor({
 });
 
 useVariableEditing(editor);
+useTableContextMenu(editor);
 const { getTemplate, insertVariable, compareVariables, getVariables, updateVariables } = useEmrApi(editor);
 
 defineExpose({
@@ -116,16 +110,24 @@ defineExpose({
   color: #000;
   font-size: 15px;
   line-height: 1.5;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  overflow: hidden;
 }
 
-.emr-paper {
+.emr-content {
+  padding: 15mm;
+  overflow: auto;
+  box-sizing: border-box;
+}
+.emr-content :deep(.ProseMirror) {
   width: 210mm;
   min-height: 297mm;
   padding: 15mm;
-  box-sizing: border-box;
-}
-.emr-content {
-  min-height: 100%;
 }
 .emr-content :deep(p) {
   margin: 0 0 1em 0;
