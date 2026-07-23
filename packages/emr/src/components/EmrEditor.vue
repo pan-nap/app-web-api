@@ -231,4 +231,7 @@ defineExpose({
   font-size: 8px;
   color: #999;
 }
+:deep(.ProseMirror .selectedCell) {
+  background-color: rgba(0, 150, 255, 0.1); /* 浅蓝色背景 */
+}
 </style>
