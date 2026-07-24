@@ -1,9 +1,11 @@
 import type { Editor } from "@tiptap/vue-3";
 import type { InsertVariableOptions, VariableChange } from "../types/emr";
-import { getValueByPath } from "../utils/templateUtils";
+import { getValueByPath, decodeOptions, normalizeTemplate } from "../utils/templateUtils";
+import { temData2, data2 } from "../data/data2.ts";
+import { onMounted } from "vue";
 
 export const useEmrApi = (editor: { value: Editor | undefined }) => {
-  const getTemplate = (): any => {
+  function getTemplate(): any {
     if (!editor.value) return null;
     const json = editor.value.getJSON();
 
@@ -31,9 +33,9 @@ export const useEmrApi = (editor: { value: Editor | undefined }) => {
     };
 
     return cleanNode(json);
-  };
+  }
 
-  const insertVariable = (options: InsertVariableOptions) => {
+  function insertVariable(options: InsertVariableOptions) {
     if (!editor.value) return;
 
     editor.value
@@ -52,9 +54,9 @@ export const useEmrApi = (editor: { value: Editor | undefined }) => {
         }
       })
       .run();
-  };
+  }
 
-  const compareVariables = (originalData: Record<string, any>): VariableChange[] => {
+  function compareVariables(originalData: Record<string, any>): VariableChange[] {
     if (!editor.value) return [];
 
     const changes: VariableChange[] = [];
@@ -81,9 +83,9 @@ export const useEmrApi = (editor: { value: Editor | undefined }) => {
     });
 
     return changes;
-  };
+  }
 
-  const getVariables = (): Record<string, any> => {
+  function getVariables(): Record<string, any> {
     if (!editor.value) return {};
 
     const variables: Record<string, any> = {};
@@ -114,9 +116,9 @@ export const useEmrApi = (editor: { value: Editor | undefined }) => {
     });
 
     return variables;
-  };
+  }
 
-  const updateVariables = (data: Record<string, any>) => {
+  function updateVariables(data: Record<string, any>) {
     if (!editor.value) return;
 
     const transaction = editor.value.state.tr;
@@ -138,9 +140,61 @@ export const useEmrApi = (editor: { value: Editor | undefined }) => {
     });
 
     editor.value.view.dispatch(transaction);
-  };
+  }
+
+  function applyDataToTemplate(template: any, data: Record<string, any>) {
+    const normalized = normalizeTemplate(template);
+
+    const applyToNode = (node: any): any => {
+      if (!node) return node;
+
+      if (node.type === "field" && node.attrs) {
+        const attrs = node.attrs;
+        const refKey = attrs["data-ref-key"] || "";
+        const widgetName = attrs["data-widget-name"] || "";
+        const widgetType = attrs["data-widget-type"] || "text";
+        const extensionValue = getValueByPath(data, refKey) || attrs["data-extension-value"] || "";
+        const optionsStr = attrs["data-options"] || "";
+        const placeholder = attrs["data-placeholder"] || "";
+
+        return {
+          type: "variable",
+          attrs: {
+            refKey,
+            widgetName,
+            widgetType,
+            extensionValue,
+            options: decodeOptions(optionsStr),
+            required: attrs["data-required"] !== "" || attrs["data-required-warning"] !== "",
+            placeholder
+          }
+        };
+      }
+
+      if (node.content && Array.isArray(node.content)) {
+        return {
+          ...node,
+          content: node.content.map(applyToNode)
+        };
+      }
+
+      return node;
+    };
+
+    return applyToNode(normalized);
+  }
+
+  function setContent(template?: any, data?: Record<string, any>) {
+    if (!editor.value) return;
+    editor.value.commands.setContent(applyDataToTemplate(template || temData2, data || data2));
+  }
+
+  onMounted(() => {
+    setContent();
+  });
 
   return {
+    setContent,
     getTemplate,
     insertVariable,
     compareVariables,

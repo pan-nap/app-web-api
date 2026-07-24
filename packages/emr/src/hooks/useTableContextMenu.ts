@@ -5,7 +5,7 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
   const showMenu = ref(false);
   let menuElement: HTMLElement | null = null;
 
-  const createMenu = () => {
+  function createMenu() {
     if (menuElement) return;
 
     menuElement = document.createElement("div");
@@ -23,7 +23,7 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
       display: none;
     `;
 
-    const createItem = (text: string, onClick: () => void, isDanger = false) => {
+    function createItem(text: string, onClick: () => void, isDanger = false) {
       const item = document.createElement("div");
       item.className = `emr-context-menu-item${isDanger ? " emr-context-menu-item-danger" : ""}`;
       item.textContent = text;
@@ -44,9 +44,9 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
         item.style.backgroundColor = "";
       });
       return item;
-    };
+    }
 
-    const createDivider = () => {
+    function createDivider() {
       const divider = document.createElement("div");
       divider.className = "emr-context-menu-divider";
       divider.style.cssText = `
@@ -55,7 +55,7 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
         margin: 4px 0;
       `;
       return divider;
-    };
+    }
 
     menuElement.appendChild(createItem("在上方插入行", insertRowBefore));
     menuElement.appendChild(createItem("在下方插入行", insertRowAfter));
@@ -74,9 +74,9 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
     });
 
     document.body.appendChild(menuElement);
-  };
+  }
 
-  const handleContextMenu = (event: MouseEvent) => {
+  function handleContextMenu(event: MouseEvent) {
     const target = event.target as HTMLElement;
     const tableElement = target.closest("table");
     const menuElementTarget = target.closest(".emr-context-menu");
@@ -109,62 +109,62 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
       menuElement.style.left = `${event.clientX}px`;
       menuElement.style.top = `${event.clientY}px`;
     }
-  };
+  }
 
-  const closeMenu = () => {
+  function closeMenu() {
     showMenu.value = false;
     if (menuElement) {
       menuElement.style.display = "none";
     }
-  };
+  }
 
-  const insertRowBefore = () => {
+  function insertRowBefore() {
     if (!editor.value) return;
     editor.value.chain().focus().addRowBefore().run();
     closeMenu();
-  };
+  }
 
-  const insertRowAfter = () => {
+  function insertRowAfter() {
     if (!editor.value) return;
     editor.value.chain().focus().addRowAfter().run();
     closeMenu();
-  };
+  }
 
-  const insertColumnBefore = () => {
+  function insertColumnBefore() {
     if (!editor.value) return;
     editor.value.chain().focus().addColumnBefore().run();
     closeMenu();
-  };
+  }
 
-  const insertColumnAfter = () => {
+  function insertColumnAfter() {
     if (!editor.value) return;
     editor.value.chain().focus().addColumnAfter().run();
     closeMenu();
-  };
+  }
 
-  const mergeCells = () => {
+  function mergeCells() {
     if (!editor.value) return;
     editor.value.chain().focus().mergeCells().run();
     closeMenu();
-  };
+  }
 
-  const splitCell = () => {
+  function splitCell() {
     if (!editor.value) return;
     editor.value.chain().focus().splitCell().run();
     closeMenu();
-  };
+  }
 
-  const deleteRow = () => {
+  function deleteRow() {
     if (!editor.value) return;
     editor.value.chain().focus().deleteRow().run();
     closeMenu();
-  };
+  }
 
-  const deleteColumn = () => {
+  function deleteColumn() {
     if (!editor.value) return;
     editor.value.chain().focus().deleteColumn().run();
     closeMenu();
-  };
+  }
 
   onMounted(() => {
     document.addEventListener("contextmenu", handleContextMenu);

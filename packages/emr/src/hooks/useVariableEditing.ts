@@ -9,7 +9,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
   const dropdownPosition = reactive({ x: 0, y: 0 });
   let dropdownContainer: HTMLElement | null = null;
 
-  const createDropdown = () => {
+  function createDropdown() {
     if (dropdownContainer) return;
 
     dropdownContainer = document.createElement("div");
@@ -44,9 +44,9 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
         closeDropdown();
       }
     });
-  };
+  }
 
-  const renderDropdown = () => {
+  function renderDropdown() {
     if (!dropdownContainer) return;
 
     const menu = dropdownContainer.querySelector(".emr-dropdown-menu") as HTMLElement;
@@ -78,16 +78,16 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
     dropdownContainer.style.display = "block";
     menu.style.left = `${dropdownPosition.x}px`;
     menu.style.top = `${dropdownPosition.y}px`;
-  };
+  }
 
-  const closeDropdown = () => {
+  function closeDropdown() {
     showDropdown.value = false;
     if (dropdownContainer) {
       dropdownContainer.style.display = "none";
     }
-  };
+  }
 
-  const handleVariableClick = (event: MouseEvent) => {
+  function handleVariableClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     const variableSpan = target.closest(".emr-variable");
 
@@ -128,9 +128,9 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
       }
       return true;
     });
-  };
+  }
 
-  const startInlineEdit = (span: HTMLElement, refKey: string, currentValue: string) => {
+  function startInlineEdit(span: HTMLElement, refKey: string, currentValue: string) {
     const rect = span.getBoundingClientRect();
     const computedStyle = window.getComputedStyle(span);
 
@@ -159,7 +159,6 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
     input.style.margin = "0";
     input.style.boxSizing = "border-box";
 
-    // 用于测量文本宽度的隐藏元素
     const measureEl = document.createElement("span");
     measureEl.style.cssText = `
       position: absolute;
@@ -174,21 +173,21 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
     `;
     document.body.appendChild(measureEl);
 
-    const updateInputWidth = () => {
+    function updateInputWidth() {
       measureEl.textContent = input.value || " ";
       const textWidth = measureEl.getBoundingClientRect().width;
       input.style.width = `${Math.max(textWidth, minWidth)}px`;
-    };
+    }
 
     updateInputWidth();
 
-    const finishEdit = (save: boolean) => {
+    function finishEdit(save: boolean) {
       if (save) {
         updateVariableValue(refKey, input.value.trim());
       }
       measureEl.remove();
       input.remove();
-    };
+    }
 
     input.addEventListener("blur", () => finishEdit(true));
     input.addEventListener("input", updateInputWidth);
@@ -205,9 +204,9 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
     document.body.appendChild(input);
     input.focus();
     input.select();
-  };
+  }
 
-  const updateVariableValue = (refKey: string, value: string) => {
+  function updateVariableValue(refKey: string, value: string) {
     if (!editor.value) return;
 
     const transaction = editor.value.state.tr;
@@ -224,9 +223,9 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
     });
 
     editor.value.view.dispatch(transaction);
-  };
+  }
 
-  const handleDropdownSelect = (option: { value: string; label: string }) => {
+  function handleDropdownSelect(option: { value: string; label: string }) {
     if (!editor.value || !dropdownRefKey.value) return;
 
     const transaction = editor.value.state.tr;
@@ -244,7 +243,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
 
     editor.value.view.dispatch(transaction);
     closeDropdown();
-  };
+  }
 
   onMounted(() => {
     const contentElement = editor.value?.view?.dom as HTMLElement | null;

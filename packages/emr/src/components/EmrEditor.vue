@@ -15,56 +15,12 @@ import TableHeader from "@tiptap/extension-table-header";
 import Placeholder from "@tiptap/extension-placeholder";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { TextAlign } from "@tiptap/extension-text-align";
-import EmrToolbar from "./EmrToolbar.vue";
 import { VariableExtension } from "../extensions/VariableExtension";
 import { PageBreakExtension } from "../extensions/PageBreakExtension";
-import { getValueByPath, decodeOptions, normalizeTemplate } from "../utils/templateUtils";
-import { temData2, data2 } from "../data/data2.ts";
 import { useVariableEditing } from "../hooks/useVariableEditing";
-import { useEmrApi } from "../hooks/useEmrApi";
 import { useTableContextMenu } from "../hooks/useTableContextMenu";
-
-const applyDataToTemplate = (template: any, data: Record<string, any>) => {
-  const normalized = normalizeTemplate(template);
-
-  const applyToNode = (node: any): any => {
-    if (!node) return node;
-
-    if (node.type === "field" && node.attrs) {
-      const attrs = node.attrs;
-      const refKey = attrs["data-ref-key"] || "";
-      const widgetName = attrs["data-widget-name"] || "";
-      const widgetType = attrs["data-widget-type"] || "text";
-      const extensionValue = getValueByPath(data, refKey) || attrs["data-extension-value"] || "";
-      const optionsStr = attrs["data-options"] || "";
-      const placeholder = attrs["data-placeholder"] || "";
-
-      return {
-        type: "variable",
-        attrs: {
-          refKey,
-          widgetName,
-          widgetType,
-          extensionValue,
-          options: decodeOptions(optionsStr),
-          required: attrs["data-required"] !== "" || attrs["data-required-warning"] !== "",
-          placeholder
-        }
-      };
-    }
-
-    if (node.content && Array.isArray(node.content)) {
-      return {
-        ...node,
-        content: node.content.map(applyToNode)
-      };
-    }
-
-    return node;
-  };
-
-  return applyToNode(normalized);
-};
+import { useEmrApi } from "../hooks/useEmrApi";
+import EmrToolbar from "./EmrToolbar.vue";
 
 const editor = useEditor({
   extensions: [
@@ -89,7 +45,7 @@ const editor = useEditor({
     }),
     PageBreakExtension
   ],
-  content: applyDataToTemplate(temData2, data2)
+  content: ""
 });
 
 useVariableEditing(editor);

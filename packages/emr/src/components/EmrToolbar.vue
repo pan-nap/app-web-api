@@ -54,22 +54,131 @@
       class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
       :class="{ 'bg-blue-100 text-blue-600': editor?.isActive({ textAlign: 'left' }) }"
       @click="editor?.chain().focus().setTextAlign('left').run()"
+      title="左对齐"
     >
-      ←
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="15" y1="3" x2="6" y2="3"></line>
+        <line x1="15" y1="9" x2="6" y2="9"></line>
+        <line x1="19" y1="15" x2="6" y2="15"></line>
+        <line x1="19" y1="21" x2="6" y2="21"></line>
+      </svg>
     </button>
     <button
       class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
       :class="{ 'bg-blue-100 text-blue-600': editor?.isActive({ textAlign: 'center' }) }"
       @click="editor?.chain().focus().setTextAlign('center').run()"
+      title="居中"
     >
-      ↔
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="21" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="6" x2="3" y2="6"></line>
+        <line x1="21" y1="18" x2="3" y2="18"></line>
+      </svg>
     </button>
     <button
       class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
       :class="{ 'bg-blue-100 text-blue-600': editor?.isActive({ textAlign: 'right' }) }"
       @click="editor?.chain().focus().setTextAlign('right').run()"
+      title="右对齐"
     >
-      →
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="9" y1="3" x2="18" y2="3"></line>
+        <line x1="9" y1="9" x2="18" y2="9"></line>
+        <line x1="5" y1="15" x2="18" y2="15"></line>
+        <line x1="5" y1="21" x2="18" y2="21"></line>
+      </svg>
+    </button>
+    <div class="w-px h-6 bg-gray-200 mx-1"></div>
+    <button
+      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
+      @click="editor?.chain().focus().toggleTextStyle({ verticalAlign: 'top' }).run()"
+      title="顶部对齐"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="12" y1="19" x2="12" y2="5"></line>
+        <polyline points="5 12 12 5 19 12"></polyline>
+      </svg>
+    </button>
+    <button
+      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
+      @click="editor?.chain().focus().toggleTextStyle({ verticalAlign: 'middle' }).run()"
+      title="居中对齐"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="12" y1="22" x2="12" y2="2"></line>
+        <polyline points="4 12 12 2 20 12"></polyline>
+        <polyline points="4 12 12 22 20 12"></polyline>
+      </svg>
+    </button>
+    <button
+      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
+      @click="editor?.chain().focus().toggleTextStyle({ verticalAlign: 'bottom' }).run()"
+      title="底部对齐"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <polyline points="19 12 12 19 5 12"></polyline>
+      </svg>
     </button>
     <div class="w-px h-6 bg-gray-200 mx-1"></div>
     <div class="table-dropdown relative" @mouseenter="showTableMenu = true">
@@ -118,15 +227,15 @@ const maxCols = 8;
 const selectedRows = ref(3);
 const selectedCols = ref(3);
 
-const selectGrid = (row: number, col: number) => {
+function selectGrid(row: number, col: number) {
   selectedRows.value = row;
   selectedCols.value = col;
-};
+}
 
-const insertTable = (rows: number, cols: number) => {
+function insertTable(rows: number, cols: number) {
   props.editor?.chain().focus().insertTable({ rows, cols }).run();
   showTableMenu.value = false;
-};
+}
 </script>
 
 <style scoped>
