@@ -94,15 +94,8 @@ const editor = useEditor({
 
 useVariableEditing(editor);
 useTableContextMenu(editor);
-const { getTemplate, insertVariable, compareVariables, getVariables, updateVariables } = useEmrApi(editor);
 
-defineExpose({
-  getTemplate,
-  getVariables,
-  updateVariables,
-  insertVariable,
-  compareVariables
-});
+defineExpose(useEmrApi(editor));
 </script>
 
 <style scoped>
@@ -205,16 +198,23 @@ defineExpose({
 .emr-content :deep(.page-break) {
   position: relative;
 }
-.emr-content :deep(.page-break::after) {
-  content: "分页符";
+.emr-content :deep(.page-break) {
+  width: 100%;
+  height: 1px;
+  background: #ccc;
+  position: relative;
+  margin: 16px 0;
+}
+
+.emr-content :deep(.page-break-text) {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   color: #999;
-  font-size: 0.8rem;
+  font-size: 12px;
   background: white;
-  padding: 0 0.5rem;
+  padding: 0 8px;
 }
 
 .emr-content :deep(.emr-variable-select) {

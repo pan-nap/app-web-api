@@ -6,19 +6,17 @@ export const PageBreakExtension = Node.create({
   selectable: false,
 
   parseHTML() {
-    return [
-      { tag: "hr.page-break" },
-      { tag: "div[data-page-break]" }
-    ];
+    return [{ tag: "div.page-break" }, { tag: "hr.page-break" }];
   },
 
   renderHTML() {
     return [
-      "hr",
+      "div",
       {
         class: "page-break",
         "data-page-break": ""
-      }
+      },
+      ["span", { class: "page-break-text" }, "分页符"]
     ];
   }
 });

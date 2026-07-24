@@ -50,6 +50,28 @@
       1. List
     </button>
     <div class="w-px h-6 bg-gray-200 mx-1"></div>
+    <button
+      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
+      :class="{ 'bg-blue-100 text-blue-600': editor?.isActive({ textAlign: 'left' }) }"
+      @click="editor?.chain().focus().setTextAlign('left').run()"
+    >
+      ←
+    </button>
+    <button
+      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
+      :class="{ 'bg-blue-100 text-blue-600': editor?.isActive({ textAlign: 'center' }) }"
+      @click="editor?.chain().focus().setTextAlign('center').run()"
+    >
+      ↔
+    </button>
+    <button
+      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
+      :class="{ 'bg-blue-100 text-blue-600': editor?.isActive({ textAlign: 'right' }) }"
+      @click="editor?.chain().focus().setTextAlign('right').run()"
+    >
+      →
+    </button>
+    <div class="w-px h-6 bg-gray-200 mx-1"></div>
     <div class="table-dropdown relative" @mouseenter="showTableMenu = true">
       <button class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors flex items-center gap-1">
         <span>Table</span>
@@ -58,69 +80,24 @@
       <div
         v-show="showTableMenu"
         @mouseleave="showTableMenu = false"
-        class="table-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3 min-w-[200px]"
+        class="table-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3"
       >
         <div class="mb-3">
-          <div class="text-xs text-gray-500 mb-2">选择行列数</div>
-          <div class="grid-selector grid grid-cols-[repeat(8,1fr)] gap-1 bg-gray-200 p-1 rounded">
+          <div class="text-gray-500 mb-2">选择行列数 {{ selectedRows }}x{{ selectedCols }}</div>
+          <div class="grid-selector grid grid-cols-[repeat(8,1fr)] gap-1 p-1 rounded">
             <template v-for="row in maxRows" :key="row">
-              <button
+              <div
                 v-for="col in maxCols"
                 :key="`${row}-${col}`"
-                class="grid-cell w-6 h-6 text-xs rounded-sm transition-colors"
+                class="border-[1px] border-gray-400 border-solid w-6 h-6 rounded-sm transition-colors"
                 :class="{
-                  'bg-blue-500 text-white': selectedRows >= row && selectedCols >= col,
-                  'hover:bg-blue-100': selectedRows < row || selectedCols < col
+                  'bg-blue-500': selectedRows >= row && selectedCols >= col
                 }"
                 @mouseenter="selectGrid(row, col)"
                 @click="insertTable(row, col)"
-              ></button>
+              ></div>
             </template>
           </div>
-        </div>
-        <div class="border-t border-gray-100 pt-3 space-y-2">
-          <button class="dropdown-btn w-full px-3 py-2 text-sm rounded hover:bg-gray-50 text-left flex items-center gap-2" @click="handleMergeCells">
-            <span>合并单元格</span>
-          </button>
-          <button class="dropdown-btn w-full px-3 py-2 text-sm rounded hover:bg-gray-50 text-left flex items-center gap-2" @click="handleSplitCell">
-            <span>拆分单元格</span>
-          </button>
-          <button
-            class="dropdown-btn w-full px-3 py-2 text-sm rounded hover:bg-gray-50 text-left flex items-center gap-2"
-            @click="handleAddRowBefore"
-          >
-            <span>在上方添加行</span>
-          </button>
-          <button class="dropdown-btn w-full px-3 py-2 text-sm rounded hover:bg-gray-50 text-left flex items-center gap-2" @click="handleAddRowAfter">
-            <span>在下方添加行</span>
-          </button>
-          <button
-            class="dropdown-btn w-full px-3 py-2 text-sm rounded hover:bg-gray-50 text-left flex items-center gap-2"
-            @click="handleAddColumnBefore"
-          >
-            <span>在左侧添加列</span>
-          </button>
-          <button
-            class="dropdown-btn w-full px-3 py-2 text-sm rounded hover:bg-gray-50 text-left flex items-center gap-2"
-            @click="handleAddColumnAfter"
-          >
-            <span>在右侧添加列</span>
-          </button>
-          <button class="dropdown-btn w-full px-3 py-2 text-sm rounded hover:bg-gray-50 text-left flex items-center gap-2" @click="handleDeleteRow">
-            <span>删除当前行</span>
-          </button>
-          <button
-            class="dropdown-btn w-full px-3 py-2 text-sm rounded hover:bg-gray-50 text-left flex items-center gap-2"
-            @click="handleDeleteColumn"
-          >
-            <span>删除当前列</span>
-          </button>
-          <button
-            class="dropdown-btn w-full px-3 py-2 text-sm rounded hover:bg-gray-50 text-left flex items-center gap-2 text-red-500"
-            @click="handleDeleteTable"
-          >
-            <span>删除表格</span>
-          </button>
         </div>
       </div>
     </div>
@@ -148,51 +125,6 @@ const selectGrid = (row: number, col: number) => {
 
 const insertTable = (rows: number, cols: number) => {
   props.editor?.chain().focus().insertTable({ rows, cols }).run();
-  showTableMenu.value = false;
-};
-
-const handleMergeCells = () => {
-  props.editor?.chain().focus().mergeCells().run();
-  showTableMenu.value = false;
-};
-
-const handleSplitCell = () => {
-  props.editor?.chain().focus().splitCell().run();
-  showTableMenu.value = false;
-};
-
-const handleAddRowBefore = () => {
-  props.editor?.chain().focus().addRowBefore().run();
-  showTableMenu.value = false;
-};
-
-const handleAddRowAfter = () => {
-  props.editor?.chain().focus().addRowAfter().run();
-  showTableMenu.value = false;
-};
-
-const handleAddColumnBefore = () => {
-  props.editor?.chain().focus().addColumnBefore().run();
-  showTableMenu.value = false;
-};
-
-const handleAddColumnAfter = () => {
-  props.editor?.chain().focus().addColumnAfter().run();
-  showTableMenu.value = false;
-};
-
-const handleDeleteRow = () => {
-  props.editor?.chain().focus().deleteRow().run();
-  showTableMenu.value = false;
-};
-
-const handleDeleteColumn = () => {
-  props.editor?.chain().focus().deleteColumn().run();
-  showTableMenu.value = false;
-};
-
-const handleDeleteTable = () => {
-  props.editor?.chain().focus().deleteTable().run();
   showTableMenu.value = false;
 };
 </script>

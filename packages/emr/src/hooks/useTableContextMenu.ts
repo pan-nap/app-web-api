@@ -1,9 +1,8 @@
-import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import type { Editor } from "@tiptap/vue-3";
 
 export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
   const showMenu = ref(false);
-  const menuPosition = reactive({ x: 0, y: 0 });
   let menuElement: HTMLElement | null = null;
 
   const createMenu = () => {
@@ -34,6 +33,9 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
         color: ${isDanger ? "#dc2626" : "#374151"};
         white-space: nowrap;
       `;
+      item.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+      });
       item.addEventListener("click", onClick);
       item.addEventListener("mouseenter", () => {
         item.style.backgroundColor = isDanger ? "#fef2f2" : "#f3f4f6";
@@ -82,17 +84,17 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
     if (!tableElement) {
       if (menuElementTarget) {
         event.preventDefault();
+        return;
       }
+      closeMenu();
       return;
     }
 
     event.preventDefault();
 
     if (showMenu.value && menuElement?.style?.display === "block") {
-      menuPosition.x = event.clientX;
-      menuPosition.y = event.clientY;
-      menuElement.style.left = `${menuPosition.x}px`;
-      menuElement.style.top = `${menuPosition.y}px`;
+      menuElement.style.left = `${event.clientX}px`;
+      menuElement.style.top = `${event.clientY}px`;
       return;
     }
 
@@ -100,14 +102,12 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
     if (!cell || !editor.value) return;
 
     createMenu();
-    menuPosition.x = event.clientX;
-    menuPosition.y = event.clientY;
     showMenu.value = true;
 
     if (menuElement) {
       menuElement.style.display = "block";
-      menuElement.style.left = `${menuPosition.x}px`;
-      menuElement.style.top = `${menuPosition.y}px`;
+      menuElement.style.left = `${event.clientX}px`;
+      menuElement.style.top = `${event.clientY}px`;
     }
   };
 
@@ -180,7 +180,6 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
 
   return {
     showMenu,
-    menuPosition,
     insertRowBefore,
     insertRowAfter,
     insertColumnBefore,

@@ -29,7 +29,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
       border: 1px solid #e5e7eb;
       border-radius: 6px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-      min-width: 160px;
+      min-width: 30px;
       padding: 4px 0;
       font-size: 14px;
       max-height: 240px;
@@ -137,11 +137,12 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
     const input = document.createElement("input");
     input.type = "text";
     input.value = currentValue;
-
     input.style.position = "fixed";
     input.style.left = `${rect.left}px`;
     input.style.top = `${rect.top}px`;
-    input.style.minWidth = `${Math.max(rect.width, 30)}px`;
+    const minWidth = Math.max(rect.width, 30);
+    input.style.width = `${minWidth}px`;
+    input.style.minWidth = `${minWidth}px`;
     input.style.height = `${rect.height}px`;
     input.style.zIndex = "9999";
     input.style.border = "none";
@@ -158,14 +159,39 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
     input.style.margin = "0";
     input.style.boxSizing = "border-box";
 
+    // 用于测量文本宽度的隐藏元素
+    const measureEl = document.createElement("span");
+    measureEl.style.cssText = `
+      position: absolute;
+      visibility: hidden;
+      white-space: pre;
+      font-size: ${computedStyle.fontSize};
+      font-family: ${computedStyle.fontFamily};
+      font-weight: ${computedStyle.fontWeight};
+      letter-spacing: ${computedStyle.letterSpacing};
+      padding: 0 4px;
+      box-sizing: border-box;
+    `;
+    document.body.appendChild(measureEl);
+
+    const updateInputWidth = () => {
+      measureEl.textContent = input.value || " ";
+      const textWidth = measureEl.getBoundingClientRect().width;
+      input.style.width = `${Math.max(textWidth, minWidth)}px`;
+    };
+
+    updateInputWidth();
+
     const finishEdit = (save: boolean) => {
       if (save) {
         updateVariableValue(refKey, input.value.trim());
       }
+      measureEl.remove();
       input.remove();
     };
 
     input.addEventListener("blur", () => finishEdit(true));
+    input.addEventListener("input", updateInputWidth);
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
