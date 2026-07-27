@@ -4,6 +4,10 @@
  * 数据结构以 ProseMirror JSON 为唯一真值
  */
 
+export interface EmrEditorProps {
+  disabled?: boolean;
+}
+
 /** 下拉选项配置 */
 export interface VariableOption {
   /** 选项值 */

@@ -3,8 +3,9 @@ import type { InsertVariableOptions, VariableChange } from "../types/emr";
 import { getValueByPath, decodeOptions, normalizeTemplate } from "../utils/templateUtils";
 import { temData2, data2 } from "../data/data2.ts";
 import { onMounted } from "vue";
+import type { EmrEditorProps } from "../types/emr";
 
-export const useEmrApi = (editor: { value: Editor | undefined }) => {
+export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
   function getTemplate(): any {
     if (!editor.value) return null;
     const json = editor.value.getJSON();
@@ -36,7 +37,7 @@ export const useEmrApi = (editor: { value: Editor | undefined }) => {
   }
 
   function insertVariable(options: InsertVariableOptions) {
-    if (!editor.value) return;
+    if (!editor.value || props.disabled) return;
 
     editor.value
       .chain()
@@ -119,7 +120,7 @@ export const useEmrApi = (editor: { value: Editor | undefined }) => {
   }
 
   function updateVariables(data: Record<string, any>) {
-    if (!editor.value) return;
+    if (!editor.value || props.disabled) return;
 
     const transaction = editor.value.state.tr;
 

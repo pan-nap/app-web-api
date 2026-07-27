@@ -1,7 +1,8 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import type { Editor } from "@tiptap/vue-3";
+import type { EmrEditorProps } from "../types/emr";
 
-export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
+export const useTableContextMenu = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
   const showMenu = ref(false);
   let menuElement: HTMLElement | null = null;
 
@@ -167,6 +168,7 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }) => {
   }
 
   onMounted(() => {
+    if (props.disabled) return;
     document.addEventListener("contextmenu", handleContextMenu);
   });
 

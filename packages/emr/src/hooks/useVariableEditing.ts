@@ -1,7 +1,8 @@
 import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
 import type { Editor } from "@tiptap/vue-3";
+import type { EmrEditorProps } from "../types/emr";
 
-export const useVariableEditing = (editor: { value: Editor | undefined }) => {
+export const useVariableEditing = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
   const showDropdown = ref(false);
   const dropdownOptions = ref<{ value: string; label: string }[]>([]);
   const dropdownCurrentValue = ref("");
@@ -246,6 +247,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }) => {
   }
 
   onMounted(() => {
+    if (props.disabled) return;
     const contentElement = editor.value?.view?.dom as HTMLElement | null;
     contentElement?.addEventListener("click", handleVariableClick);
   });

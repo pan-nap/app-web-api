@@ -21,6 +21,11 @@ import { useVariableEditing } from "../hooks/useVariableEditing";
 import { useTableContextMenu } from "../hooks/useTableContextMenu";
 import { useEmrApi } from "../hooks/useEmrApi";
 import EmrToolbar from "./EmrToolbar.vue";
+import type { EmrEditorProps } from "../types/emr";
+
+const props = withDefaults(defineProps<EmrEditorProps>(), {
+  disabled: false
+});
 
 const editor = useEditor({
   extensions: [
@@ -45,13 +50,14 @@ const editor = useEditor({
     }),
     PageBreakExtension
   ],
+  editable: !props.disabled, // 设置为 false，编辑器将处于只读状态
   content: ""
 });
 
-useVariableEditing(editor);
-useTableContextMenu(editor);
+useVariableEditing(editor, props);
+useTableContextMenu(editor, props);
 
-defineExpose(useEmrApi(editor));
+defineExpose(useEmrApi(editor, props));
 </script>
 
 <style scoped>
