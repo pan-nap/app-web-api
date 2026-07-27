@@ -1,6 +1,6 @@
 <template>
   <div class="emr-editor">
-    <emr-toolbar :editor="editor" />
+    <emr-toolbar v-if="!hideToolbar" :editor="editor" />
     <editor-content :editor="editor" class="emr-content bg-white shadow-sm my-2" />
   </div>
 </template>
@@ -24,6 +24,7 @@ import EmrToolbar from "./EmrToolbar.vue";
 import type { EmrEditorProps } from "../types/emr";
 
 const props = withDefaults(defineProps<EmrEditorProps>(), {
+  hideToolbar: false,
   disabled: false
 });
 
