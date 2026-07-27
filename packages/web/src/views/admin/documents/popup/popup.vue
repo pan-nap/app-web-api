@@ -29,8 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
-import { HsMessage } from "hs-admin-ui";
+import { ref, onMounted } from "vue";
 import { EmrEditor } from "@cashier/emr";
 import type { EmrElement } from "@cashier/emr";
 import { useDocumentStore } from "@/stores/documents";

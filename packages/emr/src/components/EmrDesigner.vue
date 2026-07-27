@@ -1,0 +1,342 @@
+<template>
+  <div class="emr-designer h-full flex flex-col bg-gray-100">
+    <div class="designer-header flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200">
+      <h2 class="text-base font-semibold text-gray-800">EMR 模板设计器</h2>
+      <div class="header-actions flex items-center gap-2">
+        <button @click="handlePreview" class="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded hover:bg-gray-200 transition-colors">预览</button>
+        <button @click="handleSave" class="px-3 py-1.5 text-sm text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors">保存模板</button>
+      </div>
+    </div>
+
+    <div class="designer-body flex flex-1 overflow-hidden">
+      <EmrComponentPanel @drag-start="handleDragStart" />
+
+      <div
+        class="editor-container flex-1 overflow-auto flex items-start justify-center py-4"
+        @dragover="handleDragOver"
+        @drop="handleDrop"
+        @click="handleEditorAreaClick"
+      >
+        <EmrEditor ref="editorRef" class="designer-editor" :class="{ 'editor-selected': isEditorFocused }" />
+      </div>
+
+      <EmrPropertyPanel
+        :selected-variable="selectedVariable"
+        @update-attr="handleUpdateAttr"
+        @update-options="handleUpdateOptions"
+        @delete="handleDeleteVariable"
+      />
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
+import type { Editor } from "@tiptap/vue-3";
+import EmrEditor from "./EmrEditor.vue";
+import EmrComponentPanel from "./EmrComponentPanel.vue";
+import EmrPropertyPanel from "./EmrPropertyPanel.vue";
+import type { InsertVariableOptions, VariableOption } from "../types/emr";
+
+const editorRef = ref<InstanceType<typeof EmrEditor> | null>(null);
+const selectedVariable = ref<InsertVariableOptions | null>(null);
+const selectedPos = ref<number | null>(null);
+const isEditorFocused = ref(false);
+
+let editorInstance: Editor | null = null;
+let dragPayload: any = null;
+
+function getEditor(): Editor | null {
+  if (editorInstance) return editorInstance;
+  editorInstance = editorRef.value?.getEditor() || null;
+  return editorInstance;
+}
+
+function handleDragStart(payload: any) {
+  dragPayload = payload;
+}
+
+function handleDragOver(event: DragEvent) {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "copy";
+  }
+}
+
+function handleDrop(event: DragEvent) {
+  event.preventDefault();
+
+  const editor = getEditor();
+  if (!editor || !dragPayload) {
+    console.log("handleDrop: editor or dragPayload is null");
+    return;
+  }
+
+  const coords = editor.view.posAtCoords({
+    left: event.clientX,
+    top: event.clientY
+  });
+
+  console.log("handleDrop: coords =", coords);
+
+  if (!coords || coords.pos === undefined) {
+    console.log("handleDrop: coords is null, using default insert");
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: "variable",
+        attrs: {
+          refKey: dragPayload.refKey || "",
+          widgetName: dragPayload.widgetName || "变量",
+          widgetType: dragPayload.widgetType || "text",
+          extensionValue: "",
+          options:
+            dragPayload.widgetType === "select"
+              ? [
+                  { label: "选项1", value: "1" },
+                  { label: "选项2", value: "2" }
+                ]
+              : [],
+          required: false,
+          placeholder: ""
+        }
+      })
+      .run();
+    return;
+  }
+
+  const pos = coords.pos;
+
+  editor
+    .chain()
+    .focus()
+    .insertContentAt(pos, {
+      type: "variable",
+      attrs: {
+        refKey: dragPayload.refKey || "",
+        widgetName: dragPayload.widgetName || "变量",
+        widgetType: dragPayload.widgetType || "text",
+        extensionValue: "",
+        options:
+          dragPayload.widgetType === "select"
+            ? [
+                { label: "选项1", value: "1" },
+                { label: "选项2", value: "2" }
+              ]
+            : [],
+        required: false,
+        placeholder: ""
+      }
+    })
+    .run();
+
+  nextTick(() => {
+    selectVariableAtPos(pos);
+  });
+
+  dragPayload = null;
+}
+
+function handleEditorAreaClick(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (target.closest(".emr-variable")) {
+    const variableEl = target.closest(".emr-variable") as HTMLElement;
+    const refKey = variableEl.getAttribute("data-ref-key") || "";
+    const widgetName = variableEl.getAttribute("data-widget-name") || "";
+    const widgetType = variableEl.getAttribute("data-widget-type") || "text";
+    const placeholder = variableEl.getAttribute("data-placeholder") || "";
+    const required = variableEl.getAttribute("data-required") === "true";
+
+    const editor = getEditor();
+    if (!editor) return;
+
+    const pos = editor.view.posAtDOM(variableEl as Node, 0);
+
+    selectedPos.value = pos;
+    selectedVariable.value = {
+      refKey,
+      widgetName,
+      widgetType: widgetType as any,
+      extensionValue: variableEl.textContent || "",
+      options: [],
+      required,
+      placeholder
+    };
+
+    const nodePos = findVariableNodeAtPos(pos);
+    if (nodePos && nodePos.node.attrs.options) {
+      selectedVariable.value.options = nodePos.node.attrs.options;
+    }
+  } else {
+    selectedVariable.value = null;
+    selectedPos.value = null;
+  }
+}
+
+function findVariableNodeAtPos(pos: number): { node: any; pos: number } | null {
+  const editor = getEditor();
+  if (!editor) return null;
+
+  let result: { node: any; pos: number } | null = null;
+
+  editor.state.doc.descendants((node: any, nodePos: number) => {
+    if (node.type.name === "variable") {
+      const nodeEnd = nodePos + node.nodeSize;
+      if (pos >= nodePos && pos <= nodeEnd) {
+        result = { node, pos: nodePos };
+        return false;
+      }
+    }
+    return true;
+  });
+
+  return result;
+}
+
+function selectVariableAtPos(pos: number) {
+  const nodePos = findVariableNodeAtPos(pos);
+  if (!nodePos) return;
+
+  const node = nodePos.node;
+  selectedPos.value = nodePos.pos;
+  selectedVariable.value = {
+    refKey: node.attrs.refKey || "",
+    widgetName: node.attrs.widgetName || "",
+    widgetType: node.attrs.widgetType || "text",
+    extensionValue: node.attrs.extensionValue || "",
+    options: node.attrs.options || [],
+    required: node.attrs.required || false,
+    placeholder: node.attrs.placeholder || ""
+  };
+}
+
+function handleUpdateAttr(key: string, value: any) {
+  if (!selectedVariable.value || selectedPos.value === null) return;
+
+  const editor = getEditor();
+  if (!editor) return;
+
+  const pos = selectedPos.value;
+  const nodePos = findVariableNodeAtPos(pos);
+  if (!nodePos) return;
+
+  const newAttrs = {
+    ...nodePos.node.attrs,
+    [key]: value
+  };
+
+  const transaction = editor.state.tr.setNodeMarkup(nodePos.pos, undefined, newAttrs);
+  editor.view.dispatch(transaction);
+
+  (selectedVariable.value as any)[key] = value;
+}
+
+function handleUpdateOptions(options: VariableOption[]) {
+  if (!selectedVariable.value || selectedPos.value === null) return;
+
+  const editor = getEditor();
+  if (!editor) return;
+
+  const pos = selectedPos.value;
+  const nodePos = findVariableNodeAtPos(pos);
+  if (!nodePos) return;
+
+  const newAttrs = {
+    ...nodePos.node.attrs,
+    options
+  };
+
+  const transaction = editor.state.tr.setNodeMarkup(nodePos.pos, undefined, newAttrs);
+  editor.view.dispatch(transaction);
+
+  selectedVariable.value.options = options;
+}
+
+function handleDeleteVariable() {
+  if (selectedPos.value === null) return;
+
+  const editor = getEditor();
+  if (!editor) return;
+
+  const nodePos = findVariableNodeAtPos(selectedPos.value);
+  if (!nodePos) return;
+
+  const transaction = editor.state.tr.delete(nodePos.pos, nodePos.pos + nodePos.node.nodeSize);
+  editor.view.dispatch(transaction);
+
+  selectedVariable.value = null;
+  selectedPos.value = null;
+}
+
+function handlePreview() {
+  alert("预览功能开发中...");
+}
+
+function handleSave() {
+  const editor = getEditor();
+  if (!editor) return;
+
+  const template = editor.getJSON();
+  console.log("保存模板：", template);
+  alert("模板已保存（查看控制台）");
+}
+
+function handleSelectionUpdate() {
+  const editor = getEditor();
+  if (!editor) return;
+
+  const { from, to } = editor.state.selection;
+  if (from === to) {
+    const nodePos = findVariableNodeAtPos(from);
+    if (nodePos) {
+      selectVariableAtPos(nodePos.pos);
+      return;
+    }
+  }
+}
+
+onMounted(() => {
+  nextTick(() => {
+    const editor = getEditor();
+    if (editor) {
+      editor.on("selectionUpdate", handleSelectionUpdate);
+    }
+
+    document.addEventListener("click", handleEditorAreaClick);
+  });
+});
+
+onBeforeUnmount(() => {
+  const editor = getEditor();
+  if (editor) {
+    editor.off("selectionUpdate", handleSelectionUpdate);
+  }
+
+  document.removeEventListener("click", handleEditorAreaClick);
+});
+</script>
+
+<style scoped>
+.editor-container {
+  background-color: #f3f4f6;
+}
+
+.designer-editor {
+  width: 100%;
+  max-width: 100%;
+}
+
+.editor-selected {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+:deep(.emr-variable) {
+  cursor: pointer;
+}
+
+:deep(.emr-variable:hover) {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+</style>

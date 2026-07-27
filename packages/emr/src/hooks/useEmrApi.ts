@@ -6,6 +6,10 @@ import { onMounted } from "vue";
 import type { EmrEditorProps } from "../types/emr";
 
 export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
+  function getEditor(): Editor | null {
+    return editor.value || null;
+  }
+
   function getTemplate(): any {
     if (!editor.value) return null;
     const json = editor.value.getJSON();
@@ -200,6 +204,7 @@ export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEdito
     insertVariable,
     compareVariables,
     getVariables,
-    updateVariables
+    updateVariables,
+    getEditor
   };
 };

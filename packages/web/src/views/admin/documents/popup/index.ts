@@ -1,5 +1,6 @@
 import { Utils } from "hs-admin-ui";
 import type { EmrElement } from "@cashier/emr";
+import AddPopup from "./add.vue";
 import EditorPopup from "./popup.vue";
 
 export interface EditorPopupOptions {
@@ -20,7 +21,7 @@ export interface EditorPopupOptions {
 export function showPopup(options: EditorPopupOptions = {}): Promise<"confirm" | "cancel" | undefined> {
   return new Promise((resolve) => {
     Utils.showPopup(
-      EditorPopup,
+      options.row?.id ? EditorPopup : AddPopup,
       {
         name: options.name ?? "",
         docType: options.docType ?? "template",

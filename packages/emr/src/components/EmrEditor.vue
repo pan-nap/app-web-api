@@ -50,7 +50,7 @@ const editor = useEditor({
     }),
     PageBreakExtension
   ],
-  editable: !props.disabled, // 设置为 false，编辑器将处于只读状态
+  editable: !props.disabled,
   content: ""
 });
 
