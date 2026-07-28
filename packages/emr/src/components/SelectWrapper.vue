@@ -1,6 +1,6 @@
 <template>
   <div class="select-wrapper">
-    <el-select v-model="selectValue" placeholder="请选择" @change="handleChange">
+    <el-select v-model="selectValue" automatic-dropdown placeholder="请选择" @change="handleChange">
       <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
     </el-select>
   </div>
@@ -42,6 +42,6 @@ function handleChange(value: string) {
 <style scoped>
 .select-wrapper {
   display: inline-block;
-  min-width: 120px;
+  min-width: 100%;
 }
 </style>

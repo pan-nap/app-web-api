@@ -1,148 +1,10 @@
-import { ref, reactive, onMounted, onBeforeUnmount, createVNode, render, nextTick } from "vue";
+import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
 import type { Editor } from "@tiptap/vue-3";
 import type { EmrEditorProps } from "../types";
-import DatePickerWrapper from "../components/DatePickerWrapper.vue";
-import SelectWrapper from "../components/SelectWrapper.vue";
-import { getAppContext } from "../index";
+import { useComponentPicker } from "./useComponentPicker";
 
 export const useVariableEditing = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
-  let selectContainer: HTMLElement | null = null;
-
-  /** 启动下拉选择编辑模式，使用 ElSelect 组件 */
-  function startSelectEdit(span: HTMLElement, refKey: string, currentValue: string, options: { value: string; label: string }[]) {
-    if (selectContainer) {
-      cleanupSelect();
-    }
-
-    const rect = span.getBoundingClientRect();
-
-    selectContainer = document.createElement("div");
-    selectContainer.style.cssText = `
-      position: fixed;
-      left: ${rect.left}px;
-      top: ${rect.top}px;
-      z-index: 9999;
-      background: #fff;
-      padding: 4px;
-      border-radius: 4px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    `;
-
-    const vnode = createVNode(SelectWrapper, {
-      modelValue: currentValue,
-      options,
-      "onUpdate:modelValue": (val: string) => {
-        updateVariableValue(refKey, val);
-      },
-      onChange: (val: string) => {
-        updateVariableValue(refKey, val);
-      }
-    });
-
-    const appContext = getAppContext();
-    if (appContext) {
-      vnode.appContext = appContext;
-    }
-
-    render(vnode, selectContainer);
-    document.body.appendChild(selectContainer);
-
-    nextTick(() => {
-      const input = selectContainer?.querySelector("input");
-      if (input) {
-        input.focus();
-      }
-    });
-
-    setTimeout(() => {
-      document.addEventListener("mousedown", handleSelectOutsideClick);
-    }, 100);
-  }
-
-  /** 清理选择器容器 */
-  function cleanupSelect() {
-    if (selectContainer) {
-      render(null, selectContainer);
-      selectContainer.remove();
-      selectContainer = null;
-      document.removeEventListener("mousedown", handleSelectOutsideClick);
-    }
-  }
-
-  /** 处理选择器外部点击 */
-  function handleSelectOutsideClick(e: MouseEvent) {
-    if (selectContainer && !selectContainer.contains(e.target as Node)) {
-      cleanupSelect();
-    }
-  }
-
-  /** 启动日期编辑模式，使用 ElDatePicker 组件 */
-  function startDateEdit(span: HTMLElement, refKey: string, currentValue: string) {
-    const rect = span.getBoundingClientRect();
-
-    // 创建容器
-    const container = document.createElement("div");
-    container.style.cssText = `
-      position: fixed;
-      left: ${rect.left}px;
-      top: ${rect.top}px;
-      width: 150px;
-      z-index: 9999;
-      background: #fff;
-      padding: 4px;
-      border-radius: 4px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    `;
-
-    // 创建虚拟节点
-    const vnode = createVNode(DatePickerWrapper, {
-      modelValue: currentValue,
-      valueFormat: "YYYY-MM-DD",
-      "onUpdate:modelValue": (val: string) => {
-        updateVariableValue(refKey, val);
-      },
-      onChange: (val: string) => {
-        updateVariableValue(refKey, val);
-        cleanup();
-      }
-    });
-
-    // 获取 appContext 以确保组件正确渲染
-    const appContext = getAppContext();
-    if (appContext) {
-      vnode.appContext = appContext;
-    }
-
-    // 渲染到容器
-    render(vnode, container);
-    document.body.appendChild(container);
-
-    // 聚焦到输入框
-    nextTick(() => {
-      const input = container.querySelector("input");
-      if (input) {
-        input.focus();
-        input.select();
-      }
-    });
-
-    function cleanup() {
-      render(null, container);
-      container.remove();
-      document.removeEventListener("mousedown", handleOutsideClick);
-    }
-
-    function handleOutsideClick(e: MouseEvent) {
-      if (!container.contains(e.target as Node)) {
-        cleanup();
-      }
-    }
-
-    // 点击外部关闭
-    setTimeout(() => {
-      document.addEventListener("mousedown", handleOutsideClick);
-    }, 100);
-  }
+  const { cleanupPicker, startDatePicker, startSelectPicker } = useComponentPicker();
 
   /** 启动数字编辑模式，创建数字输入框 */
   function startNumberEdit(span: HTMLElement, refKey: string, currentValue: string) {
@@ -323,7 +185,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
     const variableSpan = target.closest(".emr-variable");
 
     if (!variableSpan || !editor.value) {
-      cleanupSelect();
+      cleanupPicker();
       return;
     }
 
@@ -341,11 +203,11 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
         if (isSelect) {
           event.preventDefault();
           event.stopPropagation();
-          startSelectEdit(variableSpan as HTMLElement, refKey, node.attrs.extensionValue || "", options);
+          startSelectPicker(variableSpan as HTMLElement, node.attrs.extensionValue || "", options, (val) => updateVariableValue(refKey, val));
         } else if (isDate) {
           event.preventDefault();
           event.stopPropagation();
-          startDateEdit(variableSpan as HTMLElement, refKey, node.attrs.extensionValue || "");
+          startDatePicker(variableSpan as HTMLElement, node.attrs.extensionValue || "", (val) => updateVariableValue(refKey, val));
         } else if (isNumber) {
           event.preventDefault();
           event.stopPropagation();
@@ -367,7 +229,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
   });
 
   onBeforeUnmount(() => {
-    cleanupSelect();
+    cleanupPicker();
   });
 
   return {};
