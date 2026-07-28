@@ -109,7 +109,6 @@ function getTypeIcon(widgetType: string): string {
 function handleDragStart(event: DragEvent, item: ComponentItem) {
   const payload = { type: "component", widgetType: item.widgetType, widgetName: item.label };
   if (event.dataTransfer) {
-    event.dataTransfer.setData("application/json", JSON.stringify(payload));
     event.dataTransfer.effectAllowed = "copy";
   }
   emit("drag-start", payload);
@@ -123,7 +122,6 @@ function handleFieldDragStart(event: DragEvent, field: DataField) {
     refKey: field.refKey
   };
   if (event.dataTransfer) {
-    event.dataTransfer.setData("application/json", JSON.stringify(payload));
     event.dataTransfer.effectAllowed = "copy";
   }
   emit("drag-start", payload);

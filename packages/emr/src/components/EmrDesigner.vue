@@ -3,8 +3,8 @@
     <div class="designer-header flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200">
       <h2 class="text-base font-semibold text-gray-800">EMR 模板设计器</h2>
       <div class="header-actions flex items-center gap-2">
-        <button @click="handlePreview" class="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded hover:bg-gray-200 transition-colors">预览</button>
-        <button @click="handleSave" class="px-3 py-1.5 text-sm text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors">保存模板</button>
+        <el-button @click="handlePreview" type="primary">预览</el-button>
+        <el-button @click="handleSave" type="primary">保存模板</el-button>
       </div>
     </div>
 
@@ -81,41 +81,15 @@ function handleDrop(event: DragEvent) {
     top: event.clientY
   });
 
-  console.log("handleDrop: coords =", coords);
-
   if (!coords || coords.pos === undefined) {
     console.log("handleDrop: coords is null, using default insert");
-    editor
-      .chain()
-      .focus()
-      .insertContent({
-        type: "variable",
-        attrs: {
-          refKey: dragPayload.refKey || "",
-          widgetName: dragPayload.widgetName || "变量",
-          widgetType: dragPayload.widgetType || "text",
-          extensionValue: "",
-          options:
-            dragPayload.widgetType === "select"
-              ? [
-                  { label: "选项1", value: "1" },
-                  { label: "选项2", value: "2" }
-                ]
-              : [],
-          required: false,
-          placeholder: ""
-        }
-      })
-      .run();
     return;
   }
-
-  const pos = coords.pos;
 
   editor
     .chain()
     .focus()
-    .insertContentAt(pos, {
+    .insertContentAt(coords.pos, {
       type: "variable",
       attrs: {
         refKey: dragPayload.refKey || "",
@@ -136,7 +110,7 @@ function handleDrop(event: DragEvent) {
     .run();
 
   nextTick(() => {
-    selectVariableAtPos(pos);
+    selectVariableAtPos(coords.pos);
   });
 
   dragPayload = null;
@@ -169,7 +143,7 @@ function handleEditorAreaClick(event: MouseEvent) {
       placeholder
     };
 
-    const nodePos = findVariableNodeAtPos(pos);
+    const nodePos = editorRef.value?.findVariableNodeAtPos(pos);
     if (nodePos && nodePos.node.attrs.options) {
       selectedVariable.value.options = nodePos.node.attrs.options;
     }
@@ -179,30 +153,9 @@ function handleEditorAreaClick(event: MouseEvent) {
   }
 }
 
-/** 根据位置查找变量节点 */
-function findVariableNodeAtPos(pos: number): { node: any; pos: number } | null {
-  const editor = getEditor();
-  if (!editor) return null;
-
-  let result: { node: any; pos: number } | null = null;
-
-  editor.state.doc.descendants((node: any, nodePos: number) => {
-    if (node.type.name === "variable") {
-      const nodeEnd = nodePos + node.nodeSize;
-      if (pos >= nodePos && pos <= nodeEnd) {
-        result = { node, pos: nodePos };
-        return false;
-      }
-    }
-    return true;
-  });
-
-  return result;
-}
-
 /** 根据位置选中变量并更新属性面板 */
 function selectVariableAtPos(pos: number) {
-  const nodePos = findVariableNodeAtPos(pos);
+  const nodePos = editorRef.value?.findVariableNodeAtPos(pos);
   if (!nodePos) return;
 
   const node = nodePos.node;
@@ -226,7 +179,7 @@ function handleUpdateAttr(key: string, value: any) {
   if (!editor) return;
 
   const pos = selectedPos.value;
-  const nodePos = findVariableNodeAtPos(pos);
+  const nodePos = editorRef.value?.findVariableNodeAtPos(pos);
   if (!nodePos) return;
 
   const newAttrs = {
@@ -248,7 +201,7 @@ function handleUpdateOptions(options: VariableOption[]) {
   if (!editor) return;
 
   const pos = selectedPos.value;
-  const nodePos = findVariableNodeAtPos(pos);
+  const nodePos = editorRef.value?.findVariableNodeAtPos(pos);
   if (!nodePos) return;
 
   const newAttrs = {
@@ -269,7 +222,7 @@ function handleDeleteVariable() {
   const editor = getEditor();
   if (!editor) return;
 
-  const nodePos = findVariableNodeAtPos(selectedPos.value);
+  const nodePos = editorRef.value?.findVariableNodeAtPos(selectedPos.value);
   if (!nodePos) return;
 
   const transaction = editor.state.tr.delete(nodePos.pos, nodePos.pos + nodePos.node.nodeSize);
@@ -301,7 +254,7 @@ function handleSelectionUpdate() {
 
   const { from, to } = editor.state.selection;
   if (from === to) {
-    const nodePos = findVariableNodeAtPos(from);
+    const nodePos = editorRef.value?.findVariableNodeAtPos(from);
     if (nodePos) {
       selectVariableAtPos(nodePos.pos);
       return;

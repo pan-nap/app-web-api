@@ -1,6 +1,7 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import App from "./App.vue";
+import { emrEditor } from "@cashier/emr";
 import { Utils, useHsAdminUi } from "hs-admin-ui";
 import { setupRouter, default as router } from "./router";
 import "hs-admin-ui/style.css";
@@ -29,7 +30,9 @@ app
     escClosable: true,
     showZoom: false,
     resize: true
-  });
+  })
+  .use(emrEditor);
+
 setupRouter(app).then(() => {
   app.mount("#app");
 });

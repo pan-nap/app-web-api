@@ -1,23 +1,13 @@
 <template>
-  <div class="flex flex-col h-full">
-    <!-- 编辑器 -->
-    <div class="flex-1 overflow-hidden flex flex-col">
-      <div class="basis-[150rpx]"></div>
-      <EmrDesigner ref="editorRef" />
-      <div class="basis-[150rpx]"></div>
-    </div>
-
-    <!-- 底部按钮 -->
-    <footer class="flex items-center justify-end gap-3 px-4 py-3 border-t border-gray-200 bg-gray-50">
-      <hs-button @click="close('cancel')">取消</hs-button>
-      <bc-button type="primary">保存</bc-button>
-    </footer>
+  <div class="h-full overflow-hidden flex flex-col">
+    <div class="basis-[150rpx]"></div>
+    <EmrDesigner ref="editorRef" />
+    <div class="basis-[150rpx]"></div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { EmrDesigner } from "@cashier/emr";
 import type { EmrElement } from "@cashier/emr";
 import { useDocumentStore } from "@/stores/documents";
 

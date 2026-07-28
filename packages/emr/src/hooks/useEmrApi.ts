@@ -201,6 +201,26 @@ export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEdito
     editor.value.commands.setContent(applyDataToTemplate(template || temData2, data || data2));
   }
 
+  /** 根据位置查找变量节点 */
+  function findVariableNodeAtPos(pos: number): { node: any; pos: number } | null {
+    if (!editor.value) return null;
+
+    let result: { node: any; pos: number } | null = null;
+
+    editor.value.state.doc.descendants((node: any, nodePos: number) => {
+      if (node.type.name === "variable") {
+        const nodeEnd = nodePos + node.nodeSize;
+        if (pos >= nodePos && pos <= nodeEnd) {
+          result = { node, pos: nodePos };
+          return false;
+        }
+      }
+      return true;
+    });
+
+    return result;
+  }
+
   onMounted(() => {
     setContent();
   });
@@ -212,6 +232,7 @@ export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEdito
     compareVariables,
     getVariables,
     updateVariables,
-    getEditor
+    getEditor,
+    findVariableNodeAtPos
   };
 };
