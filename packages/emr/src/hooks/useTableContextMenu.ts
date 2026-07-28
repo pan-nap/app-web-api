@@ -1,11 +1,12 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import type { Editor } from "@tiptap/vue-3";
-import type { EmrEditorProps } from "../types/emr";
+import type { EmrEditorProps } from "../types";
 
 export const useTableContextMenu = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
   const showMenu = ref(false);
   let menuElement: HTMLElement | null = null;
 
+  /** 创建右键菜单 DOM 元素及其子菜单项 */
   function createMenu() {
     if (menuElement) return;
 
@@ -24,6 +25,7 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }, props
       display: none;
     `;
 
+    /** 创建菜单项 */
     function createItem(text: string, onClick: () => void, isDanger = false) {
       const item = document.createElement("div");
       item.className = `emr-context-menu-item${isDanger ? " emr-context-menu-item-danger" : ""}`;
@@ -47,6 +49,7 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }, props
       return item;
     }
 
+    /** 创建菜单项分割线 */
     function createDivider() {
       const divider = document.createElement("div");
       divider.className = "emr-context-menu-divider";
@@ -77,6 +80,7 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }, props
     document.body.appendChild(menuElement);
   }
 
+  /** 处理右键菜单事件，显示或更新菜单位置 */
   function handleContextMenu(event: MouseEvent) {
     const target = event.target as HTMLElement;
     const tableElement = target.closest("table");
@@ -112,6 +116,7 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }, props
     }
   }
 
+  /** 关闭右键菜单 */
   function closeMenu() {
     showMenu.value = false;
     if (menuElement) {
@@ -119,48 +124,56 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }, props
     }
   }
 
+  /** 在当前单元格上方插入一行 */
   function insertRowBefore() {
     if (!editor.value) return;
     editor.value.chain().focus().addRowBefore().run();
     closeMenu();
   }
 
+  /** 在当前单元格下方插入一行 */
   function insertRowAfter() {
     if (!editor.value) return;
     editor.value.chain().focus().addRowAfter().run();
     closeMenu();
   }
 
+  /** 在当前单元格左侧插入一列 */
   function insertColumnBefore() {
     if (!editor.value) return;
     editor.value.chain().focus().addColumnBefore().run();
     closeMenu();
   }
 
+  /** 在当前单元格右侧插入一列 */
   function insertColumnAfter() {
     if (!editor.value) return;
     editor.value.chain().focus().addColumnAfter().run();
     closeMenu();
   }
 
+  /** 合并选中的单元格 */
   function mergeCells() {
     if (!editor.value) return;
     editor.value.chain().focus().mergeCells().run();
     closeMenu();
   }
 
+  /** 拆分合并的单元格 */
   function splitCell() {
     if (!editor.value) return;
     editor.value.chain().focus().splitCell().run();
     closeMenu();
   }
 
+  /** 删除当前行 */
   function deleteRow() {
     if (!editor.value) return;
     editor.value.chain().focus().deleteRow().run();
     closeMenu();
   }
 
+  /** 删除当前列 */
   function deleteColumn() {
     if (!editor.value) return;
     editor.value.chain().focus().deleteColumn().run();

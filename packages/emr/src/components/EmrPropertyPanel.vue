@@ -109,7 +109,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import type { InsertVariableOptions, VariableOption } from "../types/emr";
+import type { InsertVariableOptions, VariableOption } from "../types";
 
 const props = defineProps<{
   selectedVariable: InsertVariableOptions | null;

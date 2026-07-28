@@ -21,7 +21,7 @@ import { useVariableEditing } from "../hooks/useVariableEditing";
 import { useTableContextMenu } from "../hooks/useTableContextMenu";
 import { useEmrApi } from "../hooks/useEmrApi";
 import EmrToolbar from "./EmrToolbar.vue";
-import type { EmrEditorProps } from "../types/emr";
+import type { EmrEditorProps } from "../types";
 
 const props = withDefaults(defineProps<EmrEditorProps>(), {
   hideToolbar: false,

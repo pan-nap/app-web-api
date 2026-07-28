@@ -52,19 +52,7 @@
 
 <script setup lang="ts">
 import { reactive, ref } from "vue";
-
-interface ComponentItem {
-  type: string;
-  label: string;
-  icon: string;
-  widgetType: "text" | "number" | "date" | "select";
-}
-
-interface DataField {
-  refKey: string;
-  widgetName: string;
-  widgetType: string;
-}
+import type { ComponentItem, DataField } from "../types";
 
 const emit = defineEmits<{
   (e: "drag-start", payload: { type: string; widgetType: string; widgetName: string; refKey?: string }): void;
@@ -119,39 +107,26 @@ function getTypeIcon(widgetType: string): string {
 }
 
 function handleDragStart(event: DragEvent, item: ComponentItem) {
+  const payload = { type: "component", widgetType: item.widgetType, widgetName: item.label };
   if (event.dataTransfer) {
-    event.dataTransfer.setData(
-      "application/json",
-      JSON.stringify({
-        type: "component",
-        widgetType: item.widgetType,
-        widgetName: item.label
-      })
-    );
+    event.dataTransfer.setData("application/json", JSON.stringify(payload));
     event.dataTransfer.effectAllowed = "copy";
   }
-  emit("drag-start", { type: "component", widgetType: item.widgetType, widgetName: item.label });
+  emit("drag-start", payload);
 }
 
 function handleFieldDragStart(event: DragEvent, field: DataField) {
-  if (event.dataTransfer) {
-    event.dataTransfer.setData(
-      "application/json",
-      JSON.stringify({
-        type: "datasource",
-        widgetType: field.widgetType,
-        widgetName: field.widgetName,
-        refKey: field.refKey
-      })
-    );
-    event.dataTransfer.effectAllowed = "copy";
-  }
-  emit("drag-start", {
+  const payload = {
     type: "datasource",
     widgetType: field.widgetType,
     widgetName: field.widgetName,
     refKey: field.refKey
-  });
+  };
+  if (event.dataTransfer) {
+    event.dataTransfer.setData("application/json", JSON.stringify(payload));
+    event.dataTransfer.effectAllowed = "copy";
+  }
+  emit("drag-start", payload);
 }
 </script>
 

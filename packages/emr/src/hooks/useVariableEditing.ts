@@ -1,6 +1,6 @@
 import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
 import type { Editor } from "@tiptap/vue-3";
-import type { EmrEditorProps } from "../types/emr";
+import type { EmrEditorProps } from "../types";
 
 export const useVariableEditing = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
   const showDropdown = ref(false);
@@ -10,6 +10,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
   const dropdownPosition = reactive({ x: 0, y: 0 });
   let dropdownContainer: HTMLElement | null = null;
 
+  /** 创建下拉菜单容器 DOM 元素 */
   function createDropdown() {
     if (dropdownContainer) return;
 
@@ -47,6 +48,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
     });
   }
 
+  /** 渲染下拉菜单选项列表 */
   function renderDropdown() {
     if (!dropdownContainer) return;
 
@@ -81,6 +83,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
     menu.style.top = `${dropdownPosition.y}px`;
   }
 
+  /** 关闭下拉菜单 */
   function closeDropdown() {
     showDropdown.value = false;
     if (dropdownContainer) {
@@ -88,6 +91,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
     }
   }
 
+  /** 处理变量点击事件，区分下拉选择或内联编辑 */
   function handleVariableClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     const variableSpan = target.closest(".emr-variable");
@@ -131,6 +135,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
     });
   }
 
+  /** 启动内联文本编辑模式，创建输入框替代变量显示 */
   function startInlineEdit(span: HTMLElement, refKey: string, currentValue: string) {
     const rect = span.getBoundingClientRect();
     const computedStyle = window.getComputedStyle(span);
@@ -207,6 +212,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
     input.select();
   }
 
+  /** 更新指定变量的值 */
   function updateVariableValue(refKey: string, value: string) {
     if (!editor.value) return;
 
@@ -226,6 +232,7 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
     editor.value.view.dispatch(transaction);
   }
 
+  /** 处理下拉菜单选项选择 */
   function handleDropdownSelect(option: { value: string; label: string }) {
     if (!editor.value || !dropdownRefKey.value) return;
 

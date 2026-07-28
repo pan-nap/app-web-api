@@ -36,7 +36,7 @@ import type { Editor } from "@tiptap/vue-3";
 import EmrEditor from "./EmrEditor.vue";
 import EmrComponentPanel from "./EmrComponentPanel.vue";
 import EmrPropertyPanel from "./EmrPropertyPanel.vue";
-import type { InsertVariableOptions, VariableOption } from "../types/emr";
+import type { InsertVariableOptions, VariableOption } from "../types";
 
 const editorRef = ref<InstanceType<typeof EmrEditor> | null>(null);
 const selectedVariable = ref<InsertVariableOptions | null>(null);
@@ -46,16 +46,19 @@ const isEditorFocused = ref(false);
 let editorInstance: Editor | null = null;
 let dragPayload: any = null;
 
+/** 获取编辑器实例（带缓存） */
 function getEditor(): Editor | null {
   if (editorInstance) return editorInstance;
   editorInstance = editorRef.value?.getEditor() || null;
   return editorInstance;
 }
 
+/** 拖拽开始事件处理，保存拖拽载荷 */
 function handleDragStart(payload: any) {
   dragPayload = payload;
 }
 
+/** 拖拽悬停事件处理，设置拖放效果为复制 */
 function handleDragOver(event: DragEvent) {
   event.preventDefault();
   if (event.dataTransfer) {
@@ -63,6 +66,7 @@ function handleDragOver(event: DragEvent) {
   }
 }
 
+/** 拖拽放下事件处理，在鼠标位置插入变量节点 */
 function handleDrop(event: DragEvent) {
   event.preventDefault();
 
@@ -138,6 +142,7 @@ function handleDrop(event: DragEvent) {
   dragPayload = null;
 }
 
+/** 编辑器区域点击事件处理，选中变量节点并显示属性面板 */
 function handleEditorAreaClick(event: MouseEvent) {
   const target = event.target as HTMLElement;
   if (target.closest(".emr-variable")) {
@@ -174,6 +179,7 @@ function handleEditorAreaClick(event: MouseEvent) {
   }
 }
 
+/** 根据位置查找变量节点 */
 function findVariableNodeAtPos(pos: number): { node: any; pos: number } | null {
   const editor = getEditor();
   if (!editor) return null;
@@ -194,6 +200,7 @@ function findVariableNodeAtPos(pos: number): { node: any; pos: number } | null {
   return result;
 }
 
+/** 根据位置选中变量并更新属性面板 */
 function selectVariableAtPos(pos: number) {
   const nodePos = findVariableNodeAtPos(pos);
   if (!nodePos) return;
@@ -211,6 +218,7 @@ function selectVariableAtPos(pos: number) {
   };
 }
 
+/** 更新选中变量的指定属性值 */
 function handleUpdateAttr(key: string, value: any) {
   if (!selectedVariable.value || selectedPos.value === null) return;
 
@@ -232,6 +240,7 @@ function handleUpdateAttr(key: string, value: any) {
   (selectedVariable.value as any)[key] = value;
 }
 
+/** 更新选中变量的下拉选项列表 */
 function handleUpdateOptions(options: VariableOption[]) {
   if (!selectedVariable.value || selectedPos.value === null) return;
 
@@ -253,6 +262,7 @@ function handleUpdateOptions(options: VariableOption[]) {
   selectedVariable.value.options = options;
 }
 
+/** 删除选中的变量节点 */
 function handleDeleteVariable() {
   if (selectedPos.value === null) return;
 
@@ -269,10 +279,12 @@ function handleDeleteVariable() {
   selectedPos.value = null;
 }
 
+/** 预览模板（占位功能） */
 function handlePreview() {
   alert("预览功能开发中...");
 }
 
+/** 保存模板 */
 function handleSave() {
   const editor = getEditor();
   if (!editor) return;
@@ -282,6 +294,7 @@ function handleSave() {
   alert("模板已保存（查看控制台）");
 }
 
+/** 处理编辑器选区更新事件 */
 function handleSelectionUpdate() {
   const editor = getEditor();
   if (!editor) return;

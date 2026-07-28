@@ -1,15 +1,16 @@
 import type { Editor } from "@tiptap/vue-3";
-import type { InsertVariableOptions, VariableChange } from "../types/emr";
+import type { InsertVariableOptions, VariableChange, EmrEditorProps } from "../types";
 import { getValueByPath, decodeOptions, normalizeTemplate } from "../utils/templateUtils";
 import { temData2, data2 } from "../data/data2.ts";
 import { onMounted } from "vue";
-import type { EmrEditorProps } from "../types/emr";
 
 export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
+  /** 获取编辑器实例 */
   function getEditor(): Editor | null {
     return editor.value || null;
   }
 
+  /** 获取模板内容（清除变量值，返回纯净模板） */
   function getTemplate(): any {
     if (!editor.value) return null;
     const json = editor.value.getJSON();
@@ -40,6 +41,7 @@ export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEdito
     return cleanNode(json);
   }
 
+  /** 在光标位置插入变量节点 */
   function insertVariable(options: InsertVariableOptions) {
     if (!editor.value || props.disabled) return;
 
@@ -61,6 +63,7 @@ export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEdito
       .run();
   }
 
+  /** 比对当前变量值与原始数据的差异，返回变更列表 */
   function compareVariables(originalData: Record<string, any>): VariableChange[] {
     if (!editor.value) return [];
 
@@ -90,6 +93,7 @@ export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEdito
     return changes;
   }
 
+  /** 获取当前所有变量值（返回嵌套结构对象） */
   function getVariables(): Record<string, any> {
     if (!editor.value) return {};
 
@@ -123,6 +127,7 @@ export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEdito
     return variables;
   }
 
+  /** 根据数据更新编辑器中变量的值 */
   function updateVariables(data: Record<string, any>) {
     if (!editor.value || props.disabled) return;
 
@@ -147,6 +152,7 @@ export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEdito
     editor.value.view.dispatch(transaction);
   }
 
+  /** 将数据应用到模板，将字段节点转换为变量节点 */
   function applyDataToTemplate(template: any, data: Record<string, any>) {
     const normalized = normalizeTemplate(template);
 
@@ -189,6 +195,7 @@ export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEdito
     return applyToNode(normalized);
   }
 
+  /** 设置编辑器内容（模板+数据） */
   function setContent(template?: any, data?: Record<string, any>) {
     if (!editor.value) return;
     editor.value.commands.setContent(applyDataToTemplate(template || temData2, data || data2));
