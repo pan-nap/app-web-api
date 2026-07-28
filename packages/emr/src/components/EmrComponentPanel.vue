@@ -107,7 +107,13 @@ function getTypeIcon(widgetType: string): string {
 }
 
 function handleDragStart(event: DragEvent, item: ComponentItem) {
-  const payload = { type: "component", widgetType: item.widgetType, widgetName: item.label };
+  const refKey = crypto.randomUUID();
+  const payload = {
+    type: "component",
+    widgetType: item.widgetType,
+    widgetName: item.label,
+    refKey
+  };
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = "copy";
   }
