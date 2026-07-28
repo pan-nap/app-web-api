@@ -2,149 +2,78 @@ import { ref, reactive, onMounted, onBeforeUnmount, createVNode, render, nextTic
 import type { Editor } from "@tiptap/vue-3";
 import type { EmrEditorProps } from "../types";
 import DatePickerWrapper from "../components/DatePickerWrapper.vue";
+import SelectWrapper from "../components/SelectWrapper.vue";
 import { getAppContext } from "../index";
 
 export const useVariableEditing = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
-  const showDropdown = ref(false);
-  const dropdownOptions = ref<{ value: string; label: string }[]>([]);
-  const dropdownCurrentValue = ref("");
-  const dropdownRefKey = ref("");
-  const dropdownPosition = reactive({ x: 0, y: 0 });
-  let dropdownContainer: HTMLElement | null = null;
+  let selectContainer: HTMLElement | null = null;
 
-  /** 创建下拉菜单容器 DOM 元素 */
-  function createDropdown() {
-    if (dropdownContainer) return;
+  /** 启动下拉选择编辑模式，使用 ElSelect 组件 */
+  function startSelectEdit(span: HTMLElement, refKey: string, currentValue: string, options: { value: string; label: string }[]) {
+    if (selectContainer) {
+      cleanupSelect();
+    }
 
-    dropdownContainer = document.createElement("div");
-    dropdownContainer.className = "emr-dropdown-overlay";
-    dropdownContainer.style.cssText = `
+    const rect = span.getBoundingClientRect();
+
+    selectContainer = document.createElement("div");
+    selectContainer.style.cssText = `
       position: fixed;
-      inset: 0;
-      z-index: 10000;
-      display: none;
+      left: ${rect.left}px;
+      top: ${rect.top}px;
+      z-index: 9999;
+      background: #fff;
+      padding: 4px;
+      border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
     `;
 
-    const menu = document.createElement("div");
-    menu.className = "emr-dropdown-menu";
-    menu.style.cssText = `
-      position: absolute;
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-      min-width: 30px;
-      padding: 4px 0;
-      font-size: 14px;
-      max-height: 240px;
-      overflow-y: auto;
-    `;
-
-    dropdownContainer.appendChild(menu);
-    document.body.appendChild(dropdownContainer);
-
-    dropdownContainer.addEventListener("click", (e) => {
-      if (e.target === dropdownContainer) {
-        closeDropdown();
+    const vnode = createVNode(SelectWrapper, {
+      modelValue: currentValue,
+      options,
+      "onUpdate:modelValue": (val: string) => {
+        updateVariableValue(refKey, val);
+      },
+      onChange: (val: string) => {
+        updateVariableValue(refKey, val);
       }
     });
-  }
 
-  /** 渲染下拉菜单选项列表 */
-  function renderDropdown() {
-    if (!dropdownContainer) return;
+    const appContext = getAppContext();
+    if (appContext) {
+      vnode.appContext = appContext;
+    }
 
-    const menu = dropdownContainer.querySelector(".emr-dropdown-menu") as HTMLElement;
-    if (!menu) return;
+    render(vnode, selectContainer);
+    document.body.appendChild(selectContainer);
 
-    menu.innerHTML = "";
-
-    dropdownOptions.value.forEach((option) => {
-      const item = document.createElement("div");
-      item.className = `emr-dropdown-item${String(option.value) === String(dropdownCurrentValue.value) ? " emr-dropdown-item-selected" : ""}`;
-      item.textContent = option.label;
-      item.style.cssText = `
-        padding: 8px 16px;
-        cursor: pointer;
-        color: ${String(option.value) === String(dropdownCurrentValue.value) ? "#0369a1" : "#374151"};
-        white-space: nowrap;
-        background-color: ${String(option.value) === String(dropdownCurrentValue.value) ? "#e0f2fe" : ""};
-      `;
-      item.addEventListener("mouseenter", () => {
-        item.style.backgroundColor = "#f3f4f6";
-      });
-      item.addEventListener("mouseleave", () => {
-        item.style.backgroundColor = String(option.value) === String(dropdownCurrentValue.value) ? "#e0f2fe" : "";
-      });
-      item.addEventListener("click", () => handleDropdownSelect(option));
-      menu.appendChild(item);
+    nextTick(() => {
+      const input = selectContainer?.querySelector("input");
+      if (input) {
+        input.focus();
+      }
     });
 
-    dropdownContainer.style.display = "block";
-    menu.style.left = `${dropdownPosition.x}px`;
-    menu.style.top = `${dropdownPosition.y}px`;
+    setTimeout(() => {
+      document.addEventListener("mousedown", handleSelectOutsideClick);
+    }, 100);
   }
 
-  /** 关闭下拉菜单 */
-  function closeDropdown() {
-    showDropdown.value = false;
-    if (dropdownContainer) {
-      dropdownContainer.style.display = "none";
+  /** 清理选择器容器 */
+  function cleanupSelect() {
+    if (selectContainer) {
+      render(null, selectContainer);
+      selectContainer.remove();
+      selectContainer = null;
+      document.removeEventListener("mousedown", handleSelectOutsideClick);
     }
   }
 
-  /** 处理变量点击事件，区分下拉选择或内联编辑 */
-  function handleVariableClick(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    const variableSpan = target.closest(".emr-variable");
-
-    if (!variableSpan || !editor.value) {
-      closeDropdown();
-      return;
+  /** 处理选择器外部点击 */
+  function handleSelectOutsideClick(e: MouseEvent) {
+    if (selectContainer && !selectContainer.contains(e.target as Node)) {
+      cleanupSelect();
     }
-
-    const refKey = variableSpan.getAttribute("data-ref-key");
-    if (!refKey) return;
-
-    editor.value.state.doc.descendants((node, pos) => {
-      if (node.type.name === "variable" && node.attrs.refKey === refKey) {
-        const widgetType = node.attrs.widgetType || "text";
-        const options = node.attrs.options || [];
-        const hasDropdown = widgetType === "select" && options.length > 0;
-        const isDate = widgetType === "date";
-        const isNumber = widgetType === "number";
-
-        if (hasDropdown) {
-          event.preventDefault();
-          event.stopPropagation();
-
-          dropdownOptions.value = options;
-          dropdownCurrentValue.value = node.attrs.extensionValue || "";
-          dropdownRefKey.value = refKey;
-
-          const rect = variableSpan.getBoundingClientRect();
-          dropdownPosition.x = rect.left;
-          dropdownPosition.y = rect.bottom;
-          showDropdown.value = true;
-
-          createDropdown();
-          renderDropdown();
-        } else if (isDate) {
-          event.preventDefault();
-          event.stopPropagation();
-          startDateEdit(variableSpan as HTMLElement, refKey, node.attrs.extensionValue || "");
-        } else if (isNumber) {
-          event.preventDefault();
-          event.stopPropagation();
-          startNumberEdit(variableSpan as HTMLElement, refKey, node.attrs.extensionValue || "");
-        } else {
-          startInlineEdit(variableSpan as HTMLElement, refKey, node.attrs.extensionValue || "");
-        }
-
-        return false;
-      }
-      return true;
-    });
   }
 
   /** 启动日期编辑模式，使用 ElDatePicker 组件 */
@@ -388,25 +317,47 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
     editor.value.view.dispatch(transaction);
   }
 
-  /** 处理下拉菜单选项选择 */
-  function handleDropdownSelect(option: { value: string; label: string }) {
-    if (!editor.value || !dropdownRefKey.value) return;
+  /** 处理变量点击事件，区分不同类型的编辑方式 */
+  function handleVariableClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const variableSpan = target.closest(".emr-variable");
 
-    const transaction = editor.value.state.tr;
+    if (!variableSpan || !editor.value) {
+      cleanupSelect();
+      return;
+    }
+
+    const refKey = variableSpan.getAttribute("data-ref-key");
+    if (!refKey) return;
 
     editor.value.state.doc.descendants((node, pos) => {
-      if (node.type.name === "variable" && node.attrs.refKey === dropdownRefKey.value) {
-        transaction.setNodeMarkup(pos, undefined, {
-          ...node.attrs,
-          extensionValue: String(option.value)
-        });
+      if (node.type.name === "variable" && node.attrs.refKey === refKey) {
+        const widgetType = node.attrs.widgetType || "text";
+        const options = node.attrs.options || [];
+        const isSelect = widgetType === "select" && options.length > 0;
+        const isDate = widgetType === "date";
+        const isNumber = widgetType === "number";
+
+        if (isSelect) {
+          event.preventDefault();
+          event.stopPropagation();
+          startSelectEdit(variableSpan as HTMLElement, refKey, node.attrs.extensionValue || "", options);
+        } else if (isDate) {
+          event.preventDefault();
+          event.stopPropagation();
+          startDateEdit(variableSpan as HTMLElement, refKey, node.attrs.extensionValue || "");
+        } else if (isNumber) {
+          event.preventDefault();
+          event.stopPropagation();
+          startNumberEdit(variableSpan as HTMLElement, refKey, node.attrs.extensionValue || "");
+        } else {
+          startInlineEdit(variableSpan as HTMLElement, refKey, node.attrs.extensionValue || "");
+        }
+
         return false;
       }
       return true;
     });
-
-    editor.value.view.dispatch(transaction);
-    closeDropdown();
   }
 
   onMounted(() => {
@@ -416,16 +367,8 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
   });
 
   onBeforeUnmount(() => {
-    if (dropdownContainer) {
-      document.body.removeChild(dropdownContainer);
-      dropdownContainer = null;
-    }
+    cleanupSelect();
   });
 
-  return {
-    showDropdown,
-    dropdownOptions,
-    dropdownCurrentValue,
-    handleDropdownSelect
-  };
+  return {};
 };
