@@ -1,6 +1,7 @@
 import { createVNode, render, nextTick, onBeforeUnmount } from "vue";
 import DatePickerWrapper from "../components/DatePickerWrapper.vue";
 import SelectWrapper from "../components/SelectWrapper.vue";
+import InputWrapper from "../components/InputWrapper.vue";
 import { getAppContext } from "../index";
 
 /** 通用组件选择器配置 */
@@ -26,12 +27,7 @@ export const useComponentPicker = () => {
   }
 
   /** 创建动态组件选择器 */
-  function createPicker(
-    Component: any,
-    props: Record<string, any>,
-    anchorEl: HTMLElement,
-    config: PickerConfig = {}
-  ): PickerInstance {
+  function createPicker(Component: any, props: Record<string, any>, anchorEl: HTMLElement, config: PickerConfig = {}): PickerInstance {
     cleanupPicker();
 
     const rect = anchorEl.getBoundingClientRect();
@@ -44,7 +40,6 @@ export const useComponentPicker = () => {
       top: ${rect.top}px;
       z-index: 9999;
       background: #fff;
-      padding: 4px;
       border-radius: 4px;
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
       ${width ? `width: ${width}px;` : ""}
@@ -92,12 +87,7 @@ export const useComponentPicker = () => {
   }
 
   /** 启动日期选择器 */
-  function startDatePicker(
-    anchorEl: HTMLElement,
-    currentValue: string,
-    onChange: (value: string) => void,
-    valueFormat: string = "YYYY-MM-DD"
-  ) {
+  function startDatePicker(anchorEl: HTMLElement, currentValue: string, onChange: (value: string) => void, valueFormat: string = "YYYY-MM-DD") {
     return createPicker(
       DatePickerWrapper,
       {
@@ -131,6 +121,39 @@ export const useComponentPicker = () => {
     );
   }
 
+  /** 启动文本/数字输入选择器 */
+  function startInputPicker(
+    anchorEl: HTMLElement,
+    currentValue: string,
+    onChange: (value: string) => void,
+    inputType: "text" | "number" = "text",
+    onEnter?: (value: string) => void,
+    onEsc?: () => void
+  ) {
+    const anchorWidth = Math.max(anchorEl.getBoundingClientRect().width, 30);
+    return createPicker(
+      InputWrapper,
+      {
+        modelValue: currentValue,
+        type: inputType,
+        minWidth: anchorWidth,
+        "onUpdate:modelValue": onChange,
+        onChange,
+        onEnter: (val: string) => {
+          onEnter?.(val);
+        },
+        onEsc: () => {
+          onEsc?.();
+        },
+        onBlur: (val: string) => {
+          onChange(val);
+        }
+      },
+      anchorEl,
+      {}
+    );
+  }
+
   onBeforeUnmount(() => {
     cleanupPicker();
   });
@@ -138,6 +161,7 @@ export const useComponentPicker = () => {
   return {
     cleanupPicker,
     startDatePicker,
-    startSelectPicker
+    startSelectPicker,
+    startInputPicker
   };
 };
