@@ -17,6 +17,9 @@ const config = {
   sourcemap: true,
   minify: false,
   plugins: [],
+  loader: {
+    '.html': 'text'
+  },
   define: {
     'process.env.EXTENSION_VERSION': `"${pkg.version}"`
   },
