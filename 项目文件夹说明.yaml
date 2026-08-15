@@ -1,8 +1,10 @@
 use:
   - "pnpm dev" #所有端统一执行开发命令
 projects:
+  - "ai-plugin" #VSCode AI聊天插件(仅DeepSeek)
   - "app" #移动端系统
   - "backend" #后端系统
   - "emr" #独立文书插件
   - "mqtt-server" #mqtt服务器
   - "web" #web端系统
+reference: "架构梳理.md" #整体架构说明文档
