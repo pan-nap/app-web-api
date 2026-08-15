@@ -46,6 +46,13 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  // 命令：总结当前 Git 变更（用于提交）
+  context.subscriptions.push(
+    vscode.commands.registerCommand("ai-plugin.gitSummary", () => {
+      viewProvider.requestGitSummary();
+    })
+  );
+
   console.log("[ai-plugin] 激活完成");
 }
 

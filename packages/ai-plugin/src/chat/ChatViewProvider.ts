@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ChatManager } from "./ChatManager";
 import { ConfigManager } from "../config";
+import { GitService } from "../git/GitService";
 import { WebviewMessage } from "../types";
 import { getProvider } from "../providers";
 
@@ -14,11 +15,15 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
   private readonly chatManager: ChatManager;
   private readonly configManager: ConfigManager;
+  private readonly gitService: GitService;
   private disposables: vscode.Disposable[] = [];
+  /** 等待视图就绪后自动触发的 Git 总结请求（侧边栏未打开时由命令触发） */
+  private pendingGitSummary = false;
 
   constructor(chatManager: ChatManager, configManager: ConfigManager) {
     this.chatManager = chatManager;
     this.configManager = configManager;
+    this.gitService = new GitService();
   }
 
   resolveWebviewView(
@@ -69,11 +74,29 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     this.sendMessages();
   }
 
+  /** 供命令触发 Git 总结：视图已打开则直接通知前端，未打开则先打开再触发 */
+  public requestGitSummary(): void {
+    if (this._view) {
+      this._view.webview.postMessage({
+        type: "gitSummaryRequested"
+      } as WebviewMessage);
+    } else {
+      this.pendingGitSummary = true;
+      vscode.commands.executeCommand("ai-plugin-sidebar.focus");
+    }
+  }
+
   private async handleMessage(message: WebviewMessage): Promise<void> {
     switch (message.type) {
       case "ready":
         this.sendProviderInfo();
         this.sendMessages();
+        if (this.pendingGitSummary) {
+          this.pendingGitSummary = false;
+          this._view?.webview.postMessage({
+            type: "gitSummaryRequested"
+          } as WebviewMessage);
+        }
         break;
       case "sendMessage": {
         const content = message.payload?.content as string | undefined;
@@ -99,6 +122,27 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         await this.configManager.configureProvider();
         this.sendProviderInfo();
         break;
+      case "gitSummary": {
+        try {
+          const summary = await this.gitService.getChangeSummary();
+          if (!summary.ok || !summary.context) {
+            this._view?.webview.postMessage({
+              type: "error",
+              payload: { message: summary.message || "没有可总结的变更" }
+            } as WebviewMessage);
+          } else {
+            await this.chatManager.sendGitSummary(summary.display, summary.context);
+          }
+        } catch (e: any) {
+          console.error("[ai-plugin-view] gitSummary 异常:", e?.message ?? e);
+          this._view?.webview.postMessage({
+            type: "error",
+            payload: { message: `Git 总结失败：${e?.message ?? e}` }
+          } as WebviewMessage);
+        }
+        this.sendMessages();
+        break;
+      }
     }
   }
 
@@ -257,6 +301,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   <div class="header">
     <span class="header-title">AI 智能体</span>
     <span class="provider-badge" id="provider">未配置</span>
+    <button class="icon-btn" id="gitBtn" title="总结当前 Git 变更（用于提交）">📋</button>
     <button class="icon-btn" id="configBtn" title="配置提供者 / API Key">⚙</button>
     <button class="icon-btn" id="clearBtn" title="清空聊天">🗑</button>
   </div>
@@ -285,6 +330,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   const stopBtn = document.getElementById('stopBtn');
   const clearBtn = document.getElementById('clearBtn');
   const configBtn = document.getElementById('configBtn');
+  const gitBtn = document.getElementById('gitBtn');
   const providerEl = document.getElementById('provider');
 
   let msgs = [];
@@ -351,6 +397,17 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     render();
   }
 
+  function sendGitSummary() {
+    if (streaming) return;
+    errMsg = '';
+    streaming = true;
+    // 本地乐观渲染请求消息 + 空助手气泡
+    msgs.push({ role: 'user', content: '📋 请求总结当前 Git 变更…' });
+    msgs.push({ role: 'assistant', content: '' });
+    post('gitSummary');
+    render();
+  }
+
   // 自动增高输入框
   input.addEventListener('input', () => {
     input.style.height = 'auto';
@@ -381,9 +438,16 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     post('configureProvider');
   });
 
+  gitBtn.addEventListener('click', () => {
+    sendGitSummary();
+  });
+
   window.addEventListener('message', (e) => {
     const d = e.data;
     switch (d.type) {
+      case 'gitSummaryRequested':
+        sendGitSummary();
+        break;
       case 'messages':
         msgs = d.payload.messages || [];
         streaming = false;

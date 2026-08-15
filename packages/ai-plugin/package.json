@@ -16,7 +16,8 @@
     "onView:ai-plugin-chat",
     "onCommand:ai-plugin.openChat",
     "onCommand:ai-plugin.configureProvider",
-    "onCommand:ai-plugin.clearChat"
+    "onCommand:ai-plugin.clearChat",
+    "onCommand:ai-plugin.gitSummary"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -37,19 +38,30 @@
         "title": "清空聊天记录",
         "category": "[王欢欢]智能体",
         "icon": "$(trash)"
+      },
+      {
+        "command": "ai-plugin.gitSummary",
+        "title": "总结 Git 变更（用于提交）",
+        "category": "[王欢欢]智能体",
+        "icon": "$(git-commit)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "ai-plugin.configureProvider",
+          "command": "ai-plugin.gitSummary",
           "when": "view == ai-plugin-chat",
           "group": "navigation@1"
         },
         {
-          "command": "ai-plugin.clearChat",
+          "command": "ai-plugin.configureProvider",
           "when": "view == ai-plugin-chat",
           "group": "navigation@2"
+        },
+        {
+          "command": "ai-plugin.clearChat",
+          "when": "view == ai-plugin-chat",
+          "group": "navigation@3"
         }
       ]
     },
