@@ -1,15 +1,7 @@
 import { ILLMProvider } from './ILLMProvider';
-import { OpenAIProvider } from './OpenAIProvider';
-import { ClaudeProvider } from './ClaudeProvider';
-import { GeminiProvider } from './GeminiProvider';
-import { DoubaoProvider } from './DoubaoProvider';
 import { DeepSeekProvider } from './DeepSeekProvider';
 
 const providers: Record<string, ILLMProvider> = {
-  openai: new OpenAIProvider(),
-  claude: new ClaudeProvider(),
-  gemini: new GeminiProvider(),
-  doubao: new DoubaoProvider(),
   deepseek: new DeepSeekProvider()
 };
 

@@ -15,16 +15,6 @@
       }
     },
     {
-      "label": "build - webview",
-      "type": "npm",
-      "script": "build",
-      "path": "webview/",
-      "group": {
-        "kind": "build"
-      },
-      "problemMatcher": []
-    },
-    {
       "label": "dev",
       "type": "npm",
       "script": "dev",

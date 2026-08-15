@@ -1,32 +1,54 @@
 import * as vscode from "vscode";
+import { ConfigManager } from "./config";
+import { ChatManager } from "./chat/ChatManager";
+import { ChatViewProvider } from "./chat/ChatViewProvider";
 
-class MyViewProvider implements vscode.WebviewViewProvider {
-  public resolveWebviewView(webviewView: vscode.WebviewView): void {
-    console.log("[ai-plugin] resolveWebviewView 被调用了！！！");
-    webviewView.webview.options = { enableScripts: true };
-    webviewView.webview.html = "<html><body><h1>TEST WORKS!</h1></body></html>";
-  }
-}
-
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
   console.log("[ai-plugin] 激活开始");
 
-  const provider = new MyViewProvider();
-  console.log("[ai-plugin] 提供者实例:", provider);
-  console.log("[ai-plugin] 类型检查:", provider instanceof vscode.WebviewViewProvider);
+  // 配置管理（读取 VS Code 设置 + SecretStorage 存 API Key）
+  const configManager = new ConfigManager(context);
 
-  const disposable = vscode.window.registerWebviewViewProvider("ai-plugin-chat", provider);
-  context.subscriptions.push(disposable);
-  console.log("[ai-plugin] 注册完成:", disposable);
+  // 聊天管理（消息记录 + 流式请求）
+  const chatManager = new ChatManager(configManager);
+
+  // 侧边栏聊天视图
+  const viewProvider = new ChatViewProvider(chatManager, configManager);
+
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      ChatViewProvider.viewType,
+      viewProvider,
+      { webviewOptions: { retainContextWhenHidden: true } }
+    )
+  );
+
+  // 命令：打开侧边栏聊天视图
+  context.subscriptions.push(
+    vscode.commands.registerCommand("ai-plugin.openChat", () => {
+      vscode.commands.executeCommand("ai-plugin-sidebar.focus");
+    })
+  );
+
+  // 命令：配置 AI 提供者（选择模型 + 输入 API Key）
+  context.subscriptions.push(
+    vscode.commands.registerCommand("ai-plugin.configureProvider", async () => {
+      await configManager.configureProvider();
+      viewProvider.refresh();
+    })
+  );
+
+  // 命令：清空聊天记录
+  context.subscriptions.push(
+    vscode.commands.registerCommand("ai-plugin.clearChat", () => {
+      chatManager.clearMessages();
+      viewProvider.refresh();
+    })
+  );
 
   console.log("[ai-plugin] 激活完成");
-
-  setTimeout(async () => {
-    console.log("[ai-plugin] 尝试打开视图");
-    await vscode.commands.executeCommand("workbench.action.openView", "ai-plugin-chat");
-  }, 2000);
 }
 
-export function deactivate() {
-  console.log("[ai-plugin] 已停用");
+export function deactivate(): void {
+  // 无需特殊清理
 }

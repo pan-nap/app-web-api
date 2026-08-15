@@ -15,8 +15,8 @@ export class ConfigManager {
 
   getConfig(): ExtensionConfig {
     return {
-      activeProvider: this.configuration.get<string>("activeProvider", "openai"),
-      defaultModel: this.configuration.get<string>("defaultModel", "gpt-4o"),
+      activeProvider: this.configuration.get<string>("activeProvider", "deepseek"),
+      defaultModel: this.configuration.get<string>("defaultModel", "deepseek-v4-flash"),
       temperature: this.configuration.get<number>("temperature", 0.7),
       maxTokens: this.configuration.get<number>("maxTokens", 4096),
       apiBaseUrl: this.configuration.get<string>("apiBaseUrl")
@@ -24,11 +24,11 @@ export class ConfigManager {
   }
 
   getActiveProviderId(): string {
-    return this.configuration.get<string>("activeProvider", "openai");
+    return this.configuration.get<string>("activeProvider", "deepseek");
   }
 
   getDefaultModel(): string {
-    return this.configuration.get<string>("defaultModel", "gpt-4o");
+    return this.configuration.get<string>("defaultModel", "deepseek-v4-flash");
   }
 
   getTemperature(): number {
@@ -80,20 +80,20 @@ export class ConfigManager {
     const providers = getAllProviders();
     const activeProviderId = this.getActiveProviderId();
 
-    const items = providers.map((p) => ({
-      label: p.name,
-      description: p.id,
-      provider: p,
-      isActive: p.id === activeProviderId
-    }));
+    // 只有一个提供者时直接配置它，避免无意义的单选弹窗
+    const provider = providers.length === 1
+      ? providers[0]
+      : (await vscode.window.showQuickPick(
+          providers.map((p) => ({
+            label: p.name,
+            description: p.id,
+            provider: p,
+            isActive: p.id === activeProviderId
+          })),
+          { placeHolder: "选择要配置的AI提供者" }
+        ))?.provider;
 
-    const selected = await vscode.window.showQuickPick(items, {
-      placeHolder: "选择要配置的AI提供者"
-    });
-
-    if (!selected) return;
-
-    const provider = selected.provider;
+    if (!provider) return;
 
     // 设置为当前激活的提供商
     await this.configuration.update("activeProvider", provider.id, vscode.ConfigurationTarget.Global);

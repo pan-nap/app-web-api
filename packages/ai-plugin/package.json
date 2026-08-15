@@ -1,7 +1,7 @@
 {
   "name": "ai-plugin",
   "displayName": "[王欢欢]智能体",
-  "description": "可自定义接入各大模型的VSCode AI插件，只需配置API Key即可使用",
+  "description": "可接入DeepSeek大模型的VSCode AI插件，只需配置API Key即可使用",
   "version": "1.0.0",
   "publisher": "huasu",
   "engines": {
@@ -23,53 +23,50 @@
     "commands": [
       {
         "command": "ai-plugin.openChat",
-        "title": "[王欢欢]聊天",
-        "category": "[王欢欢]智能体"
-      },
-      {
-        "command": "ai-plugin.configureProvider",
-        "title": "配置[王欢欢]提供者",
-        "category": "[王欢欢]智能体"
-      },
-      {
-        "command": "ai-plugin.clearChat",
-        "title": "清空聊天记录",
-        "category": "[王欢欢]智能体"
-      },
-      {
-        "command": "ai-plugin.openChat",
         "title": "打开聊天面板",
         "category": "[王欢欢]智能体"
       },
       {
-        "command": "ai-plugin.test",
-        "title": "测试命令",
-        "category": "[王欢欢]智能体"
+        "command": "ai-plugin.configureProvider",
+        "title": "配置提供者 / API Key",
+        "category": "[王欢欢]智能体",
+        "icon": "$(gear)"
       },
       {
-        "command": "ai-plugin.test2",
-        "title": "测试命令2",
-        "category": "[王欢欢]智能体"
+        "command": "ai-plugin.clearChat",
+        "title": "清空聊天记录",
+        "category": "[王欢欢]智能体",
+        "icon": "$(trash)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "ai-plugin.configureProvider",
+          "when": "view == ai-plugin-chat",
+          "group": "navigation@1"
+        },
+        {
+          "command": "ai-plugin.clearChat",
+          "when": "view == ai-plugin-chat",
+          "group": "navigation@2"
+        }
+      ]
+    },
     "configuration": {
       "title": "[王欢欢]智能体配置",
       "properties": {
         "ai-plugin.activeProvider": {
           "type": "string",
-          "default": "openai",
+          "default": "deepseek",
           "description": "当前激活的[王欢欢]提供者",
           "enum": [
-            "deepseek",
-            "openai",
-            "claude",
-            "gemini",
-            "doubao"
+            "deepseek"
           ]
         },
         "ai-plugin.defaultModel": {
           "type": "string",
-          "default": "gpt-4o",
+          "default": "deepseek-v4-flash",
           "description": "默认使用的模型"
         },
         "ai-plugin.temperature": {
@@ -106,7 +103,8 @@
       "ai-plugin-sidebar": [
         {
           "id": "ai-plugin-chat",
-          "name": "聊天"
+          "name": "聊天",
+          "type": "webview"
         }
       ]
     }
@@ -120,11 +118,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "@types/vscode": "^1.80.0",
     "@vscode/vsce": "^2.21.0",
     "esbuild": "^0.21.0",
-    "typescript": "^5.3.3",
-    "vue": "^3.4.0",
-    "vite": "^5.0.0",
-    "@vitejs/plugin-vue": "^5.0.0"
+    "typescript": "^5.3.3"
   }
 }

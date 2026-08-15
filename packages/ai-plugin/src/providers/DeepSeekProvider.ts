@@ -1,5 +1,6 @@
 import { ILLMProvider } from "./ILLMProvider";
 import { ChatMessage, ChatOptions, ChatCompletionResponse, ProviderInfo } from "../types";
+import { parseJson, ChatCompletionBody, ErrorBody } from "./http";
 
 export class DeepSeekProvider implements ILLMProvider {
   readonly id = "deepseek";
@@ -37,15 +38,15 @@ export class DeepSeekProvider implements ILLMProvider {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: { message: "请求失败" } }));
+      const error = await parseJson<ErrorBody>(response).catch(() => ({ error: { message: "请求失败" } }));
       throw new Error(error.error?.message || "请求失败");
     }
 
-    const data = await response.json();
+    const data = await parseJson<ChatCompletionBody>(response);
     return {
-      content: data.choices[0]?.message?.content || "",
-      model: data.model,
-      finishReason: data.choices[0]?.finish_reason,
+      content: data.choices?.[0]?.message?.content || "",
+      model: data.model || options.model,
+      finishReason: data.choices?.[0]?.finish_reason,
       usage: data.usage
         ? {
             promptTokens: data.usage.prompt_tokens,
@@ -76,7 +77,7 @@ export class DeepSeekProvider implements ILLMProvider {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: { message: "请求失败" } }));
+      const error = await parseJson<ErrorBody>(response).catch(() => ({ error: { message: "请求失败" } }));
       throw new Error(error.error?.message || "请求失败");
     }
 
