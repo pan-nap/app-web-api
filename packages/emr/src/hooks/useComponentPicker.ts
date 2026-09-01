@@ -46,6 +46,9 @@ export const useComponentPicker = () => {
       ${containerStyle || ""}
     `;
 
+    /** 是否已销毁（防止延迟注册/异步回调在销毁后仍执行） */
+    let disposed = false;
+
     const vnode = createVNode(Component, props);
     const appContext = getAppContext();
     if (appContext) {
@@ -69,6 +72,12 @@ export const useComponentPicker = () => {
     }
 
     function cleanup() {
+      if (disposed) return;
+      disposed = true;
+      if (outsideClickTimer) {
+        clearTimeout(outsideClickTimer);
+        outsideClickTimer = null;
+      }
       render(null, container);
       container.remove();
       document.removeEventListener("mousedown", handleOutsideClick);
@@ -77,8 +86,13 @@ export const useComponentPicker = () => {
       }
     }
 
-    setTimeout(() => {
-      document.addEventListener("mousedown", handleOutsideClick);
+    // 延迟注册外部点击监听，避免与触发 picker 的原始事件竞争；
+    // 若延迟期间组件已销毁，cleanup 会清除定时器，不会泄漏监听
+    let outsideClickTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      outsideClickTimer = null;
+      if (!disposed) {
+        document.addEventListener("mousedown", handleOutsideClick);
+      }
     }, 100);
 
     const instance: PickerInstance = { cleanup };
@@ -117,7 +131,7 @@ export const useComponentPicker = () => {
         onChange
       },
       anchorEl,
-      { width: 180 }
+      { width: 120 }
     );
   }
 

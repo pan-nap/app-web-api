@@ -80,6 +80,8 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
 
   onBeforeUnmount(() => {
     cleanupPicker();
+    const contentElement = editor.value?.view?.dom as HTMLElement | null;
+    contentElement?.removeEventListener("click", handleVariableClick);
   });
 
   return {};

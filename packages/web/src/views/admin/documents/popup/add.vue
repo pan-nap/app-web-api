@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import type { EmrElement } from "@cashier/emr";
+import { EmrDesigner, type EmrElement } from "@cashier/emr";
 import { useDocumentStore } from "@/stores/documents";
 
 const props = defineProps<{

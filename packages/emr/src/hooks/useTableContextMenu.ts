@@ -1,10 +1,67 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import type { Editor } from "@tiptap/vue-3";
+import { CellSelection } from "@tiptap/pm/tables";
 import type { EmrEditorProps } from "../types";
 
 export const useTableContextMenu = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
   const showMenu = ref(false);
   let menuElement: HTMLElement | null = null;
+  /** 右键时保存的单元格选区（anchor/head 位置），菜单动作前恢复 */
+  let savedCellSelection: { anchor: number; head: number } | null = null;
+
+  /**
+   * 阻止右键 mousedown 破坏表格单元格选区（CellSelection）。
+   * 不阻止的话，ProseMirror 会把光标移动到右键点击的单元格，
+   * 导致框选高亮（.selectedCell）在 contextmenu 弹出前就消失。
+   */
+  function handleCellMouseDown(event: MouseEvent) {
+    // 仅处理右键
+    if (event.button !== 2) return;
+    const target = event.target as HTMLElement;
+    const tableElement = target.closest("table");
+    if (!tableElement) return;
+    // 保存当前单元格选区（如有），供菜单动作前恢复
+    saveCellSelection();
+    // 阻止编辑器消费该 mousedown，保留单元格选区
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  /** 保存当前表格单元格选区 */
+  function saveCellSelection() {
+    const editorInstance = editor.value;
+    if (!editorInstance) return;
+    const sel = editorInstance.state.selection;
+    if (sel instanceof CellSelection) {
+      savedCellSelection = { anchor: sel.anchor, head: sel.head };
+    } else {
+      savedCellSelection = null;
+    }
+  }
+
+  /**
+   * 恢复右键前保存的单元格选区。
+   * 若事件链（mousedown/handleClickOn 等）已将 CellSelection 破坏，
+   * 在弹出菜单前恢复，确保"合并单元格"等操作基于完整选区执行。
+   */
+  function restoreCellSelection() {
+    if (!savedCellSelection || !editor.value) return;
+    const view = editor.value.view;
+    const sel = view.state.selection;
+    // 当前已是单元格选区则无需恢复
+    if (sel instanceof CellSelection) {
+      savedCellSelection = null;
+      return;
+    }
+    try {
+      const doc = view.state.doc;
+      const restored = CellSelection.create(doc, savedCellSelection.anchor, savedCellSelection.head);
+      view.dispatch(view.state.tr.setSelection(restored));
+    } catch (e) {
+      console.error("[emr] 恢复单元格选区失败:", e);
+    }
+    savedCellSelection = null;
+  }
 
   /** 创建右键菜单 DOM 元素及其子菜单项 */
   function createMenu() {
@@ -106,6 +163,9 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }, props
     const cell = target.closest("td, th") as HTMLTableCellElement;
     if (!cell || !editor.value) return;
 
+    // 恢复右键前保存的单元格选区（若被事件链破坏），再弹出菜单
+    restoreCellSelection();
+
     createMenu();
     showMenu.value = true;
 
@@ -183,10 +243,13 @@ export const useTableContextMenu = (editor: { value: Editor | undefined }, props
   onMounted(() => {
     if (props.disabled) return;
     document.addEventListener("contextmenu", handleContextMenu);
+    // 捕获阶段拦截右键 mousedown，避免编辑器清空表格单元格选区
+    document.addEventListener("mousedown", handleCellMouseDown, true);
   });
 
   onBeforeUnmount(() => {
     document.removeEventListener("contextmenu", handleContextMenu);
+    document.removeEventListener("mousedown", handleCellMouseDown, true);
     if (menuElement) {
       document.body.removeChild(menuElement);
       menuElement = null;

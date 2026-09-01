@@ -1,7 +1,7 @@
 <template>
   <div class="emr-designer h-full flex flex-col bg-gray-100">
-    <div class="designer-header flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200">
-      <h2 class="text-base font-semibold text-gray-800">EMR 模板设计器</h2>
+    <div class="designer-header flex items-center justify-between px-4 bg-white border-b border-gray-200">
+      <p class="text-base font-semibold text-gray-800">EMR 模板设计器</p>
       <div class="header-actions flex items-center gap-2">
         <el-button @click="handlePreview" type="primary">预览</el-button>
         <el-button @click="handleSave" type="primary">保存模板</el-button>

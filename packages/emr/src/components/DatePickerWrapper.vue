@@ -1,6 +1,8 @@
 <template>
   <div class="date-picker-wrapper">
-    <el-date-picker v-model="dateValue" type="date" :value-format="valueFormat" placeholder="选择日期" @change="handleChange" />
+    <el-config-provider>
+      <el-date-picker v-model="dateValue" type="date" :value-format="valueFormat" placeholder="选择日期" @change="handleChange" />
+    </el-config-provider>
   </div>
 </template>
 

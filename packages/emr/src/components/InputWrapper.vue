@@ -52,7 +52,7 @@ watch(
 function updateWidth() {
   if (!measureRef.value) return;
   const textWidth = measureRef.value.getBoundingClientRect().width;
-  inputWidth.value = Math.max(textWidth + 20, minWidth);
+  inputWidth.value = Math.max(textWidth, minWidth);
 }
 
 function handleInput() {

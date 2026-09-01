@@ -27,5 +27,8 @@
   "dependencies": {
     "tim-js-sdk": "^2.27.6",
     "tim-upload-plugin": "^1.4.3"
+  },
+  "devDependencies": {
+    "trtc-sdk-v5": "^5.19.2"
   }
 }

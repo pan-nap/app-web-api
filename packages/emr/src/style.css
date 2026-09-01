@@ -1,3 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+
+/* ===== LazyPopover 基础样式 ===== */
+.lazy-popover {
+  /* 由 Popper.js 动态设置 position 和 transform，此处仅定义外观 */
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  z-index: 2000;
+  word-break: break-word;
+  /* 防止内容溢出 */
+  box-sizing: border-box;
+}
+
+/* ===== Vue Transition 动画（淡入淡出 + 缩放） ===== */
+.popover-enter-active,
+.popover-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.popover-enter-from,
+.popover-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+.popover-enter-to,
+.popover-leave-from {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ===== 触发元素包裹器（可选） ===== */
+.lazy-popover__reference {
+  display: inline-block;
+  /* 保证触发元素的行为与正常内联元素一致 */
+}
