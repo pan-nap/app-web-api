@@ -9,6 +9,10 @@ export interface EmrEditorProps {
   hideToolbar?: boolean;
   /** 是否禁用编辑器 */
   disabled?: boolean;
+  /** 初始文档内容（ProseMirror JSON），不传则使用默认示例 */
+  content?: DocNode | null;
+  /** 初始变量数据（嵌套对象格式，用于回填变量值） */
+  initialData?: Record<string, any>;
 }
 
 /** 文本样式标记属性 */

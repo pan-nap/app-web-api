@@ -6,6 +6,9 @@ import { useComponentPicker } from "./useComponentPicker";
 export const useVariableEditing = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
   const { cleanupPicker, startDatePicker, startSelectPicker, startInputPicker } = useComponentPicker();
 
+  /** 缓存的编辑器 DOM 引用（卸载时使用，避免访问已销毁的 editor.view） */
+  let contentElement: HTMLElement | null = null;
+
   /** 更新指定变量的值 */
   function updateVariableValue(refKey: string, value: string) {
     if (!editor.value) return;
@@ -50,19 +53,15 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
 
         if (isSelect) {
           event.preventDefault();
-          event.stopPropagation();
           startSelectPicker(variableSpan as HTMLElement, currentValue, options, (val) => updateVariableValue(refKey, val));
         } else if (isDate) {
           event.preventDefault();
-          event.stopPropagation();
           startDatePicker(variableSpan as HTMLElement, currentValue, (val) => updateVariableValue(refKey, val));
         } else if (isNumber) {
           event.preventDefault();
-          event.stopPropagation();
           startInputPicker(variableSpan as HTMLElement, currentValue, (val) => updateVariableValue(refKey, val), "number");
         } else {
           event.preventDefault();
-          event.stopPropagation();
           startInputPicker(variableSpan as HTMLElement, currentValue, (val) => updateVariableValue(refKey, val), "text");
         }
 
@@ -74,14 +73,15 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
 
   onMounted(() => {
     if (props.disabled) return;
-    const contentElement = editor.value?.view?.dom as HTMLElement | null;
+    contentElement = editor.value?.view?.dom as HTMLElement | null;
     contentElement?.addEventListener("click", handleVariableClick);
   });
 
   onBeforeUnmount(() => {
     cleanupPicker();
-    const contentElement = editor.value?.view?.dom as HTMLElement | null;
+    // 使用缓存的 DOM 引用，不再访问 editor.value.view（卸载时编辑器可能已销毁）
     contentElement?.removeEventListener("click", handleVariableClick);
+    contentElement = null;
   });
 
   return {};

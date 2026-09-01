@@ -28,16 +28,6 @@ export const gridOptions = reactive<VxeGridProps & { url: string }>({
     { type: "checkbox", width: 60, align: "center" },
     { title: "文书名称", field: "name", minWidth: 200 },
     {
-      title: "类型",
-      field: "type",
-      width: 100,
-      align: "center",
-      formatter: ({ cellValue }: any) => {
-        return cellValue === "template" ? "模板" : "实例"
-      }
-    },
-    { title: "所属患者", field: "patientId", width: 150 },
-    {
       title: "状态",
       field: "status",
       width: 100,

@@ -25,7 +25,9 @@ import type { EmrEditorProps } from "../types";
 
 const props = withDefaults(defineProps<EmrEditorProps>(), {
   hideToolbar: false,
-  disabled: false
+  disabled: false,
+  content: null,
+  initialData: undefined
 });
 
 const editor = useEditor({
@@ -196,5 +198,26 @@ defineExpose(useEmrApi(editor, props));
 }
 :deep(.ProseMirror .selectedCell) {
   background-color: rgba(0, 150, 255, 0.1); /* 浅蓝色背景 */
+}
+
+/* 打印：隐藏工具栏，仅保留文书内容 */
+@media print {
+  .emr-editor {
+    background: #fff !important;
+  }
+  :deep(.emr-toolbar) {
+    display: none !important;
+  }
+  .emr-content {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  :deep(.ProseMirror) {
+    width: auto !important;
+    min-height: auto !important;
+    padding: 0 !important;
+  }
 }
 </style>

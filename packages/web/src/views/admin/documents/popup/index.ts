@@ -1,30 +1,24 @@
 import { Utils } from "hs-admin-ui";
-import type { EmrElement } from "@cashier/emr";
-import AddPopup from "./add.vue";
-import EditorPopup from "./popup.vue";
+import type { DocNode } from "@cashier/emr";
+import popup from "./popup.vue";
 
 export interface EditorPopupOptions {
   /** 文书名称 */
   name?: string;
-  /** 文书类型 */
-  docType?: "template" | "instance";
   /** 编辑模式：传入 row 表示编辑 */
   row?: {
     id: string;
     name: string;
-    type: "template" | "instance";
-    content: EmrElement[];
-    patientId?: string;
+    content: DocNode;
   };
 }
 
 export function showPopup(options: EditorPopupOptions = {}): Promise<"confirm" | "cancel" | undefined> {
   return new Promise((resolve) => {
     Utils.showPopup(
-      options.row?.id ? EditorPopup : AddPopup,
+      popup,
       {
         name: options.name ?? "",
-        docType: options.docType ?? "template",
         row: options.row
       },
       {

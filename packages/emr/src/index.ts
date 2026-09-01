@@ -2,8 +2,10 @@ import { App, AppContext } from "vue";
 
 import EmrEditor from "./components/EmrEditor.vue";
 import EmrDesigner from "./components/EmrDesigner.vue";
+import type { EmrDesignerSavePayload } from "./components/EmrDesigner.vue";
 
 export { EmrEditor, EmrDesigner };
+export type { EmrDesignerSavePayload };
 
 interface PluginOptions {
   /**

@@ -1,10 +1,27 @@
 <template>
   <div class="emr-designer h-full flex flex-col bg-gray-100">
-    <div class="designer-header flex items-center justify-between px-4 bg-white border-b border-gray-200">
-      <p class="text-base font-semibold text-gray-800">EMR 模板设计器</p>
-      <div class="header-actions flex items-center gap-2">
-        <el-button @click="handlePreview" type="primary">预览</el-button>
-        <el-button @click="handleSave" type="primary">保存模板</el-button>
+    <div class="designer-header flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200 gap-3">
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <input
+          v-model="docName"
+          :disabled="props.disabled"
+          class="text-base font-semibold text-gray-800 border border-transparent rounded px-2 py-1 focus:outline-none focus:border-blue-400 focus:bg-white hover:border-gray-300 bg-transparent min-w-0 flex-1"
+          placeholder="请输入文书名称"
+        />
+        <select
+          v-if="!props.hideTypeSelect"
+          v-model="docType"
+          :disabled="props.disabled"
+          class="text-sm text-gray-600 border border-gray-300 rounded px-2 py-1 focus:outline-none bg-white"
+        >
+          <option value="template">模板</option>
+          <option value="instance">实例</option>
+        </select>
+      </div>
+      <div class="header-actions flex items-center gap-2 shrink-0">
+        <el-button @click="handlePrint">打印</el-button>
+        <el-button @click="handlePreview" type="primary" plain>预览</el-button>
+        <el-button @click="handleSave" type="primary" :disabled="props.disabled">保存模板</el-button>
       </div>
     </div>
 
@@ -17,7 +34,14 @@
         @drop="handleDrop"
         @click="handleEditorAreaClick"
       >
-        <EmrEditor ref="editorRef" class="designer-editor" :class="{ 'editor-selected': isEditorFocused }" />
+        <EmrEditor
+          ref="editorRef"
+          class="designer-editor"
+          :class="{ 'editor-selected': isEditorFocused }"
+          :content="props.content"
+          :initial-data="props.initialData"
+          :disabled="props.disabled"
+        />
       </div>
 
       <EmrPropertyPanel
@@ -31,12 +55,66 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
 import type { Editor } from "@tiptap/vue-3";
 import EmrEditor from "./EmrEditor.vue";
 import EmrComponentPanel from "./EmrComponentPanel.vue";
 import EmrPropertyPanel from "./EmrPropertyPanel.vue";
-import type { InsertVariableOptions, VariableOption } from "../types";
+import type { InsertVariableOptions, VariableOption, DocNode } from "../types";
+
+/** 设计器保存载荷 */
+export interface EmrDesignerSavePayload {
+  name: string;
+  type: "template" | "instance";
+  content: DocNode | null;
+}
+
+const props = withDefaults(
+  defineProps<{
+    /** 初始文书名称 */
+    name?: string;
+    /** 文书类型：template-模板 / instance-实例 */
+    docType?: "template" | "instance";
+    /** 初始文档内容（ProseMirror JSON） */
+    content?: DocNode | null;
+    /** 初始变量数据 */
+    initialData?: Record<string, any>;
+    /** 是否隐藏类型选择（仅模板场景时传 true，固定 docType 传入值） */
+    hideTypeSelect?: boolean;
+    /** 是否禁用编辑 */
+    disabled?: boolean;
+  }>(),
+  {
+    name: "",
+    docType: "template",
+    content: null,
+    initialData: undefined,
+    hideTypeSelect: false,
+    disabled: false
+  }
+);
+
+const emit = defineEmits<{
+  (e: "save", payload: EmrDesignerSavePayload): void;
+  (e: "preview", payload: EmrDesignerSavePayload): void;
+}>();
+
+const docName = ref(props.name || "");
+const docType = ref(props.docType || "template");
+
+watch(
+  () => props.name,
+  (val) => {
+    if (val !== undefined) docName.value = val;
+  }
+);
+
+watch(
+  () => props.docType,
+  (val) => {
+    if (val !== undefined) docType.value = val;
+  }
+);
 
 const editorRef = ref<InstanceType<typeof EmrEditor> | null>(null);
 const selectedVariable = ref<InsertVariableOptions | null>(null);
@@ -51,6 +129,16 @@ function getEditor(): Editor | null {
   if (editorInstance) return editorInstance;
   editorInstance = editorRef.value?.getEditor() || null;
   return editorInstance;
+}
+
+/** 组装保存载荷 */
+function buildPayload(): EmrDesignerSavePayload {
+  const editor = getEditor();
+  return {
+    name: docName.value,
+    type: docType.value,
+    content: editor ? (editor.getJSON() as DocNode) : null
+  };
 }
 
 /** 拖拽开始事件处理，保存拖拽载荷 */
@@ -119,6 +207,11 @@ function handleDrop(event: DragEvent) {
 /** 编辑器区域点击事件处理，选中变量节点并显示属性面板 */
 function handleEditorAreaClick(event: MouseEvent) {
   const target = event.target as HTMLElement;
+
+  // 仅处理编辑器容器内的点击；
+  // 点击属性面板 / 组件面板等编辑器外部区域时不改变选中状态（避免属性面板被清空）
+  if (!target.closest(".editor-container")) return;
+
   if (target.closest(".emr-variable")) {
     const variableEl = target.closest(".emr-variable") as HTMLElement;
     const refKey = variableEl.getAttribute("data-ref-key") || "";
@@ -232,19 +325,24 @@ function handleDeleteVariable() {
   selectedPos.value = null;
 }
 
-/** 预览模板（占位功能） */
-function handlePreview() {
-  alert("预览功能开发中...");
+/** 保存模板（交由父组件处理持久化） */
+function handleSave() {
+  if (props.disabled) return;
+  if (!docName.value.trim()) {
+    alert("请输入文书名称");
+    return;
+  }
+  emit("save", buildPayload());
 }
 
-/** 保存模板 */
-function handleSave() {
-  const editor = getEditor();
-  if (!editor) return;
+/** 预览（交由父组件处理，或默认打印） */
+function handlePreview() {
+  emit("preview", buildPayload());
+}
 
-  const template = editor.getJSON();
-  console.log("保存模板：", template);
-  alert("模板已保存（查看控制台）");
+/** 打印当前文书 */
+function handlePrint() {
+  window.print();
 }
 
 /** 处理编辑器选区更新事件 */
@@ -268,8 +366,7 @@ onMounted(() => {
     if (editor) {
       editor.on("selectionUpdate", handleSelectionUpdate);
     }
-
-    document.addEventListener("click", handleEditorAreaClick);
+    // 点击选中已通过 .editor-container 的 @click 处理，无需全局监听
   });
 });
 
@@ -278,8 +375,11 @@ onBeforeUnmount(() => {
   if (editor) {
     editor.off("selectionUpdate", handleSelectionUpdate);
   }
+});
 
-  document.removeEventListener("click", handleEditorAreaClick);
+defineExpose({
+  buildPayload,
+  getEditor
 });
 </script>
 
@@ -304,5 +404,29 @@ onBeforeUnmount(() => {
 
 :deep(.emr-variable:hover) {
   background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* 打印时隐藏设计器面板，仅保留文书内容 */
+@media print {
+  .emr-designer {
+    background: #fff !important;
+  }
+  .designer-header,
+  :deep(.component-panel),
+  :deep(.property-panel),
+  :deep(.emr-toolbar) {
+    display: none !important;
+  }
+  .editor-container {
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  .designer-editor {
+    max-width: 100% !important;
+  }
+  :deep(.emr-content) {
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
 }
 </style>

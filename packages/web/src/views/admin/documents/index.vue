@@ -9,12 +9,6 @@
           <el-form-item label="名称">
             <el-input v-model="searchForm.name" placeholder="请输入文书名称" clearable />
           </el-form-item>
-          <el-form-item label="类型">
-            <el-select class="w-[120px]" v-model="searchForm.type" placeholder="全部" clearable>
-              <el-option label="模板" value="template" />
-              <el-option label="实例" value="instance" />
-            </el-select>
-          </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleSearch">查询</el-button>
             <el-button @click="handleReset">重置</el-button>
@@ -49,18 +43,24 @@ const documentStore = useDocumentStore();
 const { gridRef, checkboxData, gridEvents, ...tableMethods } = useGridTableMethods(gridOptions);
 
 const searchForm = reactive({
-  name: "",
-  type: null as string | null
+  name: ""
 });
 
+/** 统一查询：固定 type=template（文书管理只维护模板） */
+function getListParams() {
+  return {
+    name: searchForm.name || undefined,
+    type: "template"
+  };
+}
+
 function handleSearch() {
-  tableMethods.getList();
+  tableMethods.getList(getListParams());
 }
 
 function handleReset() {
   searchForm.name = "";
-  searchForm.type = null;
-  tableMethods.getList();
+  tableMethods.getList(getListParams());
 }
 
 async function handleCreate() {
@@ -127,8 +127,8 @@ async function handleBatchDelete() {
 }
 
 onBeforeMount(() => {
-  // 初始化时刷新列表
-  tableMethods.getList();
+  // 初始化时刷新列表（仅模板）
+  tableMethods.getList(getListParams());
 });
 </script>
 <style scoped>
