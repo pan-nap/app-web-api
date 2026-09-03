@@ -4,7 +4,7 @@
   "description": "收银系统移动端应用",
   "private": true,
   "scripts": {
-    "dev1": "node scripts/hx.js launch web --project . --browser Edge",
+    "dev": "node scripts/hx.js launch web --project . --browser Edge",
     "dev:web:compile": "pnpm dev --compile true",
     "dev:app-android": "node scripts/hx.js launch app-android --project . --playground custom",
     "dev:app-android:compile": "node scripts/hx.js launch app-android --project . --compile true",

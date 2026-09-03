@@ -251,6 +251,7 @@ export class StompClient {
   }
 
   /** 订阅主题 */
+  @UTSJS.keepAlive
   subscribe(destination: string, onMessage: (msg: StompMessage) => void, selector: string | null = null): string | null {
     if (this.socketTask == null || !this.connected) {
       console.error("STOMP客户端未连接，无法订阅")

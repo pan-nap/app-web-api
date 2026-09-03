@@ -84,4 +84,41 @@ private sendHeartbeat(): void {
     this.socketTask.send({ data: "\n" })
   }
 }
+
+## 导出方法回调保活（"回调函数已释放，不能再次执行"）
+
+**报错现场**（真机 Android 运行日志）：
+
+```
+uts插件[hs-stomp] uts.sdk.modules.hsStompStompClientByJs.subscribe 回调函数 已释放，不能再次执行，参考文档：https://doc.dcloud.net.cn/uni-app-x/plugin/uts-plugin.html#keepalive
+```
+
+- 订阅后连续收到 N 条消息通常报 N-1 次（首次触发后回调即被回收）。
+- 日志中的 `hsStompStompClientByJs` 是框架桥接命名，不代表仅 JS 调用才触发。
+
+**原因**：HBuilderX 4.25+ 中 UTS 插件**导出方法**的回调参数默认"触发一次后立即自动回收"（防泄漏）。`subscribe()` 把调用方传入的 `onMessage` 存进订阅记录（如 `SubRecord.onMessage` 字段），之后每条 MESSAGE 帧再回调时，回调已被释放。
+
+**解决**：`uni_modules/hs-stomp/utssdk/index.uts` 的 `subscribe()` 前加 `@UTSJS.keepAlive`：
+
+```typescript
+@UTSJS.keepAlive
+export class StompClient {
+  subscribe(destination: string, onMessage: (msg: StompMessage) => void, selector: string | null = null): string | null {
+    const sub = new SubRecord()
+    sub.onMessage = onMessage        // 长期保存 ✅ 可多次回调
+    this.subscriptions.push(sub)
+    return sub.id
+  }
+}
+```
+
+**保活规则**：
+- 方式一：方法名以 `on` 开头且仅一个回调参数 → 自动识别为可持续触发，无需装饰器。
+- 方式二：`@UTSJS.keepAlive` 装饰器 → 不限回调参数数量，导出函数与 class 方法均可标注。
+- 回调常驻内存：属"一次性注册、长期回调"场景，避免高频重复调用注册方法堆积对象。
+- 装饰器不支持 `export const fn = () => {}` 箭头导出，需写成 `export function`。
+- `app-android` / `app-ios` 各平台目录下的实现都需加；Web 端无此回收机制，坑点只在 App 端暴露。
+- 内置 API（`uni.connectSocket`、`SocketTask.onMessage` 等）回调由 SDK 管理，不受影响；仅 **uni_modules 插件导出方法**有此限制。
+
+**同类对照**：`hs-mqtt` 的 `MqttClient.subscribe()` 不接收外部回调（消息走内部 `onMessageReceive` 属性 + `uni.$emit`），无此问题。hs-* 系列插件若再报同错，对相应导出方法加 `@UTSJS.keepAlive` 即可。
 ```

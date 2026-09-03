@@ -13,11 +13,11 @@ export type BTDevice = {
   rssi: number
 }
 
-/** 连接状态 */
-export const ConnectionStateConst = {
-  Disconnected: 0,
-  Connecting: 1,
-  Connected: 2
+/** 连接状态常量（UTS 中 export const 对象无法被外部代理导出，改用 class + static 字段） */
+export class ConnectionStateConst {
+  static Disconnected: number = 0
+  static Connecting: number = 1
+  static Connected: number = 2
 }
 
 export type ConnectionState = number

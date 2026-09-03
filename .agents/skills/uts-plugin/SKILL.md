@@ -18,7 +18,7 @@ description: "UTS 插件开发规范与坑点总结。涵盖 uni_modules 插件�
 | **平台适配**        | 条件编译、平台 API 差异速查                                                | [platform-adaptation.md](references/platform-adaptation.md)         |
 | **云打包/本地编译** | libs 目录冲突、config.json 依赖、切换工作流                                | [cloud-build.md](references/cloud-build.md)                         |
 | **TRTC 集成**       | TRTC SDK 桥接架构、事件监听、坑点、自定义基座工作流                        | [trtc-integration.md](references/trtc-integration.md)               |
-| **STOMP 插件**      | STOMP 帧结构、构建/解析、WebSocket 子协议、心跳机制                        | [stomp-plugin.md](references/stomp-plugin.md)                       |
+| **STOMP 插件**      | STOMP 帧结构、构建/解析、WebSocket 子协议、心跳机制、导出回调 keepAlive   | [stomp-plugin.md](references/stomp-plugin.md)                       |
 | **MQTT 插件**       | MQTT 3.1.1 报文编码、UTF-8 手动实现、Uint8Array 拼接                       | [mqtt-plugin.md](references/mqtt-plugin.md)                         |
 | **Android 混编**    | Kotlin 语法转换、UTSAndroid API、原生资源配置、线程管理、外部SDK API兼容性 | [platform-hybrid-android.md](references/platform-hybrid-android.md) |
 | **iOS 混编**        | Swift 语法转换、DCloudUTSFoundation、原生资源配置                          | [platform-hybrid-ios.md](references/platform-hybrid-ios.md)         |
