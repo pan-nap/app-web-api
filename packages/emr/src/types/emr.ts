@@ -4,6 +4,8 @@
  * 数据结构以 ProseMirror JSON 为唯一真值
  */
 
+import type { PageSettings } from "./design";
+
 export interface EmrEditorProps {
   /** 是否隐藏工具栏 */
   hideToolbar?: boolean;
@@ -13,6 +15,8 @@ export interface EmrEditorProps {
   content?: DocNode | null;
   /** 初始变量数据（嵌套对象格式，用于回填变量值） */
   initialData?: Record<string, any>;
+  /** 页面设置 */
+  pageSettings?: PageSettings;
 }
 
 /** 文本样式标记属性 */

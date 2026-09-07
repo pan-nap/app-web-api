@@ -196,8 +196,13 @@ class IMStore {
 
 		const msgId = IMService.sendVideoMessage(imState.peerUserId, videoPath, videoType, Math.round(duration) as number, snapshotPath)
 		if (msgId.length > 0) {
-			// 获取实际封面路径（Kotlin 端自动生成）
+			// 获取实际封面路径：仅 Android 端 Kotlin 会自动生成真实封面；其它平台直接使用传入的 snapshotPath
+			// #ifdef APP-ANDROID
 			const realSnapshotPath = IMService.getLastVideoSnapshotPath()
+			// #endif
+			// #ifndef APP-ANDROID
+			const realSnapshotPath = snapshotPath
+			// #endif
 			const msg: ChatMessage = {
 				msgId: msgId,
 				sender: imState.userId,

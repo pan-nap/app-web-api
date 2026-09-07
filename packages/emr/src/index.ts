@@ -65,5 +65,11 @@ export type {
   VariableChange,
   TemplateContent,
   DocumentRecord,
-  AttrChange
+  AttrChange,
+  PageSettings,
+  PageOrientation,
+  PageSize,
+  RequiredLevel
 } from "./types";
+
+export { DEFAULT_PAGE_SETTINGS, PAGE_SIZE_DIMENSIONS } from "./types";

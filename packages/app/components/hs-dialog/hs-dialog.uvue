@@ -1,0 +1,93 @@
+<template>
+	<page-container
+		:show="visible"
+		:position="currentPosition"
+		:round="props.round"
+		:overlay="props.overlay"
+		:overlay-style="overlayStyle"
+		:custom-style="customStyle"
+		:duration="props.duration"
+		:z-index="props.zIndex"
+		:close-on-slide-down="props.closeOnSlideDown"
+		@clickoverlay="onClickOverlay"
+		@afterleave="onAfterLeave"
+	>
+		<!-- 弹窗内容由使用方通过插槽传入自定义组件 -->
+		<slot></slot>
+	</page-container>
+</template>
+
+<script setup lang="uts">
+type Props = {
+	// 弹出位置：top / bottom / left / right / center
+	position ?: string
+	// 是否显示圆角
+	round ?: boolean
+	// 是否显示遮罩
+	overlay ?: boolean
+	// 点击遮罩是否关闭（默认关闭，按使用方场景自行开关）
+	closeOnClickOverlay ?: boolean
+	// 下滑一段距离后是否关闭（仅 bottom 场景生效）
+	closeOnSlideDown ?: boolean
+	// 自定义遮罩样式
+	overlayStyle ?: string
+	// 自定义弹出层样式
+	customStyle ?: string
+	// 动画时长（毫秒）
+	duration ?: number
+	// z-index 层级
+	zIndex ?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+	position: 'bottom',
+	round: false,
+	overlay: true,
+	closeOnClickOverlay: false,
+	closeOnSlideDown: false,
+	overlayStyle: '',
+	customStyle: '',
+	duration: 300,
+	zIndex: 100
+})
+
+const visible = ref<boolean>(false)
+const currentPosition = ref<string>(props.position)
+
+/**
+ * 命令式打开弹窗
+ * 支持通过 config 覆盖位置等配置，如 open({ position: 'center' })
+ */
+const open = (config ?: UTSJSONObject) => {
+	if (config != null) {
+		const position = config['position']
+		if (position != null) {
+			currentPosition.value = position as string
+		}
+	}
+	visible.value = true
+}
+
+/**
+ * 命令式关闭弹窗（触发离开动画）
+ */
+const close = () => {
+	visible.value = false
+}
+
+const onAfterLeave = () => {
+	visible.value = false
+}
+
+const onClickOverlay = (_e: UniPointerEvent) => {
+	if (props.closeOnClickOverlay) {
+		close()
+	}
+}
+
+// 暴露命令式实例方法，页面可通过 ref 拿到后直接调用
+defineExpose({ open, close })
+</script>
+
+<style>
+</style>

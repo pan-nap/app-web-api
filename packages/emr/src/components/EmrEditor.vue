@@ -1,7 +1,7 @@
 <template>
   <div class="emr-editor">
     <emr-toolbar v-if="!hideToolbar" :editor="editor" />
-    <editor-content :editor="editor" class="emr-content bg-white shadow-sm my-2" />
+    <editor-content :editor="editor" class="emr-content bg-white shadow-sm my-2" :style="contentStyle" />
   </div>
 </template>
 
@@ -22,12 +22,43 @@ import { useTableContextMenu } from "../hooks/useTableContextMenu";
 import { useEmrApi } from "../hooks/useEmrApi";
 import EmrToolbar from "./EmrToolbar.vue";
 import type { EmrEditorProps } from "../types";
+import { DEFAULT_PAGE_SETTINGS, PAGE_SIZE_DIMENSIONS } from "../types";
+import { computed } from "vue";
 
 const props = withDefaults(defineProps<EmrEditorProps>(), {
   hideToolbar: false,
   disabled: false,
   content: null,
-  initialData: undefined
+  initialData: undefined,
+  pageSettings: undefined
+});
+
+/** 根据页面设置计算容器样式 */
+const contentStyle = computed(() => {
+  const ps = props.pageSettings || DEFAULT_PAGE_SETTINGS;
+  const isLandscape = ps.orientation === "landscape";
+
+  let width: number;
+  let height: number;
+
+  if (ps.pageSize === "Custom") {
+    width = 210;
+    height = 297;
+  } else {
+    const dims = PAGE_SIZE_DIMENSIONS[ps.pageSize];
+    width = isLandscape ? dims.height : dims.width;
+    height = isLandscape ? dims.width : dims.height;
+  }
+
+  return {
+    padding: `${ps.marginTop}mm ${ps.marginRight}mm ${ps.marginBottom}mm ${ps.marginLeft}mm`,
+    "--page-width": `${width}mm`,
+    "--page-height": `${height}mm`,
+    "--margin-top": `${ps.marginTop}mm`,
+    "--margin-right": `${ps.marginRight}mm`,
+    "--margin-bottom": `${ps.marginBottom}mm`,
+    "--margin-left": `${ps.marginLeft}mm`
+  } as Record<string, string>;
 });
 
 const editor = useEditor({
@@ -83,9 +114,9 @@ defineExpose(useEmrApi(editor, props));
   box-sizing: border-box;
 }
 .emr-content :deep(.ProseMirror) {
-  width: 210mm;
-  min-height: 297mm;
-  padding: 15mm;
+  width: var(--page-width, 210mm);
+  min-height: var(--page-height, 297mm);
+  padding: var(--margin-top, 15mm) var(--margin-right, 15mm) var(--margin-bottom, 15mm) var(--margin-left, 15mm);
 }
 .emr-content :deep(p) {
   margin: 0 0 1em 0;
@@ -153,6 +184,16 @@ defineExpose(useEmrApi(editor, props));
 .emr-content :deep(.emr-variable-empty) {
   color: #7fbdff;
   background: rgba(184, 218, 255, 0.23);
+}
+
+.emr-content :deep(.emr-variable-underline) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.emr-content :deep(.emr-variable[data-readonly="true"]) {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .emr-content :deep(.ProseMirror-focused) {

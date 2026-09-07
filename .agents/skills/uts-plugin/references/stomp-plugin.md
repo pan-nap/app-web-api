@@ -121,4 +121,30 @@ export class StompClient {
 - 内置 API（`uni.connectSocket`、`SocketTask.onMessage` 等）回调由 SDK 管理，不受影响；仅 **uni_modules 插件导出方法**有此限制。
 
 **同类对照**：`hs-mqtt` 的 `MqttClient.subscribe()` 不接收外部回调（消息走内部 `onMessageReceive` 属性 + `uni.$emit`），无此问题。hs-* 系列插件若再报同错，对相应导出方法加 `@UTSJS.keepAlive` 即可。
+
+### Web 端编译告警：`Cannot find name 'UTSJS'`
+
+**现象**（Web/H5 dev 构建，不阻断编译但污染日志）：
+
+```
+warning: Cannot find name 'UTSJS'.
+  at uni_modules/hs-stomp/utssdk/index.uts:254:3
+    @UTSJS.keepAlive
+```
+
+**原因**：`@UTSJS.keepAlive` 仅 App 原生端（Android/iOS）编译器识别；**Web 编译不导入 `UTSJS`**，装饰器 token 直接报"找不到名称"。装饰器本身只解决 App 端原生桥接的回调回收问题，Web 端无需且无此对象。
+
+**解决**：hs-stomp 是"单个 `utssdk/index.uts` 多端共用"结构，装饰器必须用条件编译限定到 App 原生端：
+
+```typescript
+  /** 订阅主题 */
+  // #ifdef APP-ANDROID || APP-IOS
+  @UTSJS.keepAlive
+  // #endif
+  subscribe(destination: string, onMessage: (msg: StompMessage) => void, selector: string | null = null): string | null {
+```
+
+- 条件编译注释必须**单独成行**，与装饰器行相邻。
+- 若插件是"按平台目录拆分"结构（`app-android/`、`app-ios/`、`web/` 各一份 index.uts），则只在 App 平台文件加 `@UTSJS.keepAlive`、`web/index.uts` 不加即可，无需条件编译。
+- 参考：https://doc.dcloud.net.cn/uni-app-x/web 下相关说明。
 ```

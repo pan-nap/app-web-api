@@ -14,6 +14,9 @@ export interface VariableOption {
   label: string;
 }
 
+/** 必填等级 */
+export type RequiredLevel = "required" | "optional" | "none";
+
 /** 插入变量节点的选项参数 */
 export interface InsertVariableOptions {
   /** 数据引用路径，如 patient.patient_name */
@@ -26,10 +29,18 @@ export interface InsertVariableOptions {
   extensionValue?: string;
   /** 下拉选项列表，widgetType为select时使用 */
   options?: VariableOption[];
-  /** 是否必填字段 */
+  /** 是否必填字段（兼容旧字段） */
   required?: boolean;
+  /** 必填等级：required-强制必填 / optional-非强制必填 / none-非必填 */
+  requiredLevel?: RequiredLevel;
   /** 占位符文本，未填写时显示 */
   placeholder?: string;
+  /** 是否显示下划线 */
+  underline?: boolean;
+  /** 是否只读 */
+  readonly?: boolean;
+  /** 是否仅选择（下拉控件只能从选项中选择） */
+  selectOnly?: boolean;
 }
 
 /** 组件面板中的组件项 */
@@ -102,6 +113,49 @@ export interface DocumentRecord {
   /** 关联患者ID（可选） */
   patientId?: string;
 }
+
+/** 页面尺寸预设 */
+export type PageSize = "A4" | "A5" | "B5" | "Letter" | "Custom";
+
+/** 页面方向 */
+export type PageOrientation = "portrait" | "landscape";
+
+/** 页面设置 */
+export interface PageSettings {
+  /** 页面尺寸 */
+  pageSize: PageSize;
+  /** 页面方向 */
+  orientation: PageOrientation;
+  /** 上边距（mm） */
+  marginTop: number;
+  /** 下边距（mm） */
+  marginBottom: number;
+  /** 左边距（mm） */
+  marginLeft: number;
+  /** 右边距（mm） */
+  marginRight: number;
+  /** 是否连续显示（不强制分页） */
+  continuousDisplay: boolean;
+}
+
+/** 默认页面设置 */
+export const DEFAULT_PAGE_SETTINGS: PageSettings = {
+  pageSize: "A4",
+  orientation: "portrait",
+  marginTop: 15,
+  marginBottom: 15,
+  marginLeft: 15,
+  marginRight: 15,
+  continuousDisplay: true
+};
+
+/** 页面尺寸对应的宽高（mm），横向时自动交换 */
+export const PAGE_SIZE_DIMENSIONS: Record<Exclude<PageSize, "Custom">, { width: number; height: number }> = {
+  A4: { width: 210, height: 297 },
+  A5: { width: 148, height: 210 },
+  B5: { width: 176, height: 250 },
+  Letter: { width: 216, height: 279 }
+};
 
 /** 属性面板中的属性变更 */
 export interface AttrChange {

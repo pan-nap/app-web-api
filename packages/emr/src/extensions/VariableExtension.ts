@@ -69,6 +69,40 @@ export const VariableExtension = Node.create({
         renderHTML: (attributes) => {
           return { "data-placeholder": attributes.placeholder };
         }
+      },
+      underline: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-underline") === "true" || element.getAttribute("data-underline") === "1",
+        renderHTML: (attributes) => {
+          return { "data-underline": attributes.underline ? "true" : "false" };
+        }
+      },
+      readonly: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-readonly") === "true",
+        renderHTML: (attributes) => {
+          return { "data-readonly": attributes.readonly ? "true" : "false" };
+        }
+      },
+      selectOnly: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-select-only") === "true",
+        renderHTML: (attributes) => {
+          return { "data-select-only": attributes.selectOnly ? "true" : "false" };
+        }
+      },
+      requiredLevel: {
+        default: "none",
+        parseHTML: (element) => {
+          const level = element.getAttribute("data-required-level");
+          if (level === "required" || level === "optional") return level;
+          // 兼容旧字段
+          if (element.getAttribute("data-required") === "true") return "required";
+          return "none";
+        },
+        renderHTML: (attributes) => {
+          return { "data-required-level": attributes.requiredLevel || "none" };
+        }
       }
     };
   },
@@ -91,6 +125,7 @@ export const VariableExtension = Node.create({
     }
 
     const hasValue = !!node.attrs.extensionValue;
+    const underlineClass = node.attrs.underline ? "emr-variable-underline" : "";
 
     if (!displayValue) {
       displayValue = placeholder || label;
@@ -100,7 +135,8 @@ export const VariableExtension = Node.create({
       "span",
       {
         ...HTMLAttributes,
-        class: `emr-variable ${hasValue ? "emr-variable-filled" : "emr-variable-empty"} ${node.attrs.widgetType === "select" ? "emr-variable-select" : ""}`,
+        class:
+          `emr-variable ${hasValue ? "emr-variable-filled" : "emr-variable-empty"} ${node.attrs.widgetType === "select" ? "emr-variable-select" : ""} ${underlineClass}`.trim(),
         contenteditable: "false"
       },
       displayValue

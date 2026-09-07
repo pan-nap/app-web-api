@@ -41,6 +41,19 @@
   ],
   "subPackages": [
     {
+      "root": "page_dialog",
+      "pages": [
+          {
+            "path": "index/index",
+            "style": {
+              "navigationStyle": "custom",
+              "disableScroll": true
+            }
+          }
+      ]
+    },
+        
+    {
       "root": "page_im",
       "pages": [
         {

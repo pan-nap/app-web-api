@@ -41,13 +41,18 @@
           :content="props.content"
           :initial-data="props.initialData"
           :disabled="props.disabled"
+          :page-settings="pageSettings"
         />
       </div>
 
       <EmrPropertyPanel
         :selected-variable="selectedVariable"
+        :page-settings="pageSettings"
+        :doc-name="docName"
         @update-attr="handleUpdateAttr"
         @update-options="handleUpdateOptions"
+        @update-page-settings="handleUpdatePageSettings"
+        @update-doc-name="(val: string) => (docName = val)"
         @delete="handleDeleteVariable"
       />
     </div>
@@ -60,13 +65,15 @@ import type { Editor } from "@tiptap/vue-3";
 import EmrEditor from "./EmrEditor.vue";
 import EmrComponentPanel from "./EmrComponentPanel.vue";
 import EmrPropertyPanel from "./EmrPropertyPanel.vue";
-import type { InsertVariableOptions, VariableOption, DocNode } from "../types";
+import type { InsertVariableOptions, VariableOption, DocNode, PageSettings } from "../types";
+import { DEFAULT_PAGE_SETTINGS } from "../types";
 
 /** 设计器保存载荷 */
 export interface EmrDesignerSavePayload {
   name: string;
   type: "template" | "instance";
   content: DocNode | null;
+  pageSettings?: PageSettings;
 }
 
 const props = withDefaults(
@@ -101,6 +108,7 @@ const emit = defineEmits<{
 
 const docName = ref(props.name || "");
 const docType = ref(props.docType || "template");
+const pageSettings = ref<PageSettings>({ ...DEFAULT_PAGE_SETTINGS });
 
 watch(
   () => props.name,
@@ -137,7 +145,8 @@ function buildPayload(): EmrDesignerSavePayload {
   return {
     name: docName.value,
     type: docType.value,
-    content: editor ? (editor.getJSON() as DocNode) : null
+    content: editor ? (editor.getJSON() as DocNode) : null,
+    pageSettings: pageSettings.value
   };
 }
 
@@ -192,7 +201,11 @@ function handleDrop(event: DragEvent) {
               ]
             : [],
         required: false,
-        placeholder: ""
+        requiredLevel: "none",
+        placeholder: "",
+        underline: false,
+        readonly: false,
+        selectOnly: false
       }
     })
     .run();
@@ -219,6 +232,10 @@ function handleEditorAreaClick(event: MouseEvent) {
     const widgetType = variableEl.getAttribute("data-widget-type") || "text";
     const placeholder = variableEl.getAttribute("data-placeholder") || "";
     const required = variableEl.getAttribute("data-required") === "true";
+    const underline = variableEl.getAttribute("data-underline") === "true";
+    const readonly = variableEl.getAttribute("data-readonly") === "true";
+    const selectOnly = variableEl.getAttribute("data-select-only") === "true";
+    const requiredLevel = (variableEl.getAttribute("data-required-level") as any) || (required ? "required" : "none");
 
     const editor = getEditor();
     if (!editor) return;
@@ -233,7 +250,11 @@ function handleEditorAreaClick(event: MouseEvent) {
       extensionValue: variableEl.textContent || "",
       options: [],
       required,
-      placeholder
+      requiredLevel,
+      placeholder,
+      underline,
+      readonly,
+      selectOnly
     };
 
     const nodePos = editorRef.value?.findVariableNodeAtPos(pos);
@@ -260,7 +281,11 @@ function selectVariableAtPos(pos: number) {
     extensionValue: node.attrs.extensionValue || "",
     options: node.attrs.options || [],
     required: node.attrs.required || false,
-    placeholder: node.attrs.placeholder || ""
+    requiredLevel: node.attrs.requiredLevel || "none",
+    placeholder: node.attrs.placeholder || "",
+    underline: node.attrs.underline || false,
+    readonly: node.attrs.readonly || false,
+    selectOnly: node.attrs.selectOnly || false
   };
 }
 
@@ -323,6 +348,11 @@ function handleDeleteVariable() {
 
   selectedVariable.value = null;
   selectedPos.value = null;
+}
+
+/** 更新页面设置 */
+function handleUpdatePageSettings(settings: PageSettings) {
+  pageSettings.value = { ...settings };
 }
 
 /** 保存模板（交由父组件处理持久化） */

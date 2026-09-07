@@ -15,7 +15,7 @@ description: "UTS 插件开发规范与坑点总结。涵盖 uni_modules 插件�
 | **编译错误**        | 内联对象、解构、for...of、async 推断等 15 类错误 + 速查表                  | [compile-errors.md](references/compile-errors.md)                   |
 | **运行时错误**      | ClassCastException、Smart cast、uni.$emit 丢失等 6 类错误 + 速查表         | [runtime-errors.md](references/runtime-errors.md)                   |
 | **开发原则**        | 107 条开发原则（核心 + Android/iOS/HarmonyOS/Web 专属）                   | [development-principles.md](references/development-principles.md)   |
-| **平台适配**        | 条件编译、平台 API 差异速查                                                | [platform-adaptation.md](references/platform-adaptation.md)         |
+| **平台适配**        | 条件编译、平台 API 差异速查、Android 专有方法跨端调用（Property does not exist） | [platform-adaptation.md](references/platform-adaptation.md)         |
 | **云打包/本地编译** | libs 目录冲突、config.json 依赖、切换工作流                                | [cloud-build.md](references/cloud-build.md)                         |
 | **TRTC 集成**       | TRTC SDK 桥接架构、事件监听、坑点、自定义基座工作流                        | [trtc-integration.md](references/trtc-integration.md)               |
 | **STOMP 插件**      | STOMP 帧结构、构建/解析、WebSocket 子协议、心跳机制、导出回调 keepAlive   | [stomp-plugin.md](references/stomp-plugin.md)                       |
