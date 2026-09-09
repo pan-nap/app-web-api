@@ -50,7 +50,7 @@ onReady 与转场动画结束的先后不固定，取决于 DOM 数量与复杂�
 - Android：onLoad 时当前页 activity 可能未创建完成，取当前页 activity 建议在 onShow 或 onReady。
 
 ```vue
-<script setup lang="uts">
+<script setup >
 onLoad((options : OnLoadOptions) => {
   const testMode = options['testMode'] as string | null
   if (testMode == 'empty') {
@@ -78,7 +78,7 @@ onShow(() => {
 | `onBeforeUnmount` | 组件卸载前执行 |
 
 ```vue
-<script setup lang="uts">
+<script setup >
 onMounted(() => {
   console.log('组件挂载')
 })

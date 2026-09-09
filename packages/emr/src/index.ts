@@ -1,4 +1,5 @@
 import { App, AppContext } from "vue";
+import "./style.css";
 
 import EmrEditor from "./components/EmrEditor.vue";
 import EmrDesigner from "./components/EmrDesigner.vue";

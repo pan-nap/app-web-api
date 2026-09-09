@@ -256,6 +256,19 @@ function floatDestroy(): void {
 
 // ========== 对外服务 ==========
 
+export function bringActivityToFront(): void {
+  try {
+    const act = UTSAndroid.getUniActivity()
+    if (act == null) return
+    const actRef = act as android.app.Activity
+    const intent = new android.content.Intent(actRef, actRef.javaClass)
+    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+    actRef.startActivity(intent)
+  } catch (_e: any) {
+    console.log('FLOAT: bringActivityToFront 失败')
+  }
+}
+
 export class FloatWindowService {
   static onShow(callback: () => void): void {
     _onShow = callback

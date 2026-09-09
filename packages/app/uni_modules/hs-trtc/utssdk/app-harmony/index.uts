@@ -83,4 +83,12 @@ export class TrtcService {
   static setRemoteVideoView(userId: string, tv: any | null): void {
     console.log('TRTC Harmony: setRemoteVideoView 待实现')
   }
+
+  static setLocalVideoElement(el: UniElement | null): void {
+    console.log('TRTC Harmony: setLocalVideoElement 待实现')
+  }
+
+  static setRemoteVideoElement(userId: string, el: UniElement | null): void {
+    console.log('TRTC Harmony: setRemoteVideoElement 待实现')
+  }
 }

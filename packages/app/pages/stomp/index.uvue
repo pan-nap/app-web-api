@@ -6,7 +6,7 @@
 	</hs-screen>
 </template>
 
-<script setup lang="uts">
+<script setup >
 import { stompClient, useStompMessage } from '@/utils/stomp.uts'
 import { StompMessage } from '@/uni_modules/hs-stomp'
 

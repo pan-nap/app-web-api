@@ -1,7 +1,7 @@
 <template>
   <input class="hs-input" :value="modelValue" @input="onInput" />
 </template>
-<script setup lang="uts">
+<script setup>
 import type { FormItemContext } from '../../types/form'
 
 const injectedFormItem = inject<FormItemContext | null>('hsFormItem', null)

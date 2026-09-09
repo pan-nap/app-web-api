@@ -62,8 +62,12 @@ export class TrtcService {
   static isLocalCameraOn(): boolean
   /** 本地麦克风是否开启 */
   static isLocalMicOn(): boolean
-  /** 设置本地视频渲染容器 */
+  /** 设置本地视频渲染容器（原生 any，供插件内部使用） */
   static setLocalVideoView(tv: any | null): void
-  /** 设置远端视频渲染容器 */
+  /** 设置远端视频渲染容器（原生 any，供插件内部使用） */
   static setRemoteVideoView(userId: string, tv: any | null): void
+  /** 从 UniElement 提取原生视图并设置为本地视频渲染容器（供 uvue 页面调用） */
+  static setLocalVideoElement(el: UniElement | null): void
+  /** 从 UniElement 提取原生视图并设置为远端视频渲染容器（供 uvue 页面调用） */
+  static setRemoteVideoElement(userId: string, el: UniElement | null): void
 }

@@ -53,7 +53,16 @@ packages/app/
 ### uni-app x 项目标识
 
 - `manifest.json` 中**必须存在 `"uni-app-x": {}` 节点**，否则项目被识别为老版 uni-app。
+- **蒸汽模式**需在 `manifest.json` 中配置 `"uni-app-x": { "vapor": true }`。
 - 页面后缀必须为 **`.uvue`**，且需在 `pages.json` 中注册。
+- 工具/脚本文件后缀为 **`.uts`**（不要写 `.ts` 或 `.js`）。
+
+### 蒸汽模式语法要求（HBuilderX 5.24）
+
+- `.uvue` 文件的 `<script setup>` **不要写 `lang` 属性**（5.25 之前不支持 `lang="ts"`）
+- 可直接写 js/ts 语法，无需强类型标注
+- 原生 API（`UTSAndroid`、`getAndroidView`）只能在 `utssdk/` 插件中使用
+- 页面中使用 `UniElement` 代替原生视图引用
 
 ### pages.json
 

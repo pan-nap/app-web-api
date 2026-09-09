@@ -29,6 +29,8 @@ export function setFloatVideoSource(isLocal: boolean, remoteUserId: string): voi
 export function checkFloatPermission(): boolean
 /** 打开悬浮窗权限设置页 */
 export function requestFloatPermission(): void
+/** 将当前 Activity 带到前台（Android） */
+export function bringActivityToFront(): void
 
 /** 悬浮窗服务类 */
 export class FloatWindowService {

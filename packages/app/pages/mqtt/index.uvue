@@ -6,7 +6,7 @@
 	</hs-screen>
 </template>
 
-<script setup lang="uts">
+<script setup >
 import { mqttClient, useMqttMessage } from '@/utils/mqtt.uts'
 
 const receiveMsg = ref("")

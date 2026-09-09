@@ -4,7 +4,7 @@
   </view>
 </template>
 
-<script setup lang="uts">
+<script setup >
 import type { FormContext, FormRules, ItemCtx } from '../../types/form'
 
 type Props = {

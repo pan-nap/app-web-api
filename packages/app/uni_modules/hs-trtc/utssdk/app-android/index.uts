@@ -291,4 +291,32 @@ export class TrtcService {
   static setRemoteVideoView(userId: string, tv: any | null): void {
     bindRemoteVideoViewImpl(userId, tv)
   }
+
+  /** 从 UniElement 提取原生 ViewGroup 并设置为本地视频渲染容器（供 uvue 页面调用） */
+  static setLocalVideoElement(el: UniElement | null): void {
+    if (el == null) {
+      TrtcService.setLocalVideoView(null)
+      return
+    }
+    try {
+      const vg = el.getAndroidView<android.view.ViewGroup>()
+      TrtcService.setLocalVideoView(vg)
+    } catch (e: any) {
+      console.error('TRTC: setLocalVideoElement 提取原生视图失败 - ' + (e != null ? e.toString() : ''))
+    }
+  }
+
+  /** 从 UniElement 提取原生 ViewGroup 并设置为远端视频渲染容器（供 uvue 页面调用） */
+  static setRemoteVideoElement(userId: string, el: UniElement | null): void {
+    if (el == null) {
+      TrtcService.setRemoteVideoView(userId, null)
+      return
+    }
+    try {
+      const vg = el.getAndroidView<android.view.ViewGroup>()
+      TrtcService.setRemoteVideoView(userId, vg)
+    } catch (e: any) {
+      console.error('TRTC: setRemoteVideoElement 提取原生视图失败 - ' + (e != null ? e.toString() : ''))
+    }
+  }
 }

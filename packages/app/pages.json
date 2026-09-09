@@ -29,30 +29,22 @@
       "style": {
         "navigationBarTitleText": "stomp测试页"
       }
-    },
-    // #ifdef APP
-    {
-      "path": "pages/bluetooth/index",
-      "style": {
-        "navigationBarTitleText": "蓝牙"
-      }
     }
-    // #endif
   ],
   "subPackages": [
     {
       "root": "page_dialog",
       "pages": [
-          {
-            "path": "index/index",
-            "style": {
-              "navigationStyle": "custom",
-              "disableScroll": true
-            }
+        {
+          "path": "index/index",
+          "style": {
+            "navigationStyle": "custom",
+            "disableScroll": true
           }
+        }
       ]
     },
-        
+
     {
       "root": "page_im",
       "pages": [

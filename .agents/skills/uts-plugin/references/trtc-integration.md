@@ -2,10 +2,10 @@
 
 ## 版本选择
 
-| SDK | Maven 坐标 | Maven Central 状态 | TRTCParams 是否可用 |
-|-----|-----------|-------------------|-------------------|
-| LiteAVSDK_TRTC | `com.tencent.liteav:LiteAVSDK_TRTC:latest.release` | ❌ 无公开版本记录 | ❌ 不可用 |
-| **LiteAVSDK_Professional** | **`com.tencent.liteav:LiteAVSDK_Professional:13.3.0.20247`** | ✅ 有明确发布记录 | ✅ 可用 **← 推荐** |
+| SDK                        | Maven 坐标                                                   | Maven Central 状态 | TRTCParams 是否可用 |
+| -------------------------- | ------------------------------------------------------------ | ------------------ | ------------------- |
+| LiteAVSDK_TRTC             | `com.tencent.liteav:LiteAVSDK_TRTC:latest.release`           | ❌ 无公开版本记录  | ❌ 不可用           |
+| **LiteAVSDK_Professional** | **`com.tencent.liteav:LiteAVSDK_Professional:13.3.0.20247`** | ✅ 有明确发布记录  | ✅ 可用 **← 推荐**  |
 
 **结论**：使用 `LiteAVSDK_Professional` 替代 `LiteAVSDK_TRTC`。全功能版包含 TRTC 所有类，Maven Central 上有完整版本记录。
 
@@ -34,6 +34,7 @@ utssdk/
 ```
 
 **关键设计原则**（自定义基座模式）：
+
 1. 直接 `import com.tencent.trtc.*` — **编译时依赖 SDK 类**（自定义基座云端打包时 Maven 依赖在 classpath 上）
 2. 监听器通过匿名类 `object : TRTCCloudListener()` 实现，重写 `onRemoteUserEnterRoom` 等回调
 3. 所有 SDK 方法直接调用：`c.startLocalPreview(frontCamera, view)` — 无需反射
@@ -56,13 +57,13 @@ TRTCBridge: startLocalPreview SDK 调用成功        ← SDK 实际调用成功
 
 ## 视频画面链路
 
-| 环节 | 本地画面 | 远端画面 |
-|------|---------|---------|
-| **视图类型** | `TXCloudVideoView`（SDK 自带的 SurfaceView） | `android.view.TextureView`（UTS 手动创建） |
-| **管理方** | `TRTCBridge.kt` 单例持有 | uvue 页面变量持有 |
-| **创建时机** | `startLocalPreviewInContainer` 时自动创建 | `createVideoViews()` 时创建 |
-| **SDK 调用** | `startLocalPreview(boolean, TXCloudVideoView)` | `startRemoteView(String, TextureView)` |
-| **容器切换** | `startLocalPreviewInContainer` 自动 removeView + addView | 需手动解绑再绑到新 TextureView |
+| 环节         | 本地画面                                                 | 远端画面                                   |
+| ------------ | -------------------------------------------------------- | ------------------------------------------ |
+| **视图类型** | `TXCloudVideoView`（SDK 自带的 SurfaceView）             | `android.view.TextureView`（UTS 手动创建） |
+| **管理方**   | `TRTCBridge.kt` 单例持有                                 | uvue 页面变量持有                          |
+| **创建时机** | `startLocalPreviewInContainer` 时自动创建                | `createVideoViews()` 时创建                |
+| **SDK 调用** | `startLocalPreview(boolean, TXCloudVideoView)`           | `startRemoteView(String, TextureView)`     |
+| **容器切换** | `startLocalPreviewInContainer` 自动 removeView + addView | 需手动解绑再绑到新 TextureView             |
 
 ## 常见问题排查
 
@@ -92,6 +93,7 @@ TRTC SDK 通过 `TRTCCloud.setListener(TRTCCloudListener)` 提供房间事件回
 **⚠️ 关键坑点：`TRTCCloudListener` 是抽象类（class），不是接口（interface）！**
 
 这意味着：
+
 - ❌ **不能用** `Proxy.newProxyInstance()` 动态代理（那只能用于 interface）
 - ✅ **必须用** `object : TRTCCloudListener()` 匿名类继承方式
 
@@ -127,28 +129,29 @@ cloud?.setListener(listener)
 
 **支持的回调事件：**
 
-| SDK 方法 | 参数 | 说明 |
-|---------|------|------|
-| `onRemoteUserEnterRoom` | `(String userId)` | 远端用户进入房间 |
-| `onRemoteUserLeaveRoom` | `(String userId, int reason)` | 远端用户离开房间 |
-| `onEnterRoom` | `(long result)` | 本端进入房间结果（≥0 成功） |
-| `onExitRoom` | `(int reason)` | 本端离开房间 |
-| `onUserVideoAvailable` | `(String userId, boolean available)` | 远端视频可用状态 |
-| `onFirstVideoFrame` | `(String userId, int streamType, int w, int h)` | 首帧视频渲染 |
-| `onError` | `(int errCode, String errMsg, Bundle extra)` | SDK 错误 |
-| `onConnectionLost` / `onTryToReconnect` / `onConnectionRecovery` | — | 网络状态变化 |
+| SDK 方法                                                         | 参数                                            | 说明                        |
+| ---------------------------------------------------------------- | ----------------------------------------------- | --------------------------- |
+| `onRemoteUserEnterRoom`                                          | `(String userId)`                               | 远端用户进入房间            |
+| `onRemoteUserLeaveRoom`                                          | `(String userId, int reason)`                   | 远端用户离开房间            |
+| `onEnterRoom`                                                    | `(long result)`                                 | 本端进入房间结果（≥0 成功） |
+| `onExitRoom`                                                     | `(int reason)`                                  | 本端离开房间                |
+| `onUserVideoAvailable`                                           | `(String userId, boolean available)`            | 远端视频可用状态            |
+| `onFirstVideoFrame`                                              | `(String userId, int streamType, int w, int h)` | 首帧视频渲染                |
+| `onError`                                                        | `(int errCode, String errMsg, Bundle extra)`    | SDK 错误                    |
+| `onConnectionLost` / `onTryToReconnect` / `onConnectionRecovery` | —                                               | 网络状态变化                |
 
 **优势**：完全替代 STOMP 信令的房间通知。两个设备只要 sdkAppId/roomId 一致、userSig 有效、userId 不同，TRTC SDK 自身就能通知对端进入/离开，无需额外消息通道。
 
 **UTS 层调用方式：**
+
 ```typescript
 TrtcService.onRemoteUserEnter((userId) => {
   // 绑定远端视频
-  TrtcService.setRemoteVideoView(userId, container)
-})
+  TrtcService.setRemoteVideoView(userId, container);
+});
 TrtcService.onRemoteUserLeave((userId) => {
   // 清理远端画面
-})
+});
 ```
 
 ## TRTC SDK 类结构坑点
@@ -194,13 +197,14 @@ params.strRoomId = "888"
 
 **⚠️ 关键：这两个是完全不同的房间！** 两端分别用一个进房间会分别在各自的房间，互相不可见。
 
-| 端 | roomId 类型 | 实际房间 |
-|----|------------|---------|
-| Web SDK (trtc-sdk-v5) | `{ roomId: 888 }` → 数值 | 房间「888」（int）|
-| Android SDK | `params.roomId = 888` | 房间「888」（int）✅ |
-| Android SDK | `params.strRoomId = "888"` | 房间「"888"」（String）❌ |
+| 端                    | roomId 类型                | 实际房间                  |
+| --------------------- | -------------------------- | ------------------------- |
+| Web SDK (trtc-sdk-v5) | `{ roomId: 888 }` → 数值   | 房间「888」（int）        |
+| Android SDK           | `params.roomId = 888`      | 房间「888」（int）✅      |
+| Android SDK           | `params.strRoomId = "888"` | 房间「"888"」（String）❌ |
 
 **规则**：
+
 - Web TRTC SDK 只支持数值 roomId
 - 纯数字房间（如 `888`）用 `params.roomId`，两端都保持数值
 - 包含字母的房间（如 `"room_abc"`）才用 `strRoomId`
@@ -268,6 +272,7 @@ unzip -o libs/LiteAVSDK_Professional-13.3.0.20247.aar classes.jar -d libs/
 ```
 
 项目已提供一键脚本：
+
 - Windows: `uni_modules/hs-trtc/scripts/init-libs.bat`
 - macOS/Linux: `bash uni_modules/hs-trtc/scripts/init-libs.sh`
 
@@ -280,11 +285,13 @@ unzip -o libs/LiteAVSDK_Professional-13.3.0.20247.aar classes.jar -d libs/
 **现象**：页面从后台返回或从悬浮窗返回视频页时，视频画面白屏，需要回退一页再进入才有画面。
 
 **根因**：
+
 - `TXCloudVideoView` 内部使用 `TextureView`，当 View 从 Window 移除时，TextureView 的 Surface 会被销毁
 - 重新 `addView` 后，Surface 需要重新创建，但 SDK 的渲染管道还指向旧的 Surface
 - 如果 `stopLocalPreview()` 中销毁了 `localPreviewView`（`localPreviewView = null`），重新创建的新 View 需要重新走初始化流程
 
 **解决方案**（View 复用模式）：
+
 ```kotlin
 // ✅ 正确：stopLocalPreview 只停止预览，不销毁 View
 fun stopLocalPreview() {
@@ -322,6 +329,7 @@ fun startLocalPreviewInContainer(frontCamera: Boolean, container: ViewGroup) {
 **根因**：使用 `startActivity` 且添加了 `FLAG_ACTIVITY_NEW_TASK`，这会创建一个**新的 Activity 实例**而不是把已有的 Activity 带到前台。新实例的 TRTC 状态未初始化，导致白屏。返回上一页实际上是关闭了新实例，露出了旧实例的画面。
 
 **解决方案**：使用 `FLAG_ACTIVITY_REORDER_TO_FRONT` 替代 `FLAG_ACTIVITY_NEW_TASK`：
+
 ```kotlin
 // ✅ 正确：将已有 Activity 带到前台，不创建新实例
 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
@@ -337,14 +345,15 @@ context.startActivity(intent)
 **根因**：UTS 编译器不知道 `moveTaskToFront` 是 `android.app.Activity` 的方法，因为 UTS 中 Android API 的可见性有限制。
 
 **解决方案**：改用 `startActivity` + `FLAG_ACTIVITY_REORDER_TO_FRONT`：
+
 ```typescript
 // ❌ 编译报错
-actRef.moveTaskToFront(true)
+actRef.moveTaskToFront(true);
 
 // ✅ 正确
-const intent = new android.content.Intent(context, act.getClass())
-intent.addFlags(android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-context.startActivity(intent)
+const intent = new android.content.Intent(context, act.getClass());
+intent.addFlags(android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+context.startActivity(intent);
 ```
 
 ### 坑4：回调注册状态未重置导致连接状态卡死
@@ -356,16 +365,16 @@ context.startActivity(intent)
 ```typescript
 // ❌ leaveRoomImpl 中未重置标志位
 function leaveRoomImpl() {
-    TRTCBridge.exitRoom()
-    TRTCBridge.destroy()
-    // _callbacksRegistered 未重置，下一次 enterRoom 不注册回调
+  TRTCBridge.exitRoom();
+  TRTCBridge.destroy();
+  // _callbacksRegistered 未重置，下一次 enterRoom 不注册回调
 }
 
 // ✅ 正确：重置标志位
 function leaveRoomImpl() {
-    TRTCBridge.exitRoom()
-    TRTCBridge.destroy()
-    _callbacksRegistered = false  // ← 关键：允许下一次重新注册回调
+  TRTCBridge.exitRoom();
+  TRTCBridge.destroy();
+  _callbacksRegistered = false; // ← 关键：允许下一次重新注册回调
 }
 ```
 
@@ -385,6 +394,7 @@ container.setClipToOutline(true)  // 没有 OutlineProvider 时导致异常
 ```
 
 **解决方案**：移除 `setClipToOutline(true)`，只靠 `GradientDrawable` 背景的圆角即可：
+
 ```kotlin
 // ✅ 正确：只设置 GradientDrawable 背景
 val bgDrawable = GradientDrawable()
@@ -403,13 +413,15 @@ container.setBackground(bgDrawable)
 
 ```typescript
 // ❌ 错误：使用被 MOVE 更新的变量判断
-let _dragLastX = 0, _dragLastY = 0
+let _dragLastX = 0,
+  _dragLastY = 0;
 // ACTION_DOWN: _dragLastX = rawX, _dragLastY = rawY
 // ACTION_MOVE: _dragLastX = rawX, _dragLastY = rawY  ← 不断更新
 // ACTION_UP: 用 _dragLastX/Y 算距离 → 距离 ≈ 0 → 误判为点击
 
 // ✅ 正确：用 ACTION_DOWN 时保存的 _downX/Y 计算
-let _downX = 0, _downY = 0
+let _downX = 0,
+  _downY = 0;
 // ACTION_DOWN: _downX = rawX, _downY = rawY
 // ACTION_UP: 用 _downX/_downY 算距离 → 距离 > 阈值 → 判定为拖动
 ```
@@ -420,12 +432,12 @@ let _downX = 0, _downY = 0
 
 **根因**：TRTC SDK 在 v8.0+ / v11.4+ 中废弃了一些旧 API，改用新签名。
 
-| 废弃 API | 替代 API | 引入版本 |
-|----------|----------|---------|
-| `setListener(listener)` | `addListener(listener)` | v11.4 |
-| `startRemoteView(userId, view)` | `startRemoteView(userId, streamType, view)` | v8.0 |
-| `stopRemoteView(userId)` | `stopRemoteView(userId, streamType)` | v8.0 |
-| `startLocalAudio()` | `startLocalAudio(quality)` | v8.0 |
+| 废弃 API                        | 替代 API                                    | 引入版本 |
+| ------------------------------- | ------------------------------------------- | -------- |
+| `setListener(listener)`         | `addListener(listener)`                     | v11.4    |
+| `startRemoteView(userId, view)` | `startRemoteView(userId, streamType, view)` | v8.0     |
+| `stopRemoteView(userId)`        | `stopRemoteView(userId, streamType)`        | v8.0     |
+| `startLocalAudio()`             | `startLocalAudio(quality)`                  | v8.0     |
 
 ```kotlin
 // 旧 API
@@ -446,17 +458,19 @@ c.startLocalAudio(TRTCCloudDef.TRTC_AUDIO_QUALITY_DEFAULT)
 **现象**：编译报错 `参数类型不匹配：实际类型为 'Int'，预期类型为 'Float'`。
 
 **解决方案**：UTS 中数值字面量默认是 `Int` 类型，需要 Float 参数时需显式转换：
+
 ```typescript
 // ❌ 错误：radius 是 Int
-bgDrawable.setCornerRadius(radius)
+bgDrawable.setCornerRadius(radius);
 
 // ✅ 正确：转换为 Float
-bgDrawable.setCornerRadius(radius as Float)
+bgDrawable.setCornerRadius(radius as Float);
 ```
 
 ### 坑9：内存泄漏 — 静态 View 引用已销毁 Activity
 
 **参考**：本文档「内存泄漏」章节已覆盖。核心要点：
+
 - `TRTCBridge` 的 `companion object` 中持有的 `TXCloudVideoView` 或 UTS 层的 `_localVideoView` 视图
 - 页面销毁时必须调用 `destroy()` 清空所有静态引用
 - UTS 层的 `_localVideoView` 也要在 `leaveRoom()` 时置 `null`
@@ -468,14 +482,15 @@ bgDrawable.setCornerRadius(radius as Float)
 **根因**：Android 12（API 31）开始禁用静默开启蓝牙。
 
 **解决方案**：判断系统版本，API 31+ 引导用户手动开启：
+
 ```typescript
 if (android.os.Build.VERSION.SDK_INT >= 31) {
-    // 弹出系统蓝牙授权对话框
-    const intent = new android.content.Intent(android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE)
-    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-    UTSAndroid.getUniActivity()?.startActivity(intent)
+  // 弹出系统蓝牙授权对话框
+  const intent = new android.content.Intent(android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE);
+  intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+  UTSAndroid.getUniActivity()?.startActivity(intent);
 } else {
-    adapter.enable()
+  adapter.enable();
 }
 ```
 
@@ -486,11 +501,10 @@ if (android.os.Build.VERSION.SDK_INT >= 31) {
 **根因**：UTS 中 `UTSAndroid.getJavaClass()` 对 `BluetoothDevice` 这类 Kotlin 类不可用，`class BluetoothDevice : Any, Parcelable` 没有 `companion object`，不能直接作为表达式引用。
 
 **解决方案**：只能在 UTS 中保持旧 API（带泛型参数），编译警告可忽略：
+
 ```typescript
 // ✅ UTS 中唯一可用的写法（仅编译警告，不影响运行）
-const raw = intent.getParcelableExtra<android.bluetooth.BluetoothDevice>(
-    android.bluetooth.BluetoothDevice.EXTRA_DEVICE
-)
+const raw = intent.getParcelableExtra<android.bluetooth.BluetoothDevice>(android.bluetooth.BluetoothDevice.EXTRA_DEVICE);
 // 原生的新 API（需要 ::class.java）在 UTS 中不可编译
 ```
 
@@ -499,11 +513,72 @@ const raw = intent.getParcelableExtra<android.bluetooth.BluetoothDevice>(
 **现象**：`android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY` 在 API 26+ 引入。
 
 **解决方案**：
+
 ```typescript
-let type: number
+let type: number;
 try {
-    type = android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+  type = android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 } catch (_e: any) {
-    type = 2038  // TYPE_PHONE 的旧值
+  type = 2038; // TYPE_PHONE 的旧值
 }
 ```
+
+### 坑13：UniElement 桥接原生视图（蒸汽模式关键模式）
+
+**背景**：蒸汽模式中，`.uvue` 页面不允许直接使用 `getAndroidView`，必须通过 UTS 插件封装。
+
+**模式**：
+
+```
+.uvue 页面                          utssdk 插件
+┌─────────────────────┐          ┌─────────────────────────┐
+│ ref<UniElement>     │  ──传──→  │ getAndroidView<ViewGroup>│
+│ 跨平台安全类型       │          │ 使用原生 ViewGroup      │
+└─────────────────────┘          └─────────────────────────┘
+```
+
+**代码示例**：
+
+```typescript
+// ===== .uvue 页面中 =====
+const mainContainer = ref<UniElement | null>(null)
+// 传 UniElement 给插件
+TrtcService.setLocalVideoElement(mainContainer.value)
+
+// ===== utssdk/app-android/index.uts 中 =====
+import { UTSAndroid } from 'io.dcloud.uts'
+
+static setLocalVideoElement(el: UniElement | null): void {
+  if (el == null) return
+  try {
+    const vg = el.getAndroidView<android.view.ViewGroup>()
+    // 使用原生 ViewGroup 进行后续操作
+  } catch (e: any) {
+    console.error('提取原生视图失败 - ' + e.toString())
+  }
+}
+```
+
+**关键点**：
+
+- `UniElement` 是跨平台安全类型，页面可以持有
+- `getAndroidView<T>()` 只能在 `utssdk/` 插件中使用
+- 提取后的原生 View 可以传给 SDK（如 `startLocalPreview`）
+
+### 坑14：`_callbacksRegistered` 标志位必须重置
+
+**现象**：挂断后重新进入房间，`onEnterRoom` 等原生回调不触发，状态一直显示“正在连接”。
+
+**根因**：`leaveRoom()` 时未重置 `_callbacksRegistered = false`，导致再次 `enterRoom()` 时 `ensureBridgeInit()` 判断已注册，跳过 `registerNativeCallbacks()`。
+
+**解决**：
+
+```typescript
+function leaveRoomImpl(): void {
+  TRTCBridge.exitRoom();
+  TRTCBridge.destroy();
+  _callbacksRegistered = false; // ← 必须重置
+}
+```
+
+**原则**：所有“一次性注册”的标志位，在资源释放时必须同步重置。

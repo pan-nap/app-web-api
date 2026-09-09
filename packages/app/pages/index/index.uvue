@@ -33,7 +33,7 @@
 	</hs-screen>
 </template>
 
-<script setup lang="uts">
+<script setup >
 	const dialogRef = ref<HsDialogComponentPublicInstance | null>(null)
 	const dialogMode = ref<string>('center')
 	const dialogTitle = ref<string>('')

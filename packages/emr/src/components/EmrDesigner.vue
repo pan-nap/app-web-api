@@ -435,28 +435,4 @@ defineExpose({
 :deep(.emr-variable:hover) {
   background-color: rgba(59, 130, 246, 0.1) !important;
 }
-
-/* 打印时隐藏设计器面板，仅保留文书内容 */
-@media print {
-  .emr-designer {
-    background: #fff !important;
-  }
-  .designer-header,
-  :deep(.component-panel),
-  :deep(.property-panel),
-  :deep(.emr-toolbar) {
-    display: none !important;
-  }
-  .editor-container {
-    padding: 0 !important;
-    background: #fff !important;
-  }
-  .designer-editor {
-    max-width: 100% !important;
-  }
-  :deep(.emr-content) {
-    box-shadow: none !important;
-    margin: 0 !important;
-  }
-}
 </style>

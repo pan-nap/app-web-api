@@ -10,7 +10,7 @@
   </view>
 </template>
 
-<script setup lang="uts">
+<script setup >
 import type { FormContext, FormItemContext, FormRule, FormRules, ItemCtx } from '../../types/form'
 
 type Props = {

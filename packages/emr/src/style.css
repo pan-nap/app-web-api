@@ -2,39 +2,128 @@
 @tailwind components;
 @tailwind utilities;
 
+@media print {
+  /* ===== 全局溢出修复 ===== */
+  html, body {
+    overflow: visible !important;
+    height: auto !important;
+  }
 
+  /* ===== 隐藏弹窗外壳 ===== */
+  /* 弹窗头部（标题栏 + 关闭按钮） */
+  .popup-wrapper header,
+  .popup-wrapper > header,
+  .popup-wrapper .popup-header {
+    display: none !important;
+  }
+  /* 弹窗底部 */
+  .popup-wrapper footer,
+  .popup-footer {
+    display: none !important;
+  }
+  /* 弹窗内容区取消滚动约束 */
+  .popup-wrapper,
+  .popup-wrapper .content {
+    overflow: visible !important;
+    height: auto !important;
+    position: static !important;
+  }
+  /* Element Plus 弹窗兼容 */
+  .el-dialog__header,
+  .el-dialog__footer,
+  .el-drawer__header,
+  .el-drawer__footer {
+    display: none !important;
+  }
+  .el-dialog__body,
+  .el-drawer__body {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  .el-overlay {
+    overflow: visible !important;
+  }
 
-/* ===== LazyPopover 基础样式 ===== */
-.lazy-popover {
-  /* 由 Popper.js 动态设置 position 和 transform，此处仅定义外观 */
-  background: #ffffff;
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  max-width: 400px;
-  z-index: 2000;
-  word-break: break-word;
-  /* 防止内容溢出 */
-  box-sizing: border-box;
-}
+  /* ===== 隐藏设计器 UI 面板 ===== */
+  /* 隐藏左侧组件面板 */
+  .component-panel {
+    display: none !important;
+  }
+  /* 隐藏右侧属性面板 */
+  .property-panel {
+    display: none !important;
+  }
+  /* 隐藏工具栏 */
+  .emr-toolbar {
+    display: none !important;
+  }
+  /* 隐藏设计器头部 */
+  .designer-header {
+    display: none !important;
+  }
 
-/* ===== Vue Transition 动画（淡入淡出 + 缩放） ===== */
-.popover-enter-active,
-.popover-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-.popover-enter-from,
-.popover-leave-to {
-  opacity: 0;
-  transform: scale(0.9);
-}
-.popover-enter-to,
-.popover-leave-from {
-  opacity: 1;
-  transform: scale(1);
-}
+  /* ===== 编辑器布局适配 ===== */
+  /* 设计器取消固定高度 */
+  .emr-designer {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  /* 设计器主体取消 flex 布局，避免内容被裁剪 */
+  .designer-body {
+    display: block !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  /* 编辑器容器取消滚动和 flex 约束 */
+  .editor-container {
+    overflow: visible !important;
+    display: block !important;
+    padding: 0 !important;
+    background: #fff !important;
+    height: auto !important;
+    max-width: none !important;
+  }
+  /* 编辑器根元素取消 overflow:hidden */
+  .emr-editor {
+    overflow: visible !important;
+    height: auto !important;
+  }
+  /* 编辑器内容区域取消阴影和边距 */
+  .emr-content {
+    box-shadow: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    height: auto !important;
+    max-width: none !important;
+  }
+  /* ProseMirror 取消固定宽高，自适应打印纸 */
+  .emr-content .ProseMirror {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
 
-/* ===== 触发元素包裹器（可选） ===== */
-.lazy-popover__reference {
-  display: inline-block;
-  /* 保证触发元素的行为与正常内联元素一致 */
+  /* ===== 变量控件样式 ===== */
+  /* 打印时变量显示为普通文本 */
+  .emr-variable {
+    cursor: default !important;
+    background: none !important;
+  }
+  .emr-variable-empty {
+    color: #999 !important;
+    background: none !important;
+  }
+  /* 取消选中态 outline */
+  .editor-selected {
+    outline: none !important;
+  }
+
+  /* ===== 打印纸张设置 ===== */
+  @page {
+    margin: 10mm;
+    size: auto;
+  }
 }

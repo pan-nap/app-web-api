@@ -245,6 +245,7 @@ defineExpose(useEmrApi(editor, props));
 @media print {
   .emr-editor {
     background: #fff !important;
+    overflow: visible !important;
   }
   :deep(.emr-toolbar) {
     display: none !important;
@@ -259,6 +260,15 @@ defineExpose(useEmrApi(editor, props));
     width: auto !important;
     min-height: auto !important;
     padding: 0 !important;
+  }
+  /* 打印时变量显示为普通文本 */
+  :deep(.emr-variable) {
+    cursor: default !important;
+    background: none !important;
+  }
+  :deep(.emr-variable-empty) {
+    color: #999 !important;
+    background: none !important;
   }
 }
 </style>

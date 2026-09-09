@@ -8,20 +8,20 @@
 
 ```typescript
 // ❌ 错误 — 编译通过，运行时抛 ClassCastException
-const result = new UTSJSONObject()
-result['value'] = value
-result['bytes'] = bytes
-return result as RemainingLengthResult
+const result = new UTSJSONObject();
+result["value"] = value;
+result["bytes"] = bytes;
+return result as RemainingLengthResult;
 
 // ✅ 正确 — 使用 class 实例
 class ReadResult {
-  value: number = 0
-  bytes: number = 0
+  value: number = 0;
+  bytes: number = 0;
 }
-const result = new ReadResult()
-result.value = value
-result.bytes = bytes
-return result
+const result = new ReadResult();
+result.value = value;
+result.bytes = bytes;
+return result;
 ```
 
 **原则**：内部数据结构用 `class` 而不是 `type { ... }` + `UTSJSONObject` 构造 + `as` 转换。
@@ -33,13 +33,13 @@ return result
 ```typescript
 // ❌ 错误 — Android 运行时抛 ClassCastException
 socket.onMessage((res: any) => {
-  const raw = (res as UTSJSONObject).getAny('data')
-})
+  const raw = (res as UTSJSONObject).getAny("data");
+});
 
 // ✅ 正确 — res.data 直接访问（OnSocketMessageCallbackResult 是内置类型）
 socket.onMessage((res) => {
-  const raw = res.data as ArrayBuffer
-})
+  const raw = res.data as ArrayBuffer;
+});
 ```
 
 ## 4.3 Smart cast impossible（局部变量被闭包修改）
@@ -67,10 +67,10 @@ async function sendMsg() {
 
 ```typescript
 // Android: close() 必须传 options
-this.socketTask.close({})
+this.socketTask.close({});
 
 // ✅ 统一使用 close({})，兼容所有平台
-this.socketTask.close({})
+this.socketTask.close({});
 ```
 
 ## 4.5 uni.$emit 传递 Map 类型导致类型丢失
@@ -109,9 +109,11 @@ onStompMessage((msg: StompMessage) => {
 ## 4.6 WebSocket 连接报 400/500 错误
 
 **400 Bad Request**：服务器拒绝握手，通常是因为缺少 WebSocket 子协议。
+
 - 解决：在 `connectSocket` 中指定 `protocols: ["v12.stomp", "v11.stomp", "v10.stomp"]`
 
 **500 Server Error**：服务器内部错误，通常是路径/协议不匹配。
+
 - 解决：确认服务器支持的协议类型（STOMP vs MQTT）和路径（/stomp vs /mqtt）
 
 ## 4.7 Float 转 Integer 类型转换异常
@@ -124,12 +126,12 @@ onStompMessage((msg: StompMessage) => {
 
 ```typescript
 // ❌ 错误 — duration 在 Android 端实际为 Float，传给 Int 参数报错
-const duration = result.duration as number
-IMService.sendVideoMessage(toUserId, path, 0, duration, snapshot)
+const duration = result.duration as number;
+IMService.sendVideoMessage(toUserId, path, 0, duration, snapshot);
 
 // ✅ 正确 — 使用 Math.round() 显式转整数
-const duration = Math.round(result.duration as number) as number
-IMService.sendVideoMessage(toUserId, path, 0, duration, snapshot)
+const duration = Math.round(result.duration as number) as number;
+IMService.sendVideoMessage(toUserId, path, 0, duration, snapshot);
 ```
 
 **原则**：当 UTS `number` 传给 Kotlin `Int` 参数时，使用 `Math.round()` 或 `Math.floor()` 显式转换。
@@ -142,24 +144,107 @@ IMService.sendVideoMessage(toUserId, path, 0, duration, snapshot)
 
 ```typescript
 // ❌ 错误
-const result = res as UTSJSONObject
-const tempFilePath = result.getString('tempFilePath')
+const result = res as UTSJSONObject;
+const tempFilePath = result.getString("tempFilePath");
 
 // ✅ 正确 — 直接访问属性
-const result = res as ChooseVideoSuccess
-const tempFilePath = result.tempFilePath as string
+const result = res as ChooseVideoSuccess;
+const tempFilePath = result.tempFilePath as string;
 ```
 
 **原则**：使用 uni-app 内置类型（如 `ChooseVideoSuccess`、`ChooseImageSuccess`）直接访问属性，不要强转为 `UTSJSONObject`。
 
 ## 高频运行时错误速查表
 
-| 错误信息 | 原因 | 解决方案 |
-|----------|------|----------|
-| `ClassCastException: UTSJSONObject cannot be cast to xxx` | `UTSJSONObject as type` | 用 `class` 实例化 |
-| `ClassCastException: xxx cannot be cast to UTSJSONObject` | 强转内置类型 | 直接访问属性 |
-| `TypeError: obj.getString is not a function` | `uni.$emit` 传递含 Map 对象 | 改用回调函数模式 |
-| `Expected HTTP 101 response but was '400'` | 缺少 WebSocket 子协议 | 添加 `protocols` 参数 |
-| `Expected HTTP 101 response but was '500'` | 路径/协议不匹配 | 确认服务器支持的协议和路径 |
-| `ClassCastException: java.lang.Float cannot be cast to java.lang.Integer` | UTS number 转 Kotlin Int 时实际为 Float | 使用 `Math.round()` 显式转整数 |
-| `ClassCastException: ChooseVideoSuccess cannot be cast to UTSJSONObject` | 内置类型强转为 UTSJSONObject | 使用 `ChooseVideoSuccess` 直接访问属性 |
+| 错误信息                                                                  | 原因                                    | 解决方案                               |
+| ------------------------------------------------------------------------- | --------------------------------------- | -------------------------------------- |
+| `ClassCastException: UTSJSONObject cannot be cast to xxx`                 | `UTSJSONObject as type`                 | 用 `class` 实例化                      |
+| `ClassCastException: xxx cannot be cast to UTSJSONObject`                 | 强转内置类型                            | 直接访问属性                           |
+| `TypeError: obj.getString is not a function`                              | `uni.$emit` 传递含 Map 对象             | 改用回调函数模式                       |
+| `Expected HTTP 101 response but was '400'`                                | 缺少 WebSocket 子协议                   | 添加 `protocols` 参数                  |
+| `Expected HTTP 101 response but was '500'`                                | 路径/协议不匹配                         | 确认服务器支持的协议和路径             |
+| `ClassCastException: java.lang.Float cannot be cast to java.lang.Integer` | UTS number 转 Kotlin Int 时实际为 Float | 使用 `Math.round()` 显式转整数         |
+| `ClassCastException: ChooseVideoSuccess cannot be cast to UTSJSONObject`  | 内置类型强转为 UTSJSONObject            | 使用 `ChooseVideoSuccess` 直接访问属性 |
+
+## 新增运行时错误
+
+### 4.9 悬浮窗权限未检查导致崩溃
+
+**错误**：`android.view.WindowManager$BadTokenException: Unable to add window -- permission denied for window type`
+
+**原因**：Android 6.0+ 悬浮窗需要 `SYSTEM_ALERT_WINDOW` 权限，未检查直接 `wm.addView()` 会崩溃。
+
+**解决**：添加前先检查权限，未授权则引导用户开启：
+
+```typescript
+function checkOverlayPermission(): boolean {
+  try {
+    const act = UTSAndroid.getUniActivity();
+    if (act == null) return false;
+    const ctx = act as Context;
+    const SettingsClass = java.lang.Class.forName("android.provider.Settings");
+    const canDrawMethod = SettingsClass.getMethod("canDrawOverlays", java.lang.Class.forName("android.content.Context"));
+    const result = canDrawMethod.invoke(null, ctx) as boolean;
+    return result != null ? result : false;
+  } catch (_e: any) {
+    return true; // 检查失败时假设已授权
+  }
+}
+
+function openOverlaySettings(): void {
+  const act = UTSAndroid.getUniActivity();
+  if (act == null) return;
+  const intent = new android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+  const pkg = act.getPackageName();
+  intent.setData(android.net.Uri.parse("package:" + pkg));
+  act.startActivity(intent);
+}
+```
+
+### 4.10 TextureView Surface 销毁导致白屏
+
+**现象**：页面从后台返回或从悬浮窗返回视频页时，视频画面白屏。
+
+**根因**：`TXCloudVideoView` 内部使用 `TextureView`，当 View 从 Window 移除时 Surface 被销毁，重新添加后渲染管道指向旧 Surface。
+
+**解决**：View 复用模式，不销毁 TXCloudVideoView 实例：
+
+```kotlin
+// ✅ 正确：stopLocalPreview 只停止预览，不销毁 View
+fun stopLocalPreview() {
+    cloud?.stopLocalPreview()           // 停止 SDK 渲染
+    localPreviewView?.removeAllViews()  // 清空子 View
+    // ❌ 不要 localPreviewView = null，保留 View 供复用
+}
+```
+
+### 4.11 回调注册状态未重置导致连接卡死
+
+**现象**：挂断后重新进入房间，一直显示“正在连接”，状态不更新。
+
+**根因**：`_callbacksRegistered` 标志位在 `leaveRoom()` 时未重置，导致再次 `enterRoom()` 时跳过回调注册。
+
+**解决**：
+
+```typescript
+function leaveRoomImpl(): void {
+  TRTCBridge.exitRoom();
+  TRTCBridge.destroy();
+  _callbacksRegistered = false; // ← 关键：允许下一次重新注册
+}
+```
+
+### 4.12 悬浮窗拖拽误触点击
+
+**现象**：拖动悬浮窗后总会触发点击事件。
+
+**根因**：用 `ACTION_MOVE` 中持续更新的坐标判断拖拽距离，抬起时差值接近 0，误判为点击。
+
+**解决**：用 `ACTION_DOWN` 时保存的初始坐标计算拖拽距离：
+
+```typescript
+let _downX = 0,
+  _downY = 0;
+// ACTION_DOWN: _downX = rawX, _downY = rawY
+// ACTION_UP: 用 _downX/_downY 算距离 → 距离 > 阈值 → 判定为拖动
+```

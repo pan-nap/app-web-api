@@ -13,7 +13,15 @@
     "lib": ["ESNext", "DOM"],
     "skipLibCheck": true,
     "allowJs": true,
+    "allowArbitraryExtensions": true,
     "noEmit": true
   },
+  "include": [
+    "packages/**/*.ts",
+    "packages/**/*.d.ts",
+    "packages/**/*.uts",
+    "packages/**/*.uvue",
+    "C:/Program Files/HBuilderX/plugins/hbuilderx-ai-chat/uni-agent/knowledges/uni-app-x/types/**/*.d.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

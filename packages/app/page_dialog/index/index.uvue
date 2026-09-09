@@ -23,7 +23,7 @@
 	</view>
 </template>
 
-<script setup lang="uts">
+<script setup >
 const scene = ref<string>('')
 
 onLoad((options: OnLoadOptions) => {

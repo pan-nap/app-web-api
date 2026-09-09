@@ -31,6 +31,10 @@ export function requestFloatPermission(): void {
   console.log('FLOAT iOS: requestFloatPermission 待实现')
 }
 
+export function bringActivityToFront(): void {
+  // iOS 不需要此操作
+}
+
 export class FloatWindowService {
   static onShow(callback: () => void): void {
     console.log('FLOAT iOS: onShow 待实现')

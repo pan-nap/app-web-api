@@ -9,7 +9,7 @@
 		</view>
 </template>
 
-<script setup lang="uts">
+<script setup >
 	let imagePath: string = ''
 
 	onLoad(function (options : UTSJSONObject) : void {

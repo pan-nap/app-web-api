@@ -1,23 +1,23 @@
 <template>
-	<page-container
-		:show="visible"
-		:position="currentPosition"
-		:round="props.round"
-		:overlay="props.overlay"
-		:overlay-style="overlayStyle"
-		:custom-style="customStyle"
-		:duration="props.duration"
-		:z-index="props.zIndex"
-		:close-on-slide-down="props.closeOnSlideDown"
-		@clickoverlay="onClickOverlay"
-		@afterleave="onAfterLeave"
-	>
-		<!-- 弹窗内容由使用方通过插槽传入自定义组件 -->
-		<slot></slot>
-	</page-container>
+  <page-container
+    :show="visible"
+    :position="currentPosition"
+    :round="props.round"
+    :overlay="props.overlay"
+    :overlay-style="overlayStyle"
+    :custom-style="customStyle"
+    :duration="props.duration"
+    :z-index="props.zIndex"
+    :close-on-slide-down="props.closeOnSlideDown"
+    @clickoverlay="onClickOverlay"
+    @afterleave="onAfterLeave"
+  >
+    <!-- 弹窗内容由使用方通过插槽传入自定义组件 -->
+    <slot></slot>
+  </page-container>
 </template>
 
-<script setup lang="uts">
+<script setup>
 type Props = {
 	// 弹出位置：top / bottom / left / right / center
 	position ?: string
@@ -89,5 +89,4 @@ const onClickOverlay = (_e: UniPointerEvent) => {
 defineExpose({ open, close })
 </script>
 
-<style>
-</style>
+<style></style>

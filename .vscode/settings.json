@@ -38,5 +38,10 @@
   "prettier.printWidth": 150,
   "vue.codeActions.enabled": false,
   "typescript.tsdk": "node_modules/typescript/lib",
-  "git.ignoreLimitWarning": true
+  "git.ignoreLimitWarning": true,
+  // .uts 文件关联为 TypeScript 语法
+  "files.associations": {
+    "*.uts": "typescript",
+    "*.uvue": "vue"
+  }
 }
