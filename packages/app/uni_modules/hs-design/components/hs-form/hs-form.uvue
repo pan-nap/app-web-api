@@ -4,7 +4,7 @@
   </view>
 </template>
 
-<script setup >
+<script setup>
 import type { FormContext, FormRules, ItemCtx } from '../../types/form'
 
 type Props = {
@@ -46,7 +46,7 @@ const getValue = (prop: string): string => {
   if (prop.length == 0) {
     return ''
   }
-  const model = JSON.parse(JSON.stringify(props.model)) as UTSJSONObject
+  const model = JSON.parse(JSON.stringify(props.model)) as Record<string, any>
   const value = model[prop]
   return value != null ? value as string : ''
 }
@@ -59,7 +59,7 @@ const clearValidate = () => {
 const getRules = (): FormRules => {
   const rules = props.rules
   if (rules == null) {
-    return new UTSJSONObject()
+    return {} as FormRules
   }
   return rules as FormRules
 }

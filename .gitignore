@@ -1,6 +1,7 @@
 .DS_Store
 .vite
 .vitepress
+.qoder
 node_modules
 dist
 git_log.txt

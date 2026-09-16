@@ -10,7 +10,7 @@
   </view>
 </template>
 
-<script setup >
+<script setup>
 import type { FormContext, FormItemContext, FormRule, FormRules, ItemCtx } from '../../types/form'
 
 type Props = {
@@ -38,7 +38,7 @@ const getFormValue = (prop: string): string => {
 const getFormRules = (): FormRules => {
   const formObject = getFormObject()
   if (formObject == null) {
-    return new UTSJSONObject()
+    return {} as FormRules
   }
   return formObject.rules
 }

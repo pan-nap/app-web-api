@@ -1,29 +1,28 @@
 <template>
-	<!-- dialogPage：独立页面，不进入页面栈，由 uni.openDialogPage 打开 -->
-	<view class="dlg-page" @tap="closeByMask">
-		<view class="dlg-card" @tap.stop>
-			<text class="dlg-card__title">dialogPage 弹窗</text>
-			<text class="dlg-card__content">
-				这是一个独立的 dialogPage 页面（pages/dialog/index），
-				通过 uni.openDialogPage 打开，可自定义遮罩、动画、内容与返回逻辑，
-				自定义能力最强，但需要独立页面与事件通信配合。
-			</text>
+  <!-- dialogPage：独立页面，不进入页面栈，由 uni.openDialogPage 打开 -->
+  <view class="dlg-page" @tap="closeByMask">
+    <view class="dlg-card" @tap.stop>
+      <text class="dlg-card__title">dialogPage 弹窗</text>
+      <text class="dlg-card__content">
+        这是一个独立的 dialogPage 页面（pages/dialog/index）， 通过 uni.openDialogPage 打开，可自定义遮罩、动画、内容与返回逻辑，
+        自定义能力最强，但需要独立页面与事件通信配合。
+      </text>
 
-			<!-- 演示：从宿主页面传入参数 -->
-			<view class="dlg-card__params" v-if="scene != ''">
-				<text class="dlg-card__params-label">接收参数 scene</text>
-				<text class="dlg-card__params-value">{{ scene }}</text>
-			</view>
+      <!-- 演示：从宿主页面传入参数 -->
+      <view class="dlg-card__params" v-if="scene != ''">
+        <text class="dlg-card__params-label">接收参数 scene</text>
+        <text class="dlg-card__params-value">{{ scene }}</text>
+      </view>
 
-			<view class="dlg-card__footer">
-				<button class="dlg-btn dlg-btn--default" @tap="cancel">取消</button>
-				<button class="dlg-btn dlg-btn--primary" @tap="confirm">确定</button>
-			</view>
-		</view>
-	</view>
+      <view class="dlg-card__footer">
+        <button class="dlg-btn dlg-btn--default" @tap="cancel">取消</button>
+        <button class="dlg-btn dlg-btn--primary" @tap="confirm">确定</button>
+      </view>
+    </view>
+  </view>
 </template>
 
-<script setup >
+<script setup>
 const scene = ref<string>('')
 
 onLoad((options: OnLoadOptions) => {
@@ -59,86 +58,84 @@ const confirm = () => {
 }
 
 const emitResult = (action: string) => {
-	const result = new UTSJSONObject()
-	result['action'] = action
-	uni.$emit('dialogPageResult', result)
+	uni.$emit('dialogPageResult', { action })
 }
 </script>
 
 <style>
-	.dlg-page {
-		flex: 1;
-		background-color: rgba(0, 0, 0, 0.45);
-		display: flex;
-		flex-direction: row;
-		justify-content: center;
-		align-items: center;
-	}
+.dlg-page {
+  flex: 1;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
 
-	.dlg-card {
-		width: 640rpx;
-		background-color: #ffffff;
-		border-radius: 24rpx;
-		padding: 48rpx 40rpx 40rpx;
-		display: flex;
-		flex-direction: column;
-	}
+.dlg-card {
+  width: 640rpx;
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  padding: 48rpx 40rpx 40rpx;
+  display: flex;
+  flex-direction: column;
+}
 
-	.dlg-card__title {
-		font-size: 36rpx;
-		font-weight: 700;
-		color: #191a1b;
-	}
+.dlg-card__title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #191a1b;
+}
 
-	.dlg-card__content {
-		margin-top: 20rpx;
-		font-size: 28rpx;
-		line-height: 44rpx;
-		color: #636669;
-	}
+.dlg-card__content {
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  color: #636669;
+}
 
-	.dlg-card__params {
-		margin-top: 24rpx;
-		background-color: #f0f3f7;
-		border-radius: 12rpx;
-		padding: 16rpx 20rpx;
-		display: flex;
-		flex-direction: column;
-	}
+.dlg-card__params {
+  margin-top: 24rpx;
+  background-color: #f0f3f7;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  display: flex;
+  flex-direction: column;
+}
 
-	.dlg-card__params-label {
-		font-size: 22rpx;
-		color: #738199;
-	}
+.dlg-card__params-label {
+  font-size: 22rpx;
+  color: #738199;
+}
 
-	.dlg-card__params-value {
-		margin-top: 8rpx;
-		font-size: 28rpx;
-		color: #2376f3;
-		font-weight: 600;
-	}
+.dlg-card__params-value {
+  margin-top: 8rpx;
+  font-size: 28rpx;
+  color: #2376f3;
+  font-weight: 600;
+}
 
-	.dlg-card__footer {
-		margin-top: 40rpx;
-		display: flex;
-		flex-direction: row;
-		justify-content: flex-end;
-	}
+.dlg-card__footer {
+  margin-top: 40rpx;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
 
-	.dlg-btn {
-		margin-left: 24rpx;
-		width: 180rpx;
-		font-size: 30rpx;
-		border-radius: 12rpx;
-	}
+.dlg-btn {
+  margin-left: 24rpx;
+  width: 180rpx;
+  font-size: 30rpx;
+  border-radius: 12rpx;
+}
 
-	.dlg-btn--default {
-		background-color: #f0f3f7;
-		color: #40536d;
-	}
+.dlg-btn--default {
+  background-color: #f0f3f7;
+  color: #40536d;
+}
 
-	.dlg-btn--primary {
-		background-color: #2376f3;
-		color: #ffffff;
-	}
+.dlg-btn--primary {
+  background-color: #2376f3;
+  color: #ffffff;
+}
 </style>

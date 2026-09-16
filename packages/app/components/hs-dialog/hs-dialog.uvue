@@ -54,16 +54,17 @@ const props = withDefaults(defineProps<Props>(), {
 const visible = ref<boolean>(false)
 const currentPosition = ref<string>(props.position)
 
+type DialogConfig = {
+	position ?: string
+}
+
 /**
  * 命令式打开弹窗
  * 支持通过 config 覆盖位置等配置，如 open({ position: 'center' })
  */
-const open = (config ?: UTSJSONObject) => {
-	if (config != null) {
-		const position = config['position']
-		if (position != null) {
-			currentPosition.value = position as string
-		}
+const open = (config ?: DialogConfig) => {
+	if (config?.position != null) {
+		currentPosition.value = config.position!
 	}
 	visible.value = true
 }

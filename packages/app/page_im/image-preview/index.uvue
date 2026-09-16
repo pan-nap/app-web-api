@@ -1,28 +1,22 @@
 <template>
-	<view class="flex-1 bg-black flex items-center justify-center">
-			<image
-				:src="imagePath"
-				mode="aspectFit"
-				class="w-full h-full"
-				@click="handleImageClick"
-			></image>
-		</view>
+  <view class="flex-1 bg-black flex items-center justify-center">
+    <image :src="imagePath" mode="aspectFit" class="w-full h-full" @click="handleImageClick"></image>
+  </view>
 </template>
 
-<script setup >
-	let imagePath: string = ''
+<script setup>
+let imagePath: string = ''
 
-	onLoad(function (options : UTSJSONObject) : void {
-		const src = options.getString('src')
-		if (src != null && src.length > 0) {
-			imagePath = src
-		}
-	})
-
-	function handleImageClick() : void {
-		uni.navigateBack()
+onLoad(function (options : OnLoadOptions) : void {
+	const src = options['src'] as string | null
+	if (src != null && src.length > 0) {
+		imagePath = src
 	}
+})
+
+function handleImageClick() : void {
+	uni.navigateBack()
+}
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

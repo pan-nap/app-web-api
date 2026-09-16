@@ -1,21 +1,14 @@
 <template>
   <view class="flex-1 bg-black">
-    <video
-      :src="videoSrc"
-      class="flex-1"
-      :controls="true"
-      :autoplay="true"
-      object-fit="contain"
-      @ended="onVideoEnded"
-    />
+    <video :src="videoSrc" class="flex-1" :controls="true" :autoplay="true" object-fit="contain" @ended="onVideoEnded" />
   </view>
 </template>
 
 <script setup>
 const videoSrc = ref("");
 
-onLoad(function (options : UTSJSONObject) : void {
-  const src = options.getString('src', '');
+onLoad(function (options : OnLoadOptions) : void {
+  const src = (options['src'] ?? '') as string;
   if (src.length > 0) {
     videoSrc.value = src;
     console.log('视频播放 src=', src);

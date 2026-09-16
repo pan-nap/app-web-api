@@ -1,0 +1,7 @@
+{
+  // 多根工作区（Multi-root Workspace）配置：
+  // packages/app 是 uni-app x 项目，必须作为独立的工作区文件夹（其目录根 = 项目根），
+  // uni-app x 语言服务插件（DCloud）才能识别该项目并启用 .uvue / .uts 的语言服务。
+  // 使用方式：菜单「文件 → 打开工作区」选择本文件，不要直接打开仓库根目录。
+  "folders": [{ "name": "收银（根）", "path": "." }, { "name": "app（uni-app x）", "path": "packages/app" }]
+}

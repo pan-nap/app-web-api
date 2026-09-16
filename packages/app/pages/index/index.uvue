@@ -1,147 +1,146 @@
 <template>
-	<hs-screen hide-back title="首页">
-		<hs-card @tap="jumpTo('/pages/student/index')"><text>跳转学生页面</text></hs-card>
-		<hs-card @tap="jumpTo('/pages/mqtt/index')"><text>跳转mqtt页面</text></hs-card>
-		<hs-card @tap="jumpTo('/pages/stomp/index')"><text>跳转stomp页面</text></hs-card>
-		<hs-card @tap="jumpTo('/pages/bluetooth/index')"><text>跳转蓝牙页面</text></hs-card>
-		<hs-card @tap="jumpTo('/page_room/room/index')"><text>跳转视频通话页面</text></hs-card>
-		<hs-card @tap="jumpTo('/page_im/login/index')"><text>跳转即时通讯页面</text></hs-card>
+  <hs-screen hide-back title="首页">
+    <hs-card @tap="jumpTo('/pages/student/index')"><text>跳转学生页面</text></hs-card>
+    <hs-card @tap="jumpTo('/pages/mqtt/index')"><text>跳转mqtt页面</text></hs-card>
+    <hs-card @tap="jumpTo('/pages/stomp/index')"><text>跳转stomp页面</text></hs-card>
+    <hs-card @tap="jumpTo('/pages/bluetooth/index')"><text>跳转蓝牙页面</text></hs-card>
+    <hs-card @tap="jumpTo('/page_room/room/index')"><text>跳转视频通话页面</text></hs-card>
+    <hs-card @tap="jumpTo('/page_im/login/index')"><text>跳转即时通讯页面</text></hs-card>
 
-		<!-- 方案一：基于 page-container 封装的命令式弹窗 -->
-		<hs-card class="mt-12 flex flex-col" @tap="openPageContainerDialog">
-			<text class="fw-700 text-mainGray-500">page-container 命令式弹窗</text>
-			<text class="mt-4 text-24 text-mainGray-400">page-container 容器 + 插槽内容 + open()/close() 命令式调用</text>
-		</hs-card>
+    <!-- 方案一：基于 page-container 封装的命令式弹窗 -->
+    <hs-card class="mt-12 flex flex-col" @tap="openPageContainerDialog">
+      <text class="fw-700 text-mainGray-500">page-container 命令式弹窗</text>
+      <text class="mt-4 text-24 text-mainGray-400">page-container 容器 + 插槽内容 + open()/close() 命令式调用</text>
+    </hs-card>
 
-		<!-- 方案二：openDialogPage 独立弹窗页面 -->
-		<hs-card class="mt-12 flex flex-col" @tap="openDialogPageDemo">
-			<text class="fw-700 text-mainGray-500">openDialogPage 弹窗页面</text>
-			<text class="mt-4 text-24 text-mainGray-400">弹窗内容为独立页面，可传参与事件通信，自定义能力最强</text>
-		</hs-card>
+    <!-- 方案二：openDialogPage 独立弹窗页面 -->
+    <hs-card class="mt-12 flex flex-col" @tap="openDialogPageDemo">
+      <text class="fw-700 text-mainGray-500">openDialogPage 弹窗页面</text>
+      <text class="mt-4 text-24 text-mainGray-400">弹窗内容为独立页面，可传参与事件通信，自定义能力最强</text>
+    </hs-card>
 
-		<!-- hs-dialog：page-container 命令式弹窗封装（内容由插槽传入） -->
-		<hs-dialog ref="dialogRef" position="center" :close-on-click-overlay="true">
-			<view class="dialog-demo" :class="dialogMode == 'bottom' ? 'dialog-demo--bottom' : 'dialog-demo--center'">
-				<text class="dialog-demo__title">{{ dialogTitle }}</text>
-				<text class="dialog-demo__desc">
-					利用 page-container 作为弹窗容器，内部通过插槽传入自定义组件，
-					再封装为 ref 暴露的 open()/close() 命令式调用，业务侧无需关心显隐状态。
-				</text>
-				<button class="dialog-demo__btn" @tap="closeDialog">关 闭</button>
-			</view>
-		</hs-dialog>
-	</hs-screen>
+    <!-- hs-dialog：page-container 命令式弹窗封装（内容由插槽传入） -->
+    <hs-dialog ref="dialogRef" position="center" :close-on-click-overlay="true">
+      <view class="dialog-demo" :class="dialogMode == 'bottom' ? 'dialog-demo--bottom' : 'dialog-demo--center'">
+        <text class="dialog-demo__title">{{ dialogTitle }}</text>
+        <text class="dialog-demo__desc">
+          利用 page-container 作为弹窗容器，内部通过插槽传入自定义组件， 再封装为 ref 暴露的 open()/close() 命令式调用，业务侧无需关心显隐状态。
+        </text>
+        <button class="dialog-demo__btn" @tap="closeDialog">关 闭</button>
+      </view>
+    </hs-dialog>
+  </hs-screen>
 </template>
 
-<script setup >
-	const dialogRef = ref<HsDialogComponentPublicInstance | null>(null)
-	const dialogMode = ref<string>('center')
-	const dialogTitle = ref<string>('')
+<script setup>
+const dialogRef = ref<HsDialogComponentPublicInstance | null>(null)
+const dialogMode = ref<string>('center')
+const dialogTitle = ref<string>('')
 
-	const jumpTo = (url : string) => {
-		uni.navigateTo({
-			url
-		})
-	}
-
-	// ===== 方案一：page-container 命令式弹窗 =====
-	const openPageContainerDialog = () => {
-		dialogTitle.value = '命令式弹窗（page-container 封装）'
-		openDialog('center')
-	}
-
-	// 演示 open 支持按需覆盖弹出位置（center / bottom / top / left / right）
-	const openDialog = (position : string) => {
-		const instance = dialogRef.value
-		if (instance == null) {
-			return
-		}
-		dialogMode.value = position
-		const config = new UTSJSONObject()
-		config['position'] = position
-		instance.open(config)
-	}
-
-	const closeDialog = () => {
-		const instance = dialogRef.value
-		if (instance == null) {
-			return
-		}
-		instance.close()
-	}
-
-	// ===== 方案二：openDialogPage 独立弹窗页面 =====
-	const openDialogPageDemo = () => {
-		uni.openDialogPage({
-			url: '/page_dialog/index/index?scene=dialog-page-demo',
-			animationType: 'fade-in',
-			animationDuration: 250,
-			fail: (err : any) => {
-				console.error('openDialogPage fail:', err)
-				uni.showToast({
-					title: '当前平台/版本暂不支持 dialogPage',
-					icon: 'none'
-				})
-			}
-		})
-	}
-
-	// 接收 dialogPage 页面通过事件总线回传的结果
-	const onDialogPageResult = (data : UTSJSONObject) => {
-		const actionValue = data['action']
-		const action = actionValue != null ? (actionValue as string) : ''
-		uni.showToast({
-			title: action == 'confirm' ? 'dialogPage 返回：确定' : 'dialogPage 返回：取消',
-			icon: 'none'
-		})
-	}
-
-	onLoad(() => {
-		uni.$on('dialogPageResult', onDialogPageResult)
+const jumpTo = (url : string) => {
+	uni.navigateTo({
+		url
 	})
+}
 
-	onUnload(() => {
-		uni.$off('dialogPageResult', onDialogPageResult)
+// ===== 方案一：page-container 命令式弹窗 =====
+const openPageContainerDialog = () => {
+	dialogTitle.value = '命令式弹窗（page-container 封装）'
+	openDialog('center')
+}
+
+// 演示 open 支持按需覆盖弹出位置（center / bottom / top / left / right）
+const openDialog = (position : string) => {
+	const instance = dialogRef.value
+	if (instance == null) {
+		return
+	}
+	dialogMode.value = position
+	instance.open({ position })
+}
+
+const closeDialog = () => {
+	const instance = dialogRef.value
+	if (instance == null) {
+		return
+	}
+	instance.close()
+}
+
+// ===== 方案二：openDialogPage 独立弹窗页面 =====
+const openDialogPageDemo = () => {
+	uni.openDialogPage({
+		url: '/page_dialog/index/index?scene=dialog-page-demo',
+		animationType: 'fade-in',
+		animationDuration: 250,
+		fail: (err : any) => {
+			console.error('openDialogPage fail:', err)
+			uni.showToast({
+				title: '当前平台/版本暂不支持 dialogPage',
+				icon: 'none'
+			})
+		}
 	})
+}
+
+// 接收 dialogPage 页面通过事件总线回传的结果
+type DialogPageResult = {
+	action ?: string
+}
+const onDialogPageResult = (data : DialogPageResult) => {
+	const action = data.action ?? ''
+	uni.showToast({
+		title: action == 'confirm' ? 'dialogPage 返回：确定' : 'dialogPage 返回：取消',
+		icon: 'none'
+	})
+}
+
+onLoad(() => {
+	uni.$on('dialogPageResult', onDialogPageResult)
+})
+
+onUnload(() => {
+	uni.$off('dialogPageResult', onDialogPageResult)
+})
 </script>
 
 <style>
-	.dialog-demo {
-		display: flex;
-		flex-direction: column;
-		background-color: #ffffff;
-		padding: 40rpx 36rpx;
-	}
+.dialog-demo {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  padding: 40rpx 36rpx;
+}
 
-	.dialog-demo--center {
-		width: 70%;
-		border-radius: 24rpx;
-	}
+.dialog-demo--center {
+  width: 70%;
+  border-radius: 24rpx;
+}
 
-	.dialog-demo--bottom {
-		width: 100%;
-		border-radius: 24rpx 24rpx 0 0;
-		padding-bottom: 60rpx;
-	}
+.dialog-demo--bottom {
+  width: 100%;
+  border-radius: 24rpx 24rpx 0 0;
+  padding-bottom: 60rpx;
+}
 
-	.dialog-demo__title {
-		font-size: 36rpx;
-		font-weight: 700;
-		color: #191a1b;
-	}
+.dialog-demo__title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #191a1b;
+}
 
-	.dialog-demo__desc {
-		margin-top: 20rpx;
-		font-size: 26rpx;
-		line-height: 42rpx;
-		color: #636669;
-	}
+.dialog-demo__desc {
+  margin-top: 20rpx;
+  font-size: 26rpx;
+  line-height: 42rpx;
+  color: #636669;
+}
 
-	.dialog-demo__btn {
-		margin-top: 32rpx;
-		background-color: #2376f3;
-		color: #ffffff;
-		font-size: 30rpx;
-		border-radius: 12rpx;
-	}
+.dialog-demo__btn {
+  margin-top: 32rpx;
+  background-color: #2376f3;
+  color: #ffffff;
+  font-size: 30rpx;
+  border-radius: 12rpx;
+}
 </style>

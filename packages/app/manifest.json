@@ -5,7 +5,9 @@
 	"versionName": "1.1.1",
 	"versionCode": "111",
 	"uni-app-x": {
-		"vapor": true
+		"vapor": true,
+		"styleIsolationVersion": "2",
+		"vapor-render-target": "bytecode"
 	},
 	/* 快应用特有相关 */
 	"quickapp": {},
