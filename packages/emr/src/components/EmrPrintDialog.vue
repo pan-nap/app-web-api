@@ -10,7 +10,7 @@
         </div>
       </div>
 
-      <!-- 打印设置面板（对齐华速 DocumentPrintOptions，目标打印机仅浏览器打印 / 另存 PDF） -->
+      <!-- 打印设置面板（目标打印机仅浏览器打印 / 另存 PDF） -->
       <aside class="emr-print-options">
         <div class="emr-print-options__body">
           <div class="emr-print-options__title">打印</div>
@@ -100,7 +100,7 @@ const busy = ref(false);
 
 /** 输出目标：浏览器打印 / 另存为 PDF（不对接桌面打印助手，故无真实系统打印机） */
 const target = ref<"browser" | "pdf">("browser");
-/** 折叠面板默认收起，与华速一致 */
+/** 折叠面板默认收起 */
 const moreSettings = ref<string[]>([]);
 
 /** 本地可编辑设置（初始值来自文书 PageSettings），改动即时驱动预览重渲染 */
@@ -244,7 +244,7 @@ onBeforeUnmount(() => {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* ===== 右侧设置面板（对齐华速 DocumentPrintOptions） ===== */
+/* ===== 右侧设置面板===== */
 .emr-print-options {
   display: flex;
   flex-direction: column;

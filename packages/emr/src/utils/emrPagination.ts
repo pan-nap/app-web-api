@@ -1,11 +1,11 @@
 /**
  * EMR 打印分页引擎（P2：真实切片分页）
  *
- * 思路（移植自华速 HIS 分页算法，改为直接消费编辑器克隆 DOM）：
+ * 思路（直接消费编辑器克隆 DOM）：
  * 1. 克隆 .emr-content → 清理编辑态 → 抽出页眉/页脚 → 取正文块节点；
  * 2. 先按显式 pageBreak 节点切成「硬分段」；
  * 3. 在离屏探针页（与最终纸张同尺寸）里按浏览器真实排版高度逐块填充，
- *    超高分段按文本行、表格按行拆分，切出多张固定页；
+ *    超高文本按行拆，表格逐行填入当前页并在累加器内真实测量溢出，超高行再按单元格段落拆条带；
  * 4. 输出每页正文 HTML，页眉/页脚/页码由打印构建器逐页拼装。
  */
 import type { PageSettings } from "../types";
@@ -94,40 +94,8 @@ function cloneLineHtml(node: HTMLElement, range: Range): string {
   return fragment.outerHTML;
 }
 
-/** 将超高文本节点按行、表格节点按行拆成独立 HTML 片段（node 必须已在 DOM 中布局） */
-function splitNodeByLines(node: HTMLElement, availableHeight: number): Array<{ html: string; height: number }> {
-  if (node.classList.contains("tableWrapper")) {
-    const table = node.querySelector<HTMLTableElement>("table");
-    if (!table) {
-      return [{ html: node.outerHTML, height: node.getBoundingClientRect().height }];
-    }
-    const fragments: Array<{ html: string; height: number }> = [];
-    let rows: HTMLTableRowElement[] = [];
-    let rowsHeight = 0;
-    const pushTable = () => {
-      const tableFragment = table.cloneNode(true) as HTMLTableElement;
-      tableFragment.querySelectorAll("thead, tbody, tfoot").forEach((section) => section.remove());
-      const body = document.createElement("tbody");
-      rows.forEach((row) => body.append(row.cloneNode(true)));
-      tableFragment.append(body);
-      const wrapper = node.cloneNode(false) as HTMLElement;
-      wrapper.append(tableFragment);
-      fragments.push({ html: wrapper.outerHTML, height: rowsHeight });
-    };
-    Array.from(table.rows).forEach((row) => {
-      const rowHeight = row.getBoundingClientRect().height;
-      if (rows.length > 0 && rowsHeight + rowHeight > availableHeight) {
-        pushTable();
-        rows = [];
-        rowsHeight = 0;
-      }
-      rows.push(row);
-      rowsHeight += rowHeight;
-    });
-    if (rows.length > 0) pushTable();
-    return fragments;
-  }
-
+/** 将超高文本节点按行拆成独立 HTML 片段（node 必须已在 DOM 中布局；表格由 placeTable 贪心按行组拆分） */
+function splitNodeByLines(node: HTMLElement): Array<{ html: string; height: number }> {
   if (!["P", "H1", "H2", "H3", "H4", "H5", "H6", "LI"].includes(node.tagName)) {
     return [{ html: node.outerHTML, height: node.getBoundingClientRect().height }];
   }
@@ -250,6 +218,8 @@ export async function paginatePrintPages(sourceEl: HTMLElement, settings: PageSe
     bodyBox.appendChild(acc);
 
     const isOverflow = () => Math.ceil(acc.getBoundingClientRect().height) > available - 1;
+    /** 当前页已用高度（acc 已累加内容） */
+    const usedHeight = () => Math.ceil(acc.getBoundingClientRect().height);
     const segmentPages = (segNodes: HTMLElement[]): PrintPage[] => {
       const result: PrintPage[] = [];
       acc.replaceChildren();
@@ -268,9 +238,94 @@ export async function paginatePrintPages(sourceEl: HTMLElement, settings: PageSe
         if (acc.childElementCount > 0) pushPage();
         acc.insertAdjacentHTML("beforeend", html); // 单块超页时独占一页
       };
+      /**
+       * 表格贪心填页：在 acc 内建表骨架并逐行追加，每行用 isOverflow()（acc 真实渲染高度）判溢出，
+       * 避免「探针测行高、输出页算术」在两处渲染环境下产生误差而提前换页、页面底部留大片空白；
+       * 整行放不下时，优先按单元格内段落顺序把该行拆成条带行继续填页。
+       */
+      const placeTable = (wrapper: HTMLElement) => {
+        const table = wrapper.querySelector<HTMLTableElement>("table");
+        if (!table || table.rows.length === 0) {
+          appendHtml(wrapper.outerHTML);
+          return;
+        }
+        /** 在 acc 末尾挂一张空表骨架，返回其 tbody 供逐行追加 */
+        const startChunk = (): HTMLTableSectionElement => {
+          const tableFragment = table.cloneNode(true) as HTMLTableElement;
+          tableFragment.querySelectorAll("thead, tbody, tfoot").forEach((section) => section.remove());
+          const body = document.createElement("tbody");
+          tableFragment.append(body);
+          const chunkWrapper = wrapper.cloneNode(false) as HTMLElement;
+          chunkWrapper.append(tableFragment);
+          acc.append(chunkWrapper);
+          return body;
+        };
+        /** 将超高行按各单元格第 k 个子元素拆成条带行（保留单元格属性与样式）；不可安全拆分时返回空 */
+        const buildRowBands = (row: HTMLTableRowElement): HTMLTableRowElement[] => {
+          const cells = Array.from(row.cells);
+          if (cells.length === 0) return [];
+          // 单元格内存在裸文本/内联内容时不按条带拆，避免丢内容
+          const onlyBlocks = cells.every((cell) => Array.from(cell.childNodes).every((node) => node.nodeType === Node.ELEMENT_NODE));
+          const maxBands = Math.max(0, ...cells.map((cell) => cell.children.length));
+          if (!onlyBlocks || maxBands < 2 || cells.some((cell) => cell.rowSpan > 1 || cell.colSpan > 1)) return [];
+          const bands: HTMLTableRowElement[] = [];
+          for (let k = 0; k < maxBands; k += 1) {
+            const band = row.cloneNode(false) as HTMLTableRowElement;
+            cells.forEach((cell) => {
+              const bandCell = cell.cloneNode(false) as HTMLTableCellElement;
+              const child = cell.children[k];
+              if (child) bandCell.append(child.cloneNode(true));
+              band.append(bandCell);
+            });
+            bands.push(band);
+          }
+          return bands;
+        };
+        // 页尾剩余空间过窄（<80px）先换页，避免只塞得下一行形成窄缝
+        if (acc.childElementCount > 0 && available - usedHeight() < 80) pushPage();
+        let body = startChunk();
+        let chunkRowCount = 0;
+        const nextPage = () => {
+          pushPage();
+          body = startChunk();
+          chunkRowCount = 0;
+        };
+        Array.from(table.rows).forEach((row) => {
+          body.append(row.cloneNode(true));
+          if (!isOverflow()) {
+            chunkRowCount += 1;
+            return;
+          }
+          body.lastElementChild?.remove();
+          // 整行放不下：先试按单元格段落拆条带，尽量填满当前页
+          const bands = buildRowBands(row);
+          if (bands.length > 1) {
+            bands.forEach((band) => {
+              body.append(band);
+              if (!isOverflow()) {
+                chunkRowCount += 1;
+                return;
+              }
+              body.lastElementChild?.remove();
+              if (chunkRowCount > 0) nextPage();
+              body.append(band); // 条带自身超页高：保留占本页（超出裁剪）
+              chunkRowCount += 1;
+            });
+            return;
+          }
+          // 不可拆的超高行：换页后独占一页（超出裁剪）
+          if (chunkRowCount > 0) nextPage();
+          body.append(row.cloneNode(true));
+          chunkRowCount += 1;
+        });
+      };
       for (const node of segNodes) {
         if (tryAppend(node.outerHTML)) continue;
-        const fragments = splitNodeByLines(node, available);
+        if (node.classList.contains("tableWrapper")) {
+          placeTable(node);
+          continue;
+        }
+        const fragments = splitNodeByLines(node);
         if (fragments.length <= 1) {
           appendHtml(node.outerHTML);
           continue;
