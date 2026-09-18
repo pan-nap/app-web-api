@@ -46,11 +46,10 @@ const searchForm = reactive({
   name: ""
 });
 
-/** 统一查询：固定 type=template（文书管理只维护模板） */
+/** 统一查询（文书均为模板，不再区分类型） */
 function getListParams() {
   return {
-    name: searchForm.name || undefined,
-    type: "template"
+    name: searchForm.name || undefined
   };
 }
 

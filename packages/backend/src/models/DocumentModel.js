@@ -4,7 +4,7 @@ class DocumentModel {
 
   static async findAll(params = {}) {
     return getConnectionWithCharset(async (connection) => {
-      const { name, type, currentPage = 1, pageSize = 20 } = params;
+      const { name, currentPage = 1, pageSize = 20 } = params;
 
       let query = 'SELECT * FROM documents WHERE 1=1';
       const paramsArr = [];
@@ -13,16 +13,11 @@ class DocumentModel {
         query += ' AND name LIKE ?';
         paramsArr.push(`%${name}%`);
       }
-      if (type) {
-        query += ' AND type = ?';
-        paramsArr.push(type);
-      }
 
       // 先查总数
       const [countResult] = await connection.query(
         'SELECT COUNT(*) as total FROM documents WHERE 1=1' +
-        (name ? ' AND name LIKE ?' : '') +
-        (type ? ' AND type = ?' : ''),
+        (name ? ' AND name LIKE ?' : ''),
         paramsArr
       );
 
@@ -44,10 +39,10 @@ class DocumentModel {
 
   static async create(data) {
     return getConnectionWithCharset(async (connection) => {
-      const { name, type = 'template', templateId, content, patientId, status = 'draft' } = data;
+      const { name, content } = data;
       const [result] = await connection.query(
-        'INSERT INTO documents (name, type, template_id, content, patient_id, status) VALUES (?, ?, ?, ?, ?, ?)',
-        [name, type, templateId || null, content ? JSON.stringify(content) : null, patientId || null, status]
+        'INSERT INTO documents (name, content) VALUES (?, ?)',
+        [name, content ? JSON.stringify(content) : null]
       );
       return result.insertId;
     });
@@ -55,17 +50,13 @@ class DocumentModel {
 
   static async update(id, data) {
     return getConnectionWithCharset(async (connection) => {
-      const { name, type, templateId, content, patientId, status } = data;
+      const { name, content } = data;
 
       const updateFields = [];
       const updateParams = [];
 
       if (name !== undefined) { updateFields.push('name = ?'); updateParams.push(name); }
-      if (type !== undefined) { updateFields.push('type = ?'); updateParams.push(type); }
-      if (templateId !== undefined) { updateFields.push('template_id = ?'); updateParams.push(templateId || null); }
       if (content !== undefined) { updateFields.push('content = ?'); updateParams.push(JSON.stringify(content)); }
-      if (patientId !== undefined) { updateFields.push('patient_id = ?'); updateParams.push(patientId); }
-      if (status !== undefined) { updateFields.push('status = ?'); updateParams.push(status); }
 
       if (!updateFields.length) {
         return false;

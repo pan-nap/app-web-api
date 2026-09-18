@@ -32,7 +32,7 @@ export const useDocumentStore = defineStore("document", () => {
     return Utils.useRequest(`/sf-web/document/${id}/values`, {}, "get");
   };
 
-  /** 获取实例关联的模板结构内容 */
+  /** 获取文书模板结构内容（客户动态数据与模板分离，由变量值接口承载） */
   const getTemplate = async (id: string): Promise<any> => {
     return Utils.useRequest(`/sf-web/document/${id}/template`, {}, "get");
   };

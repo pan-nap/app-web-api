@@ -31,7 +31,10 @@ app
     showZoom: false,
     resize: true
   })
-  .use(emrEditor);
+  .use(emrEditor, {
+    request: Utils.useRequest,
+    showPopup: Utils.showPopup
+  });
 
 setupRouter(app).then(() => {
   app.mount("#app");

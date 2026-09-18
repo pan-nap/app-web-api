@@ -121,9 +121,99 @@
     outline: none !important;
   }
 
-  /* ===== 打印纸张设置 ===== */
+  /* ===== 打印纸张设置（兼容直接 window.print 的兜底默认值，打印引擎会动态注入覆盖） ===== */
   @page {
     margin: 10mm;
     size: auto;
   }
 }
+
+/* ===== 标准打印 DOM（P2 逐页固定纸张盒，预览/打印/PDF 共用） ===== */
+.emr-standard-print.is-print {
+  position: absolute;
+  left: -100000px;
+  top: 0;
+  background: #fff;
+}
+
+/* 单张固定页盒：物理纸张尺寸 + 边距内建（@page margin 归零） */
+.emr-standard-print .emr-print-page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: #000;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* 页眉 / 正文 / 页脚 纵向三段 */
+.emr-standard-print .emr-print-page__header { flex: none; }
+.emr-standard-print .emr-print-page__body { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.emr-standard-print .emr-print-page__footer { flex: none; position: relative; }
+
+/* 页脚右侧自动页码 */
+.emr-standard-print .emr-print-page__pagenum {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font-size: 10pt;
+  color: #606266;
+}
+
+/* 正文内容排版（脱离编辑器 scoped 样式，需在打印作用域内重建） */
+.emr-standard-print .emr-print-content > :first-child { margin-top: 0; }
+.emr-standard-print .emr-print-content p { margin: 0 0 1em 0; }
+.emr-standard-print .emr-print-content h1 { font-size: 24px; font-weight: bold; margin: 0 0 0.5em 0; }
+.emr-standard-print .emr-print-content h2 { font-size: 20px; font-weight: bold; margin: 0 0 0.5em 0; }
+.emr-standard-print .emr-print-content h3 { font-size: 17px; font-weight: bold; margin: 0 0 0.5em 0; }
+.emr-standard-print .emr-print-content ul,
+.emr-standard-print .emr-print-content ol { padding-left: 1.5em; margin: 0 0 1em 0; }
+.emr-standard-print .emr-print-content li { margin: 0.3em 0; }
+.emr-standard-print .emr-print-content table { border-collapse: collapse; width: 100%; table-layout: fixed; margin: 0; }
+.emr-standard-print .emr-print-content .tableWrapper { overflow: visible; margin: 0 0 1em 0; }
+.emr-standard-print .emr-print-content th,
+.emr-standard-print .emr-print-content td {
+  border: 1px solid #000;
+  padding: 4px 6px;
+  text-align: left;
+  word-break: break-all;
+  font-size: 11pt;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+.emr-standard-print .emr-print-content th { background-color: #f5f5f5; font-weight: bold; }
+
+/* 页眉/页脚排版：紧凑、无外边距 */
+.emr-standard-print .emr-print-page__header,
+.emr-standard-print .emr-print-page__footer { font-size: 10pt; color: #606266; }
+.emr-standard-print .emr-print-page__header p,
+.emr-standard-print .emr-print-page__footer p { margin: 0; }
+
+/* 变量：输出为纯文本（保留下划线书写感） */
+.emr-standard-print .emr-variable {
+  display: inline-block;
+  min-width: 30px;
+  text-align: center;
+  padding: 0 4px;
+  border-bottom: 1px solid #000;
+  cursor: default;
+  line-height: inherit;
+  background: none;
+}
+.emr-standard-print .emr-variable-empty { color: #999; background: none; }
+.emr-standard-print .editor-selected { outline: none; }
+
+/* Element Plus 控件去框线，输出为纯文本观感 */
+.emr-standard-print input,
+.emr-standard-print textarea,
+.emr-standard-print select { pointer-events: none; }
+.emr-standard-print .el-input__wrapper { box-shadow: none !important; background: transparent !important; padding: 0 !important; }
+.emr-standard-print .el-select__wrapper { box-shadow: none !important; background: transparent !important; padding: 0 !important; min-height: 0; }
+.emr-standard-print .el-input__prefix,
+.emr-standard-print .el-input__suffix { display: none; }
+
+/* 分页标记：已由真实分页体现，输出中隐藏 */
+.emr-standard-print .page-break,
+.emr-standard-print .page-break-text { display: none !important; }

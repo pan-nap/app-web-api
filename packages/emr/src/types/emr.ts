@@ -7,8 +7,6 @@
 import type { PageSettings } from "./design";
 
 export interface EmrEditorProps {
-  /** 是否隐藏工具栏 */
-  hideToolbar?: boolean;
   /** 是否禁用编辑器 */
   disabled?: boolean;
   /** 初始文档内容（ProseMirror JSON），不传则使用默认示例 */

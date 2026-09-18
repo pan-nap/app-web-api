@@ -1,14 +1,6 @@
 <template>
   <div class="h-full overflow-hidden">
-    <EmrDesigner
-      ref="designerRef"
-      :name="docName"
-      :doc-type="'template'"
-      :content="editorContent"
-      hide-type-select
-      @save="handleSave"
-      @preview="handlePreview"
-    />
+    <EmrDesigner ref="designerRef" :name="docName" :content="editorContent" @save="handleSave" @preview="handlePreview" />
   </div>
 </template>
 
@@ -39,13 +31,11 @@ async function handleSave(payload: EmrDesignerSavePayload) {
   if (props.row?.id) {
     await documentStore.update(props.row.id, {
       name: payload.name,
-      type: "template",
       content: payload.content
     });
   } else {
     await documentStore.create({
       name: payload.name,
-      type: "template",
       content: payload.content
     });
   }
@@ -58,21 +48,19 @@ async function handlePreview(payload: EmrDesignerSavePayload) {
     HsMessage.warning("请输入文书名称后再预览");
     return;
   }
-  // 预览：先保存，再通过浏览器打印预览展示 A4 文书
+  // 预览：先保存，再打开与打印同源的标准预览弹窗（由 emr 打印引擎按页面设置输出）
   if (props.row?.id) {
     await documentStore.update(props.row.id, {
       name: payload.name,
-      type: "template",
       content: payload.content
     });
   } else {
     await documentStore.create({
       name: payload.name,
-      type: "template",
       content: payload.content
     });
   }
-  window.print();
+  designerRef.value?.openPrintDialog();
 }
 
 onMounted(() => {

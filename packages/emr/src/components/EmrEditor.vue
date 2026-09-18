@@ -1,6 +1,5 @@
 <template>
   <div class="emr-editor">
-    <emr-toolbar v-if="!hideToolbar" :editor="editor" />
     <editor-content :editor="editor" class="emr-content bg-white shadow-sm my-2" :style="contentStyle" />
   </div>
 </template>
@@ -17,16 +16,15 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { VariableExtension } from "../extensions/VariableExtension";
 import { PageBreakExtension } from "../extensions/PageBreakExtension";
+import { HeaderExtension, FooterExtension, HeaderFooterGuard } from "../extensions/HeaderFooterExtension";
 import { useVariableEditing } from "../hooks/useVariableEditing";
 import { useTableContextMenu } from "../hooks/useTableContextMenu";
 import { useEmrApi } from "../hooks/useEmrApi";
-import EmrToolbar from "./EmrToolbar.vue";
 import type { EmrEditorProps } from "../types";
 import { DEFAULT_PAGE_SETTINGS, PAGE_SIZE_DIMENSIONS } from "../types";
-import { computed } from "vue";
+import { computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 
 const props = withDefaults(defineProps<EmrEditorProps>(), {
-  hideToolbar: false,
   disabled: false,
   content: null,
   initialData: undefined,
@@ -82,7 +80,10 @@ const editor = useEditor({
     TextAlign.configure({
       types: ["heading", "paragraph"]
     }),
-    PageBreakExtension
+    PageBreakExtension,
+    HeaderExtension,
+    FooterExtension,
+    HeaderFooterGuard
   ],
   editable: !props.disabled,
   content: ""
@@ -90,6 +91,79 @@ const editor = useEditor({
 
 useVariableEditing(editor, props);
 useTableContextMenu(editor, props);
+
+/**
+ * 页眉/页脚布局同步：
+ * - 页眉为文档首个块节点，正常流贴顶；
+ * - 页脚绝对定位贴页面底部，通过撑开 ProseMirror 底部 padding 避免遮挡正文。
+ */
+let hfResizeObserver: ResizeObserver | null = null;
+let hfMutationObserver: MutationObserver | null = null;
+
+function isHeaderFooter(node: Node): boolean {
+  const el = node as Element;
+  return !!el.classList && (el.classList.contains("emr-header") || el.classList.contains("emr-footer"));
+}
+
+function syncHeaderFooterSpacing() {
+  const pm = editor.value?.view.dom as HTMLElement | undefined;
+  if (!pm) return;
+  const cs = getComputedStyle(pm);
+  if (!pm.dataset.basePadBottom) {
+    pm.dataset.basePadBottom = cs.paddingBottom;
+    pm.dataset.basePadLeft = cs.paddingLeft;
+    pm.dataset.basePadRight = cs.paddingRight;
+  }
+  const baseBottom = parseFloat(pm.dataset.basePadBottom ?? "") || 0;
+  const baseLeft = parseFloat(pm.dataset.basePadLeft ?? "") || 0;
+  const baseRight = parseFloat(pm.dataset.basePadRight ?? "") || 0;
+
+  const footer = pm.querySelector(".emr-footer") as HTMLElement | null;
+  if (footer) {
+    footer.style.left = `${baseLeft}px`;
+    footer.style.right = `${baseRight}px`;
+  }
+  const footerGap = footer ? footer.offsetHeight + 12 : 0;
+  pm.style.paddingBottom = `${baseBottom + footerGap}px`;
+}
+
+function setupHeaderFooterObservers() {
+  const pm = editor.value?.view.dom as HTMLElement | undefined;
+  if (!pm || typeof ResizeObserver === "undefined") return;
+  hfResizeObserver = new ResizeObserver(() => syncHeaderFooterSpacing());
+  pm.querySelectorAll(".emr-header, .emr-footer").forEach((el) => hfResizeObserver?.observe(el));
+  hfMutationObserver = new MutationObserver((mutations) => {
+    let changed = false;
+    mutations.forEach((m) => {
+      m.addedNodes.forEach((n) => {
+        if (isHeaderFooter(n)) {
+          hfResizeObserver?.observe(n as Element);
+          changed = true;
+        }
+      });
+      m.removedNodes.forEach((n) => {
+        if (isHeaderFooter(n)) {
+          hfResizeObserver?.unobserve(n as Element);
+          changed = true;
+        }
+      });
+    });
+    if (changed) syncHeaderFooterSpacing();
+  });
+  hfMutationObserver.observe(pm, { childList: true, subtree: true });
+  syncHeaderFooterSpacing();
+}
+
+onMounted(() => {
+  nextTick(setupHeaderFooterObservers);
+});
+
+onBeforeUnmount(() => {
+  hfResizeObserver?.disconnect();
+  hfMutationObserver?.disconnect();
+  hfResizeObserver = null;
+  hfMutationObserver = null;
+});
 
 defineExpose(useEmrApi(editor, props));
 </script>
@@ -117,6 +191,38 @@ defineExpose(useEmrApi(editor, props));
   width: var(--page-width, 210mm);
   min-height: var(--page-height, 297mm);
   padding: var(--margin-top, 15mm) var(--margin-right, 15mm) var(--margin-bottom, 15mm) var(--margin-left, 15mm);
+  position: relative;
+}
+
+/* 页眉：文档首个块节点，正常流贴顶，底部虚线分隔 */
+.emr-content :deep(.emr-header) {
+  border-bottom: 1px dashed #c9ccd1;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+/* 页脚：绝对定位贴页面底部（left/right/bottom 由 JS 按边距同步） */
+.emr-content :deep(.emr-footer) {
+  position: absolute;
+  bottom: 0;
+  border-top: 1px dashed #c9ccd1;
+  padding-top: 6px;
+  background: #fff;
+}
+.emr-content :deep(.emr-header > p:first-child:empty::before) {
+  content: "页眉（点击编辑）";
+  color: #c0c4cc;
+}
+.emr-content :deep(.emr-footer > p:first-child:empty::before) {
+  content: "页脚（点击编辑）";
+  color: #c0c4cc;
+}
+.emr-content :deep(.emr-header) {
+  color: #606266;
+  font-size: 10pt;
+}
+.emr-content :deep(.emr-footer) {
+  color: #606266;
+  font-size: 10pt;
 }
 .emr-content :deep(p) {
   margin: 0 0 1em 0;
@@ -241,14 +347,11 @@ defineExpose(useEmrApi(editor, props));
   background-color: rgba(0, 150, 255, 0.1); /* 浅蓝色背景 */
 }
 
-/* 打印：隐藏工具栏，仅保留文书内容 */
+/* 打印：仅保留文书内容 */
 @media print {
   .emr-editor {
     background: #fff !important;
     overflow: visible !important;
-  }
-  :deep(.emr-toolbar) {
-    display: none !important;
   }
   .emr-content {
     box-shadow: none !important;

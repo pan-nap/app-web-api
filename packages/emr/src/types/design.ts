@@ -4,7 +4,7 @@
  * 用于组件面板、属性面板、拖拽配置等功能
  */
 
-import type { DocNode, EmrElement } from "./emr";
+import type { DocNode } from "./emr";
 
 /** 下拉选项配置 */
 export interface VariableOption {
@@ -100,18 +100,14 @@ export interface TemplateContent {
   };
 }
 
-/** 文档记录实体 */
+/** 文档记录实体（均为纯模板，客户动态数据通过 document_values 按模板+客户另行存储） */
 export interface DocumentRecord {
   /** 文档唯一标识 */
   id: string;
   /** 文档名称 */
   name: string;
-  /** 文档类型：template-模板，instance-实例 */
-  type: "template" | "instance";
   /** 文档内容，ProseMirror JSON 格式 */
-  content: EmrElement;
-  /** 关联患者ID（可选） */
-  patientId?: string;
+  content: DocNode | null;
 }
 
 /** 页面尺寸预设 */

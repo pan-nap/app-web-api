@@ -1,190 +1,121 @@
 <template>
-  <div class="toolbar flex items-center gap-1 px-3 bg-white border-b border-gray-200">
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      :class="{ 'bg-blue-100 text-blue-600': editor?.isActive('bold') }"
-      @click="editor?.chain().focus().toggleBold().run()"
-    >
-      B
-    </button>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      :class="{ 'bg-blue-100 text-blue-600': editor?.isActive('italic') }"
-      @click="editor?.chain().focus().toggleItalic().run()"
-    >
-      I
-    </button>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      :class="{ 'bg-blue-100 text-blue-600': editor?.isActive('underline') }"
-      @click="editor?.chain().focus().toggleUnderline().run()"
-    >
-      U
-    </button>
-    <div class="w-px h-6 bg-gray-200 mx-1"></div>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      :class="{ 'bg-blue-100 text-blue-600': editor?.isActive('heading', { level: 1 }) }"
-      @click="editor?.chain().focus().toggleHeading({ level: 1 }).run()"
-    >
-      H1
-    </button>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      :class="{ 'bg-blue-100 text-blue-600': editor?.isActive('heading', { level: 2 }) }"
-      @click="editor?.chain().focus().toggleHeading({ level: 2 }).run()"
-    >
-      H2
-    </button>
-    <div class="w-px h-6 bg-gray-200 mx-1"></div>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      @click="editor?.chain().focus().toggleBulletList().run()"
-    >
-      • List
-    </button>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      @click="editor?.chain().focus().toggleOrderedList().run()"
-    >
-      1. List
-    </button>
-    <div class="w-px h-6 bg-gray-200 mx-1"></div>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      :class="{ 'bg-blue-100 text-blue-600': editor?.isActive({ textAlign: 'left' }) }"
-      @click="editor?.chain().focus().setTextAlign('left').run()"
-      title="左对齐"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+  <div class="toolbar flex flex-wrap items-center gap-y-2 px-3 py-1.5 bg-white border-b border-gray-200">
+    <!-- 文本格式 -->
+    <div class="flex items-center space-x-1">
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive('bold') }"
+        title="粗体 (Ctrl+B)"
+        @click="editor?.chain().focus().toggleBold().run()"
       >
-        <line x1="15" y1="3" x2="6" y2="3"></line>
-        <line x1="15" y1="9" x2="6" y2="9"></line>
-        <line x1="19" y1="15" x2="6" y2="15"></line>
-        <line x1="19" y1="21" x2="6" y2="21"></line>
-      </svg>
-    </button>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      :class="{ 'bg-blue-100 text-blue-600': editor?.isActive({ textAlign: 'center' }) }"
-      @click="editor?.chain().focus().setTextAlign('center').run()"
-      title="居中"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        <i class="emr-icon icon-doc-jiacu" />
+      </button>
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive('italic') }"
+        title="斜体 (Ctrl+I)"
+        @click="editor?.chain().focus().toggleItalic().run()"
       >
-        <line x1="21" y1="12" x2="3" y2="12"></line>
-        <line x1="21" y1="6" x2="3" y2="6"></line>
-        <line x1="21" y1="18" x2="3" y2="18"></line>
-      </svg>
-    </button>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      :class="{ 'bg-blue-100 text-blue-600': editor?.isActive({ textAlign: 'right' }) }"
-      @click="editor?.chain().focus().setTextAlign('right').run()"
-      title="右对齐"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        <i class="emr-icon icon-doc-xieti" />
+      </button>
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive('underline') }"
+        title="下划线 (Ctrl+U)"
+        @click="editor?.chain().focus().toggleUnderline().run()"
       >
-        <line x1="9" y1="3" x2="18" y2="3"></line>
-        <line x1="9" y1="9" x2="18" y2="9"></line>
-        <line x1="5" y1="15" x2="18" y2="15"></line>
-        <line x1="5" y1="21" x2="18" y2="21"></line>
-      </svg>
-    </button>
-    <div class="w-px h-6 bg-gray-200 mx-1"></div>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      @click="editor?.chain().focus().toggleTextStyle({ verticalAlign: 'top' }).run()"
-      title="顶部对齐"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        <i class="emr-icon icon-doc-xiahuaxian" />
+      </button>
+    </div>
+
+    <div class="toolbar-separator"></div>
+
+    <!-- 标题 -->
+    <div class="flex items-center space-x-1">
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive('heading', { level: 1 }) }"
+        title="标题1"
+        @click="editor?.chain().focus().toggleHeading({ level: 1 }).run()"
       >
-        <line x1="12" y1="19" x2="12" y2="5"></line>
-        <polyline points="5 12 12 5 19 12"></polyline>
-      </svg>
-    </button>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      @click="editor?.chain().focus().toggleTextStyle({ verticalAlign: 'middle' }).run()"
-      title="居中对齐"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        H1
+      </button>
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive('heading', { level: 2 }) }"
+        title="标题2"
+        @click="editor?.chain().focus().toggleHeading({ level: 2 }).run()"
       >
-        <line x1="12" y1="22" x2="12" y2="2"></line>
-        <polyline points="4 12 12 2 20 12"></polyline>
-        <polyline points="4 12 12 22 20 12"></polyline>
-      </svg>
-    </button>
-    <button
-      class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors"
-      @click="editor?.chain().focus().toggleTextStyle({ verticalAlign: 'bottom' }).run()"
-      title="底部对齐"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        H2
+      </button>
+    </div>
+
+    <div class="toolbar-separator"></div>
+
+    <!-- 列表 -->
+    <div class="flex items-center space-x-1">
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive('bulletList') }"
+        title="无序列表"
+        @click="editor?.chain().focus().toggleBulletList().run()"
       >
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <polyline points="19 12 12 19 5 12"></polyline>
-      </svg>
-    </button>
-    <div class="w-px h-6 bg-gray-200 mx-1"></div>
+        <i class="emr-icon icon-doc-liebiao" />
+      </button>
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive('orderedList') }"
+        title="有序列表"
+        @click="editor?.chain().focus().toggleOrderedList().run()"
+      >
+        <i class="emr-icon icon-doc-shuziliebiao" />
+      </button>
+    </div>
+
+    <div class="toolbar-separator"></div>
+
+    <!-- 对齐方式 -->
+    <div class="flex items-center space-x-1">
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive({ textAlign: 'left' }) }"
+        title="左对齐"
+        @click="editor?.chain().focus().setTextAlign('left').run()"
+      >
+        <i class="emr-icon icon-doc-zuoduiqi" />
+      </button>
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive({ textAlign: 'center' }) }"
+        title="居中对齐"
+        @click="editor?.chain().focus().setTextAlign('center').run()"
+      >
+        <i class="emr-icon icon-doc-juzhongduiqi" />
+      </button>
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive({ textAlign: 'right' }) }"
+        title="右对齐"
+        @click="editor?.chain().focus().setTextAlign('right').run()"
+      >
+        <i class="emr-icon icon-doc-youduiqi" />
+      </button>
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive({ textAlign: 'justify' }) }"
+        title="两端对齐"
+        @click="editor?.chain().focus().setTextAlign('justify').run()"
+      >
+        <i class="emr-icon icon-doc-fenbuduiqi" />
+      </button>
+    </div>
+
+    <div class="toolbar-separator"></div>
+
+    <!-- 表格 -->
     <div class="table-dropdown relative" @mouseenter="showTableMenu = true">
-      <button class="toolbar-btn px-3 py-1.5 text-sm rounded hover:bg-gray-100 transition-colors flex items-center gap-1">
-        <span>Table</span>
-        <span class="text-xs">▼</span>
+      <button class="word-button" title="插入表格" @click="showTableMenu = !showTableMenu">
+        <i class="emr-icon icon-doc-biaoge" />
       </button>
       <div
         v-show="showTableMenu"
@@ -210,16 +141,70 @@
         </div>
       </div>
     </div>
+
+    <div class="toolbar-separator"></div>
+
+    <!-- 分页 -->
+    <div class="flex items-center space-x-1">
+      <button
+        class="word-button"
+        :class="{ active: editor?.isActive('pageBreak') }"
+        title="插入分页符"
+        @click="editor?.chain().focus().insertContent({ type: 'pageBreak' }).run()"
+      >
+        <i class="emr-icon icon-doc-wendang" />
+      </button>
+    </div>
+
+    <div class="toolbar-separator"></div>
+
+    <!-- 页眉页脚 -->
+    <div class="flex items-center space-x-1">
+      <button class="word-button" :class="{ active: hasHeader }" title="插入页眉（全文档仅一个）" @click="handleInsertHeader()">页眉</button>
+      <button class="word-button" :class="{ active: hasFooter }" title="插入页脚（全文档仅一个）" @click="handleInsertFooter()">页脚</button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import type { Editor } from "@tiptap/vue-3";
 
 const props = defineProps<{
   editor: Editor | null | undefined;
 }>();
+
+/** 文档变更刷新标位（插入页眉/页脚后自增，驱动按钮高亮重算） */
+const docTick = ref(0);
+
+/** 扫描当前文档是否存在指定类型的块节点 */
+function hasNodeType(type: string): boolean {
+  docTick.value; // 建立响应依赖
+  const ed = props.editor;
+  if (!ed) return false;
+  let found = false;
+  ed.state.doc.descendants((node) => {
+    if (node.type.name === type) {
+      found = true;
+      return false;
+    }
+    return !found;
+  });
+  return found;
+}
+
+const hasHeader = computed(() => hasNodeType("header"));
+const hasFooter = computed(() => hasNodeType("footer"));
+
+function handleInsertHeader() {
+  props.editor?.chain().focus().insertHeader().run();
+  docTick.value++;
+}
+
+function handleInsertFooter() {
+  props.editor?.chain().focus().insertFooter().run();
+  docTick.value++;
+}
 
 const showTableMenu = ref(false);
 const maxRows = 8;
@@ -239,15 +224,43 @@ function insertTable(rows: number, cols: number) {
 </script>
 
 <style scoped>
-.toolbar-btn {
-  font-weight: 500;
+/* 按钮样式（对齐参考工具栏 word-button 观感） */
+.word-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 6px;
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.grid-cell {
-  background-color: white;
+.word-button:hover {
+  background: #f1f3f5;
+  border-color: #d5d5d5;
 }
 
-.dropdown-btn:active {
-  background-color: #e5e7eb;
+.word-button.active {
+  background: #dbe0e6;
+  border-color: transparent;
+}
+
+/* 分隔线 */
+.toolbar-separator {
+  height: 20px;
+  border-right: 1px solid #e0e0e0;
+  margin: 0 6px;
+}
+
+.emr-icon {
+  font-size: 16px;
 }
 </style>

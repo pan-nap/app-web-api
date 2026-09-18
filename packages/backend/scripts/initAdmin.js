@@ -108,18 +108,15 @@ const initDatabase = async () => {
     `);
 
     console.log('正在创建文书表...');
+    // 文书均为纯模板；客户动态数据与模板分离，存于 document_values（模板+客户维度）
+    // 存量库旧列（type/template_id/patient_id/status）不再读写，如需物理清列另行迁移
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS documents (
         id INT PRIMARY KEY AUTO_INCREMENT,
         name VARCHAR(255) NOT NULL,
-        type ENUM('template', 'instance') NOT NULL DEFAULT 'instance',
-        template_id INT NULL,
         content LONGTEXT,
-        patient_id VARCHAR(100),
-        status ENUM('draft', 'completed', 'archived') DEFAULT 'draft',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (template_id) REFERENCES documents(id) ON DELETE SET NULL
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 

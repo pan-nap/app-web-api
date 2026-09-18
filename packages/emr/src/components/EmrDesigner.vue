@@ -1,25 +1,12 @@
 <template>
   <div class="emr-designer h-full flex flex-col bg-gray-100">
     <div class="designer-header flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200 gap-3">
-      <div class="flex items-center gap-2 flex-1 min-w-0">
-        <input
-          v-model="docName"
-          :disabled="props.disabled"
-          class="text-base font-semibold text-gray-800 border border-transparent rounded px-2 py-1 focus:outline-none focus:border-blue-400 focus:bg-white hover:border-gray-300 bg-transparent min-w-0 flex-1"
-          placeholder="请输入文书名称"
-        />
-        <select
-          v-if="!props.hideTypeSelect"
-          v-model="docType"
-          :disabled="props.disabled"
-          class="text-sm text-gray-600 border border-gray-300 rounded px-2 py-1 focus:outline-none bg-white"
-        >
-          <option value="template">模板</option>
-          <option value="instance">实例</option>
-        </select>
+      <div class="flex items-center">
+        <el-input v-model="docName" :disabled="props.disabled" placeholder="请输入文书名称" />
       </div>
+      <EmrToolbar class="flex-1 justify-center min-w-0" :editor="toolbarEditor" />
       <div class="header-actions flex items-center gap-2 shrink-0">
-        <el-button @click="handlePrint">打印</el-button>
+        <el-button @click="openPrintDialog">打印</el-button>
         <el-button @click="handlePreview" type="primary" plain>预览</el-button>
         <el-button @click="handleSave" type="primary" :disabled="props.disabled">保存模板</el-button>
       </div>
@@ -60,18 +47,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
+import { ref, shallowRef, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
 import type { Editor } from "@tiptap/vue-3";
 import EmrEditor from "./EmrEditor.vue";
 import EmrComponentPanel from "./EmrComponentPanel.vue";
 import EmrPropertyPanel from "./EmrPropertyPanel.vue";
+import EmrToolbar from "./EmrToolbar.vue";
+import EmrPrintDialog from "./EmrPrintDialog.vue";
+import { getPluginItem } from "../index";
 import type { InsertVariableOptions, VariableOption, DocNode, PageSettings } from "../types";
 import { DEFAULT_PAGE_SETTINGS } from "../types";
 
-/** 设计器保存载荷 */
+/** 设计器保存载荷（文书均为纯模板，客户动态数据由变量值接口另行承载） */
 export interface EmrDesignerSavePayload {
   name: string;
-  type: "template" | "instance";
   content: DocNode | null;
   pageSettings?: PageSettings;
 }
@@ -80,23 +69,17 @@ const props = withDefaults(
   defineProps<{
     /** 初始文书名称 */
     name?: string;
-    /** 文书类型：template-模板 / instance-实例 */
-    docType?: "template" | "instance";
     /** 初始文档内容（ProseMirror JSON） */
     content?: DocNode | null;
     /** 初始变量数据 */
     initialData?: Record<string, any>;
-    /** 是否隐藏类型选择（仅模板场景时传 true，固定 docType 传入值） */
-    hideTypeSelect?: boolean;
     /** 是否禁用编辑 */
     disabled?: boolean;
   }>(),
   {
     name: "",
-    docType: "template",
     content: null,
     initialData: undefined,
-    hideTypeSelect: false,
     disabled: false
   }
 );
@@ -107,7 +90,6 @@ const emit = defineEmits<{
 }>();
 
 const docName = ref(props.name || "");
-const docType = ref(props.docType || "template");
 const pageSettings = ref<PageSettings>({ ...DEFAULT_PAGE_SETTINGS });
 
 watch(
@@ -117,14 +99,9 @@ watch(
   }
 );
 
-watch(
-  () => props.docType,
-  (val) => {
-    if (val !== undefined) docType.value = val;
-  }
-);
-
 const editorRef = ref<InstanceType<typeof EmrEditor> | null>(null);
+/** 头部工具栏使用的编辑器实例（由 EmrEditor 内部创建，挂载后注入） */
+const toolbarEditor = shallowRef<Editor | null>(null);
 const selectedVariable = ref<InsertVariableOptions | null>(null);
 const selectedPos = ref<number | null>(null);
 const isEditorFocused = ref(false);
@@ -144,7 +121,6 @@ function buildPayload(): EmrDesignerSavePayload {
   const editor = getEditor();
   return {
     name: docName.value,
-    type: docType.value,
     content: editor ? (editor.getJSON() as DocNode) : null,
     pageSettings: pageSettings.value
   };
@@ -370,9 +346,29 @@ function handlePreview() {
   emit("preview", buildPayload());
 }
 
-/** 打印当前文书 */
-function handlePrint() {
-  window.print();
+/** 命令式打开标准打印预览弹窗（弹窗外壳由宿主注入的 showPopup 提供，预览与打印同源） */
+function openPrintDialog() {
+  const rootEl = editorRef.value?.$el as HTMLElement | undefined;
+  const contentEl = rootEl?.querySelector(".emr-content") as HTMLElement | null;
+  if (!contentEl) return;
+
+  const showPopup = getPluginItem()?.showPopup;
+  if (!showPopup) {
+    alert("未配置弹窗能力，请在宿主注册 emrEditor 时注入 showPopup");
+    return;
+  }
+
+  showPopup(
+    EmrPrintDialog,
+    { source: contentEl, settings: pageSettings.value },
+    {
+      title: docName.value ? `打印预览 - ${docName.value}` : "打印预览",
+      width: "90%",
+      height: "90%",
+      padding: false,
+      showFooter: false
+    }
+  );
 }
 
 /** 处理编辑器选区更新事件 */
@@ -394,6 +390,7 @@ onMounted(() => {
   nextTick(() => {
     const editor = getEditor();
     if (editor) {
+      toolbarEditor.value = editor;
       editor.on("selectionUpdate", handleSelectionUpdate);
     }
     // 点击选中已通过 .editor-container 的 @click 处理，无需全局监听
@@ -409,7 +406,8 @@ onBeforeUnmount(() => {
 
 defineExpose({
   buildPayload,
-  getEditor
+  getEditor,
+  openPrintDialog
 });
 </script>
 

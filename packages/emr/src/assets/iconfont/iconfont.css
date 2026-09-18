@@ -1,0 +1,72 @@
+/* 文档工具栏图标字体（阿里 iconfont 项目 id 5234038，与华速 HIS 文书工具栏同源）
+   字体族与基础类使用 emr 前缀，避免与宿主 .iconfont 全局样式冲突 */
+@font-face {
+  font-family: "emr-doc-iconfont"; /* Project id 5234038 */
+  src: url("./iconfont.woff2?t=1789382108759") format("woff2"),
+    url("./iconfont.woff?t=1789382108759") format("woff"), url("./iconfont.ttf?t=1789382108759") format("truetype");
+}
+
+.emr-icon {
+  font-family: "emr-doc-iconfont" !important;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: inline-block;
+  line-height: 1;
+}
+
+.icon-doc-wendang:before {
+    content: "\e612";
+}
+
+.icon-doc-jiacu:before {
+  content: "\e616";
+}
+
+.icon-doc-xieti:before {
+  content: "\e611";
+}
+
+.icon-doc-xiahuaxian:before {
+  content: "\e60b";
+}
+
+.icon-doc-zhonghuaxian:before {
+  content: "\e60e";
+}
+
+.icon-doc-liebiao:before {
+  content: "\e614";
+}
+
+.icon-doc-shuziliebiao:before {
+  content: "\e60a";
+}
+
+.icon-doc-zuoduiqi:before {
+  content: "\e60c";
+}
+
+.icon-doc-juzhongduiqi:before {
+  content: "\e613";
+}
+
+.icon-doc-youduiqi:before {
+  content: "\e610";
+}
+
+.icon-doc-fenbuduiqi:before {
+  content: "\e617";
+}
+
+.icon-doc-wendang:before {
+  content: "\e612";
+}
+
+.icon-doc-biaoge:before {
+  content: "\e618";
+}
+
+.icon-doc-danyuangejuzhongduiqi:before {
+  content: "\e608";
+}

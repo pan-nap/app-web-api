@@ -18,29 +18,14 @@ class DocumentValueService {
     return values;
   }
 
-  /** 获取实例关联的模板内容 */
+  /** 获取文书的模板结构内容（文书均为纯模板，客户动态数据存于 document_values） */
   static async getTemplateContent(documentId) {
     const doc = await DocumentModel.findById(documentId);
     if (!doc) {
       throw new Error('文书不存在');
     }
 
-    // 如果本身就是模板，直接返回自己的 content
-    if (doc.type === 'template') {
-      return doc.content ? JSON.parse(doc.content) : null;
-    }
-
-    // 实例类型：通过 template_id 找到关联模板
-    if (!doc.template_id) {
-      throw new Error('该实例未关联模板');
-    }
-
-    const template = await DocumentModel.findById(doc.template_id);
-    if (!template) {
-      throw new Error('关联模板不存在');
-    }
-
-    return template.content ? JSON.parse(template.content) : null;
+    return doc.content ? JSON.parse(doc.content) : null;
   }
 
   /** 批量保存文书变量值 */

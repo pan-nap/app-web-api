@@ -40,7 +40,9 @@
     "@tiptap/extension-underline": "^3.27.3",
     "@tiptap/html": "^3.27.3",
     "@tiptap/starter-kit": "^3.27.3",
-    "@tiptap/vue-3": "^3.27.3"
+    "@tiptap/vue-3": "^3.27.3",
+    "@zumer/snapdom": "^3.0.0",
+    "jspdf": "^4.2.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.6",
