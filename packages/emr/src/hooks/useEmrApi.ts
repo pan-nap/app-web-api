@@ -2,7 +2,7 @@ import { watch, onMounted } from "vue";
 import type { Editor } from "@tiptap/vue-3";
 import type { InsertVariableOptions, VariableChange, EmrEditorProps, DocNode } from "../types";
 import { getValueByPath, decodeOptions, normalizeTemplate } from "../utils/templateUtils";
-import { temData2, data2 } from "../data/data2.ts";
+import { test_tem, test_data } from "../data/data1.ts";
 
 export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEditorProps) => {
   /** 获取编辑器实例 */
@@ -262,10 +262,9 @@ export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEdito
   }
 
   /** 设置编辑器内容（模板+数据）；不传 template 时使用 props.content，其次使用内置示例 */
-  function setContent(template?: any, data?: Record<string, any>) {
+  function setContent(source: any, data: Record<string, any>) {
     if (!editor.value) return;
-    const source = template ?? props.content ?? temData2;
-    editor.value.commands.setContent(applyDataToTemplate(source, data || props.initialData || data2));
+    editor.value.commands.setContent(applyDataToTemplate(source, data));
   }
 
   /** 根据位置查找变量节点 */
@@ -290,14 +289,14 @@ export const useEmrApi = (editor: { value: Editor | undefined }, props: EmrEdito
 
   // 初始内容加载：props.content 变化时重新设置（仅首次加载生效由外部控制）
   onMounted(() => {
-    setContent();
+    setContent(props.content ?? test_tem, props.initialData || test_data);
   });
 
   watch(
     () => props.content,
     (val) => {
       if (val) {
-        setContent();
+        setContent(val, props.initialData || {});
       }
     }
   );

@@ -246,6 +246,8 @@
                 <el-option label="数字输入" value="number" />
                 <el-option label="日期选择" value="date" />
                 <el-option label="下拉选择" value="select" />
+                <el-option label="单选框" value="radio" />
+                <el-option label="多选框" value="checkbox" />
               </el-select>
             </div>
 
@@ -259,9 +261,12 @@
               />
             </div>
 
-            <!-- 下拉选项（仅 select 类型） -->
-            <div v-if="selectedVariable.widgetType === 'select'" class="form-item">
-              <label class="form-label block text-xs text-gray-500 mb-2">下拉选项</label>
+            <!-- 选项配置（下拉 / 单选 / 复选 各自的选项列表） -->
+            <div v-if="hasOptionConfig" class="form-item">
+              <label class="form-label block text-xs text-gray-500 mb-2">
+                {{ isSelectType ? "下拉选项" : "选项" }}
+              </label>
+              <div v-if="isChoiceType" class="text-xs text-gray-400 mb-2">画布上可直接点击选项文字修改，此处增删选项</div>
               <div class="options-list space-y-2">
                 <div v-for="(option, index) in localOptions" :key="index" class="option-row flex items-center gap-2">
                   <el-input v-model="option.label" size="small" placeholder="标签" @change="updateOptions()" />
@@ -284,7 +289,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import type { InsertVariableOptions, VariableOption, PageSettings, PageOrientation, PageSize, RequiredLevel } from "../types";
 
 const props = defineProps<{
@@ -310,8 +315,17 @@ const typeLabelMap: Record<string, string> = {
   text: "文本输入",
   number: "数字输入",
   date: "日期选择",
-  select: "下拉选择"
+  select: "下拉选择",
+  radio: "单选框",
+  checkbox: "多选框"
 };
+
+/** 下拉选择：选项以浮层下拉呈现（与单选/复选不同类） */
+const isSelectType = computed(() => props.selectedVariable?.widgetType === "select");
+/** 单选/复选：选项以「标记 + 文字」平铺呈现 */
+const isChoiceType = computed(() => ["radio", "checkbox"].includes(props.selectedVariable?.widgetType || ""));
+/** 是否需要在线配置选项列表（下拉/单选/复选各自维护选项数据） */
+const hasOptionConfig = computed(() => isSelectType.value || isChoiceType.value);
 
 // 同步外部 pageSettings 变化
 watch(
@@ -343,7 +357,7 @@ watch(
 watch(
   () => props.selectedVariable?.widgetType,
   () => {
-    if (props.selectedVariable?.widgetType === "select" && localOptions.value.length === 0) {
+    if (props.selectedVariable && hasOptionConfig.value && localOptions.value.length === 0) {
       localOptions.value = [
         { label: "选项1", value: "1" },
         { label: "选项2", value: "2" }

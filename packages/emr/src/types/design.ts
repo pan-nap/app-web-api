@@ -23,11 +23,11 @@ export interface InsertVariableOptions {
   refKey: string;
   /** 变量显示名称，如 姓名 */
   widgetName: string;
-  /** 字段类型，支持 text/number/date/select */
-  widgetType?: "text" | "number" | "date" | "select";
+  /** 字段类型，支持 text/number/date/select/radio/checkbox */
+  widgetType?: "text" | "number" | "date" | "select" | "radio" | "checkbox";
   /** 变量当前值 */
   extensionValue?: string;
-  /** 下拉选项列表，widgetType为select时使用 */
+  /** 选项列表，widgetType 为 select/radio/checkbox 时使用 */
   options?: VariableOption[];
   /** 是否必填字段（兼容旧字段） */
   required?: boolean;
@@ -52,7 +52,7 @@ export interface ComponentItem {
   /** 图标 */
   icon: string;
   /** 组件类型 */
-  widgetType: "text" | "number" | "date" | "select";
+  widgetType: "text" | "number" | "date" | "select" | "radio" | "checkbox";
 }
 
 /** 组件面板中的数据字段项 */

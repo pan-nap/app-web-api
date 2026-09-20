@@ -1,4 +1,6 @@
 import { Node } from "@tiptap/core";
+import type { NodeViewRenderer, NodeViewRendererProps } from "@tiptap/core";
+import { CHOICE_WIDGET_TYPES, createChoiceNodeView } from "./ChoiceNodeView";
 
 export const VariableExtension = Node.create({
   name: "variable",
@@ -109,6 +111,17 @@ export const VariableExtension = Node.create({
 
   parseHTML() {
     return [{ tag: "span[data-ref-key]" }];
+  },
+
+  /**
+   * 单选/复选使用自定义 NodeView（选项平铺展示 + 就地编辑）；
+   * 其余类型返回 undefined，由 prosemirror-view 回退到默认 renderHTML 渲染
+   */
+  addNodeView() {
+    return ((props: NodeViewRendererProps) => {
+      if (!CHOICE_WIDGET_TYPES.includes(props.node.attrs.widgetType)) return undefined;
+      return createChoiceNodeView(props);
+    }) as NodeViewRenderer;
   },
 
   renderHTML({ node, HTMLAttributes }) {

@@ -42,6 +42,10 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
     const refKey = variableSpan.getAttribute("data-ref-key");
     if (!refKey) return;
 
+    // 单选/复选由自身 NodeView 处理交互（切换选中/就地编辑），不弹浮层
+    const widgetTypeAttr = variableSpan.getAttribute("data-widget-type");
+    if (widgetTypeAttr === "radio" || widgetTypeAttr === "checkbox") return;
+
     editor.value.state.doc.descendants((node, pos) => {
       if (node.type.name === "variable" && node.attrs.refKey === refKey) {
         const widgetType = node.attrs.widgetType || "text";
@@ -72,7 +76,8 @@ export const useVariableEditing = (editor: { value: Editor | undefined }, props:
   }
 
   onMounted(() => {
-    if (props.disabled) return;
+    // 仅编辑（设计）态开放点击编辑交互；只读态不响应
+    if (!props.editable || props.disabled) return;
     contentElement = editor.value?.view?.dom as HTMLElement | null;
     contentElement?.addEventListener("click", handleVariableClick);
   });

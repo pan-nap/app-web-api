@@ -1,4 +1,4 @@
-export const data2 = {
+export const test_data = {
   patient: {
     patient_name: "张三",
     patient_sex: "1",
@@ -14,7 +14,7 @@ export const data2 = {
     dischargeTime: "2026-07-15 16:00:00"
   }
 };
-export const temData2 = {
+export const test_tem = {
   name: "西医住院病案首页",
   content: {
     templateContent: {

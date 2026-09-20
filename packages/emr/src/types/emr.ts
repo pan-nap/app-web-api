@@ -9,6 +9,8 @@ import type { PageSettings } from "./design";
 export interface EmrEditorProps {
   /** 是否禁用编辑器 */
   disabled?: boolean;
+  /** 是否编辑模式（true=设计态可编辑；false=只读态，默认只读） */
+  editable?: boolean;
   /** 初始文档内容（ProseMirror JSON），不传则使用默认示例 */
   content?: DocNode | null;
   /** 初始变量数据（嵌套对象格式，用于回填变量值） */

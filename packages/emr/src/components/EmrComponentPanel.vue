@@ -62,7 +62,9 @@ const componentList: ComponentItem[] = [
   { type: "text", label: "文本输入", icon: "📝", widgetType: "text" },
   { type: "number", label: "数字输入", icon: "🔢", widgetType: "number" },
   { type: "date", label: "日期选择", icon: "📅", widgetType: "date" },
-  { type: "select", label: "下拉选择", icon: "📋", widgetType: "select" }
+  { type: "select", label: "下拉选择", icon: "📋", widgetType: "select" },
+  { type: "radio", label: "单选框", icon: "🔘", widgetType: "radio" },
+  { type: "checkbox", label: "多选框", icon: "☑️", widgetType: "checkbox" }
 ];
 
 const groupLabels: Record<string, string> = {
@@ -101,7 +103,9 @@ function getTypeIcon(widgetType: string): string {
     text: "📝",
     number: "🔢",
     date: "📅",
-    select: "📋"
+    select: "📋",
+    radio: "🔘",
+    checkbox: "☑️"
   };
   return iconMap[widgetType] || "📝";
 }

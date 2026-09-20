@@ -28,6 +28,7 @@
           :content="props.content"
           :initial-data="props.initialData"
           :disabled="props.disabled"
+          :editable="!props.disabled"
           :page-settings="pageSettings"
         />
       </div>
@@ -170,7 +171,7 @@ function handleDrop(event: DragEvent) {
         widgetType: dragPayload.widgetType || "text",
         extensionValue: "",
         options:
-          dragPayload.widgetType === "select"
+          dragPayload.widgetType === "select" || dragPayload.widgetType === "radio" || dragPayload.widgetType === "checkbox"
             ? [
                 { label: "选项1", value: "1" },
                 { label: "选项2", value: "2" }

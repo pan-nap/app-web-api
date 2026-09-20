@@ -128,6 +128,102 @@
   }
 }
 
+/* ===== 单选/复选控件（NodeView：选项平铺 + 就地编辑） ===== */
+/* 容器重置：覆盖输入式变量控件的下划线盒样式（本控件为独立控件，非单值输入） */
+.emr-variable.emr-choice {
+  display: inline !important;
+  min-width: 0 !important;
+  text-align: left !important;
+  padding: 0 !important;
+  border-bottom: none !important;
+  background: none !important;
+  vertical-align: baseline;
+}
+.emr-choice-items {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  vertical-align: baseline;
+}
+.emr-choice-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  line-height: inherit;
+}
+.emr-choice-item:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+/* 标记：单选圆形 / 复选方形 */
+.emr-choice-mark {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: 1px solid #333;
+  background: #fff;
+  box-sizing: border-box;
+}
+.emr-choice-mark.is-radio {
+  border-radius: 50%;
+}
+.emr-choice-item.is-checked .emr-choice-mark {
+  border-color: #1d4ed8;
+}
+/* 单选选中：实心圆点 */
+.emr-choice-mark.is-radio::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  right: 2px;
+  bottom: 2px;
+  border-radius: 50%;
+  background: transparent;
+}
+.emr-choice-item.is-checked .emr-choice-mark.is-radio::after {
+  background: #1d4ed8;
+}
+/* 复选选中：勾选符号 */
+.emr-choice-mark.is-checkbox::after {
+  content: "✓";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  line-height: 1;
+  color: transparent;
+}
+.emr-choice-item.is-checked .emr-choice-mark.is-checkbox::after {
+  color: #1d4ed8;
+}
+/* 选项文字：设计态点击可就地编辑 */
+.emr-choice-label {
+  padding: 0 1px;
+  border-radius: 2px;
+  line-height: inherit;
+}
+.emr-choice-label.is-editing {
+  outline: 1px solid #3b82f6;
+  outline-offset: 1px;
+  background: #fff;
+  min-width: 24px;
+  cursor: text;
+}
+/* 无选项时的占位展示 */
+.emr-choice-empty {
+  color: #7fbdff;
+  background: rgba(184, 218, 255, 0.23);
+  padding: 0 4px;
+  border-bottom: 1px solid #000;
+}
+
 /* ===== 标准打印 DOM（P2 逐页固定纸张盒，预览/打印/PDF 共用） ===== */
 .emr-standard-print.is-print {
   position: absolute;
@@ -203,6 +299,16 @@
   background: none;
 }
 .emr-standard-print .emr-variable-empty { color: #999; background: none; }
+/* 单选/复选：打印保持标记 + 文字平铺，不加输入式下划线盒 */
+.emr-standard-print .emr-variable.emr-choice {
+  display: inline;
+  min-width: 0;
+  text-align: left;
+  padding: 0;
+  border-bottom: none;
+  background: none;
+}
+.emr-standard-print .emr-choice-item { cursor: default; }
 .emr-standard-print .editor-selected { outline: none; }
 
 /* Element Plus 控件去框线，输出为纯文本观感 */
