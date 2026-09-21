@@ -9,24 +9,24 @@
 
     <!-- 方案一：基于 page-container 封装的命令式弹窗 -->
     <hs-card class="mt-12 flex flex-col" @tap="openPageContainerDialog">
-      <text class="fw-700 text-mainGray-500">page-container 命令式弹窗</text>
-      <text class="mt-4 text-24 text-mainGray-400">page-container 容器 + 插槽内容 + open()/close() 命令式调用</text>
+      <text class="fw-[700] text-[#12171C]">page-container 命令式弹窗</text>
+      <text class="mt-4 text-24 text-[#7C90AB]">page-container 容器 + 插槽内容 + open()/close() 命令式调用</text>
     </hs-card>
 
     <!-- 方案二：openDialogPage 独立弹窗页面 -->
     <hs-card class="mt-12 flex flex-col" @tap="openDialogPageDemo">
-      <text class="fw-700 text-mainGray-500">openDialogPage 弹窗页面</text>
-      <text class="mt-4 text-24 text-mainGray-400">弹窗内容为独立页面，可传参与事件通信，自定义能力最强</text>
+      <text class="fw-[700] text-[#12171C]">openDialogPage 弹窗页面</text>
+      <text class="mt-4 text-24 text-[#7C90AB]">弹窗内容为独立页面，可传参与事件通信，自定义能力最强</text>
     </hs-card>
 
     <!-- hs-dialog：page-container 命令式弹窗封装（内容由插槽传入） -->
     <hs-dialog ref="dialogRef" position="center" :close-on-click-overlay="true">
-      <view class="dialog-demo" :class="dialogMode == 'bottom' ? 'dialog-demo--bottom' : 'dialog-demo--center'">
-        <text class="dialog-demo__title">{{ dialogTitle }}</text>
-        <text class="dialog-demo__desc">
+      <view class="flex flex-col bg-white px-36 py-40" :class="dialogMode == 'bottom' ? 'w-full rd-t-24 pb-60' : 'w-[70%] rd-24'">
+        <text class="text-36 fw-[700] text-[#191a1b]">{{ dialogTitle }}</text>
+        <text class="mt-20 text-26 lh-[42rpx] text-[#636669]">
           利用 page-container 作为弹窗容器，内部通过插槽传入自定义组件， 再封装为 ref 暴露的 open()/close() 命令式调用，业务侧无需关心显隐状态。
         </text>
-        <button class="dialog-demo__btn" @tap="closeDialog">关 闭</button>
+        <button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="closeDialog">关 闭</button>
       </view>
     </hs-dialog>
   </hs-screen>
@@ -103,44 +103,3 @@ onUnload(() => {
 	uni.$off('dialogPageResult', onDialogPageResult)
 })
 </script>
-
-<style>
-.dialog-demo {
-  display: flex;
-  flex-direction: column;
-  background-color: #ffffff;
-  padding: 40rpx 36rpx;
-}
-
-.dialog-demo--center {
-  width: 70%;
-  border-radius: 24rpx;
-}
-
-.dialog-demo--bottom {
-  width: 100%;
-  border-radius: 24rpx 24rpx 0 0;
-  padding-bottom: 60rpx;
-}
-
-.dialog-demo__title {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #191a1b;
-}
-
-.dialog-demo__desc {
-  margin-top: 20rpx;
-  font-size: 26rpx;
-  line-height: 42rpx;
-  color: #636669;
-}
-
-.dialog-demo__btn {
-  margin-top: 32rpx;
-  background-color: #2376f3;
-  color: #ffffff;
-  font-size: 30rpx;
-  border-radius: 12rpx;
-}
-</style>

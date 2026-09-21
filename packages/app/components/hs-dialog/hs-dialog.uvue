@@ -89,5 +89,3 @@ const onClickOverlay = (_e: UniPointerEvent) => {
 // 暴露命令式实例方法，页面可通过 ref 拿到后直接调用
 defineExpose({ open, close })
 </script>
-
-<style></style>

@@ -1,7 +1,7 @@
 <template>
   <hs-screen title2="IM 聊天">
     <template #title>
-      <text class="text-34 fw-600 text-[#333] mr-12">IM 聊天</text>
+      <text class="text-34 fw-[600] text-[#333] mr-12">IM 聊天</text>
       <text :class="imStore.state.loginStatus == 2 ? 'text-[#4caf50]' : 'text-[#bbb]'" class="text-20 mr-8">●</text>
       <text class="text-24 text-[#888]">{{ imStore.state.statusText }}</text>
     </template>
@@ -9,7 +9,7 @@
     <!-- 未登录：登录表单 -->
     <view class="flex-1 flex flex-col px-32 pt-40 pb-40" v-if="!imStore.state.isLoggedIn">
       <view class="mb-40">
-        <text class="text-40 fw-700 text-[#333]">登录 IM</text>
+        <text class="text-40 fw-[700] text-[#333]">登录 IM</text>
         <view class="mt-12">
           <text class="text-26 text-[#888]">输入 SDK 应用 ID、用户 ID 和签名，完成登录后即可收发消息。</text>
         </view>
@@ -53,7 +53,7 @@
         :class="imStore.state.loginStatus == 1 ? 'bg-[#ccc]' : ''"
         @tap="handleLogin"
       >
-        <text class="text-32 text-white fw-600">{{ imStore.state.loginStatus == 1 ? "登录中..." : "登录" }}</text>
+        <text class="text-32 text-white fw-[600]">{{ imStore.state.loginStatus == 1 ? "登录中..." : "登录" }}</text>
       </view>
 
       <button type="primary" class="mt-20" v-if="imStore.state.errorText.length > 0">

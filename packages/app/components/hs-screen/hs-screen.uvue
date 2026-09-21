@@ -1,26 +1,26 @@
 <template>
-	<view v-if="!hideBar" :style="[{height: `${44+statusBarHeight}px`, paddingTop: `${statusBarHeight}px`}]" class="page-nav-bar">
-		<view class="page-nav-bar__left">
-			<view v-if="!hideBack" @click="navBack" hover-class="hover-class" class="page-nav-bar__left-bar">
+	<view v-if="!hideBar" :style="[{height: `${44+statusBarHeight}px`, paddingTop: `${statusBarHeight}px`}]" class="bg-white flex flex-row items-center">
+		<view class="basis-[100rpx] shrink-0 px-20 h-[44px] flex flex-row justify-center items-center">
+			<view v-if="!hideBack" @click="navBack" class="flex-1 flex flex-row justify-center items-center">
 				<text class="text-40 text-[#333]">←</text>
 			</view>
 		</view>
-		<view class="page-nav-bar__content">
+		<view class="flex-1 flex flex-row justify-center items-center">
 			<text v-if="title != ''" class="font-bold">
 				{{title}}
 			</text>
 			<slot v-else name="title"></slot>
 		</view>
-		<view class="page-nav-bar__right">
+		<view class="basis-[100rpx] shrink-0 px-20 h-[44px] flex flex-row justify-center items-center">
 			<slot name="right"></slot>
 		</view>
 	</view>
 	<slot name="header"></slot>
 	<!-- 内容滚动区域 -->
-	<scroll-view v-if="scroll" :scroll-y="true" class="page-shell">
+	<scroll-view v-if="scroll" :scroll-y="true" class="flex-1 py-10 flex flex-col bg-[#eef1f7]">
 		<slot></slot>
 	</scroll-view>
-	<view v-else class="page-shell">
+	<view v-else class="flex-1 py-10 flex flex-col bg-[#eef1f7]">
 		<slot></slot>
 	</view>
 </template>
@@ -67,39 +67,3 @@
 		// #endif
 	}
 </script>
-
-<style>
-	.page-nav-bar {
-		background-color: #fff;
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-	}
-
-	.page-nav-bar__left,
-	.page-nav-bar__right {
-		flex: 0 0 100rpx;
-		padding: 0 20rpx;
-		height: 44px;
-		display: flex;
-		flex-direction: row;
-		justify-content: center;
-		align-items: center;
-	}
-	.page-nav-bar__left-bar,
-	.page-nav-bar__content{
-		flex:1;
-		display: flex;
-		flex-direction: row;
-		justify-content: center;
-		align-items: center;
-	}
-
-	.page-shell {
-		flex: 1;
-		padding: 10rpx 0;
-		display: flex;
-		flex-direction: column;
-		background-color: #eef1f7;
-	}
-</style>

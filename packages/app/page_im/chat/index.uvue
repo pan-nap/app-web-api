@@ -1,7 +1,7 @@
 <template>
   <hs-screen :scroll="false" title2="IM 聊天">
     <template #title>
-      <text class="text-34 fw-600 text-[#333] mr-12">IM 聊天</text>
+      <text class="text-34 fw-[600] text-[#333] mr-12">IM 聊天</text>
       <text :class="imStore.state.loginStatus == 2 ? 'text-[#4caf50]' : 'text-[#bbb]'" class="text-20 mr-8">●</text>
       <text class="text-24 text-[#888]">{{ imStore.state.statusText }}</text>
     </template>
@@ -54,11 +54,11 @@
             <view
               v-if="msg.type == 0"
               :class="msg.isSelf ? 'bg-[#1976d2]' : 'bg-white'"
-              class="max-w-500 px-24 py-18 rd-20 relative group"
+              class="max-w-500 px-24 py-18 rd-20 relative"
               :style="msg.isSelf ? 'border-bottom-right-radius: 4rpx;' : 'border-bottom-left-radius: 4rpx; border: 1rpx solid #e5e5e5;'"
               @longpress="showMessageActions(msg.msgId, $event)"
             >
-              <text class="text-30" :class="msg.isSelf ? 'text-white' : 'text-[#333]'" style="line-height: 44rpx">{{ msg.text }}</text>
+              <text class="text-30 lh-[44rpx]" :class="msg.isSelf ? 'text-white' : 'text-[#333]'">{{ msg.text }}</text>
             </view>
 
             <!-- 图片消息 -->
@@ -66,7 +66,7 @@
               <view class="w-300 h-300 bg-[#e0e0e0] flex items-center justify-center">
                 <image :src="getExtraPath(msg.extra)" class="flex-1" mode="widthFix" />
               </view>
-              <text class="absolute bottom-8 right-12 text-22 text-white bg-black/40 px-8 rd-4">{{ msg.text }}</text>
+              <text class="absolute bottom-8 right-12 text-22 text-white bg-[rgba(0,0,0,0.4)] px-8 rd-4">{{ msg.text }}</text>
             </view>
 
             <!-- 视频消息 -->
@@ -74,7 +74,7 @@
               <view class="w-300 h-300 bg-[#e0e0e0] flex items-center justify-center">
                 <image :src="getSnapshotPath(msg.extra)" class="flex-1" mode="widthFix" />
               </view>
-              <text class="absolute bottom-8 right-12 text-22 text-white bg-black/40 px-8 rd-4">{{ msg.text }}</text>
+              <text class="absolute bottom-8 right-12 text-22 text-white bg-[rgba(0,0,0,0.4)] px-8 rd-4">{{ msg.text }}</text>
             </view>
 
             <!-- 语音消息 -->
@@ -87,13 +87,13 @@
             >
               <text class="text-28 mr-12">🎤</text>
               <text class="text-26" :class="msg.isSelf ? 'text-white' : 'text-[#555]'">{{ msg.text }}</text>
-              <text class="text-22 ml-12" :class="msg.isSelf ? 'text-white/70' : 'text-[#999]'">{{ getVoiceDuration(msg.extra) }}″</text>
+              <text class="text-22 ml-12" :class="msg.isSelf ? 'text-[rgba(255,255,255,0.7)]' : 'text-[#999]'">{{ getVoiceDuration(msg.extra) }}″</text>
             </view>
 
             <!-- 自定义消息 -->
             <view v-if="msg.type == 4" :class="msg.isSelf ? 'bg-[#9c27b0]' : 'bg-[#f3e5f5]'" class="max-w-500 px-24 py-16 rd-20">
-              <text class="text-24 fw-600 mb-6" :class="msg.isSelf ? 'text-white/90' : 'text-[#7b1fa2]'">{{ msg.text }}</text>
-              <text class="text-26" :class="msg.isSelf ? 'text-white/80' : 'text-[#555]'" style="line-height: 40rpx">{{ msg.extra }}</text>
+              <text class="text-24 fw-[600] mb-6" :class="msg.isSelf ? 'text-[rgba(255,255,255,0.9)]' : 'text-[#7b1fa2]'">{{ msg.text }}</text>
+              <text class="text-26 lh-[40rpx]" :class="msg.isSelf ? 'text-[rgba(255,255,255,0.8)]' : 'text-[#555]'">{{ msg.extra }}</text>
             </view>
 
             <!-- 消息时间戳 -->
@@ -130,14 +130,14 @@
             @confirm="handleSendText"
           />
           <view class="ml-16 px-32 py-14 bg-[#1976d2] rd-36" :class="inputText.length == 0 ? 'bg-[#ccc]' : ''" @tap="handleSendText">
-            <text class="text-28 text-white fw-500">发送</text>
+            <text class="text-28 text-white fw-[500]">发送</text>
           </view>
         </view>
 
         <!-- 录音状态提示 -->
         <view v-if="isRecording" class="px-24 pb-16">
           <view class="flex flex-row items-center bg-[#fff3f3] rd-12 px-24 py-12">
-            <text class="text-32 text-[#e53935] animate-bounce">●</text>
+            <text class="text-32 text-[#e53935]">●</text>
             <text class="text-26 text-[#e53935] ml-12">正在录音... {{ recordDuration }}″</text>
             <text class="text-24 text-[#999] ml-auto">点击"停止"结束录音</text>
           </view>

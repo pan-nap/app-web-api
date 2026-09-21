@@ -10,45 +10,34 @@ description: 页面开发完整示例（登录、首页）
 每个 uvue 页面包含三个根节点：
 
 - **`<template>`**：模板，使用 uni 内置组件或自定义组件。
-- **`<script>`**：逻辑，仅能写 UTS；支持 `<script setup>`（组合式）或 `export default {}`（选项式）。
+- **`<script>`**：逻辑，蒸汽模式下仅支持组合式（`<script setup>`）；逻辑层由 js 引擎驱动，直接写标准 js/ts 语法，无需强类型。
 - **`<style>`**：样式，App 端为 ucss 子集。
 
 ### 组合式 API（推荐）
 
 ```vue
 <script setup>
-  let title = ref("Hello world")
-  const buttonClick = () => {
-    title.value = "按钮被点了"
-  }
-  onLoad(() => {})
+let title = ref("Hello world");
+const buttonClick = () => {
+  title.value = "按钮被点了";
+};
+onLoad(() => {});
 </script>
 ```
 
 - 更灵活、代码更短；可监听页面生命周期（onLoad、onShow 等）。
 - 新页面/组件建议直接用组合式。
 
-### 选项式 API
+### 选项式 API（蒸汽模式不支持）
 
-```vue
-<script>
-  export default {
-    data() { return { title: "Hello world" } },
-    onLoad() {},
-    methods: { buttonClick() { this.title = "按钮被点了" } }
-  }
-</script>
-```
-
-- App.uvue、uts 组件插件的入口目前仅支持选项式。
-- `export default {}` **外部**的代码在应用启动时执行，且不随页面回收，不宜写复杂逻辑。
+蒸汽模式仅支持组合式 API，不再支持 `export default {}` 选项式写法与 mixin；历史选项式代码需先转为组合式再适配蒸汽模式。
 
 ### 关键点
 
-- 仅能有一个 `<script>`；组合式与选项式不能分两个 script 块。
-- 选项式里页面「显示/隐藏」用 onShow/onHide；组合式里用 **onPageShow/onPageHide**。
+- 仅能有一个 `<script>`，使用组合式（`<script setup>`）。
+- 页面「显示/隐藏」用 **onPageShow/onPageHide**；组件内用 onShow/onHide。
 - **不需要 import** Vue/uni 的 API（ref、onLoad 等），框架会自动注入。
-- **使用类似unocss方式书写css** 项目使用a-hua-unocss自动编译unocss书写方式css。
+- **CSS 统一用 tailwind 原子类**（a-hua-unocss 编译时生成，见 css-ucss.md），极个别无法表达时才用 `<style>` 标签写简单 class。
 
 ## 登录页（pages/login/index.uvue）
 
@@ -76,9 +65,7 @@ description: 页面开发完整示例（登录、首页）
       </hs-form>
 
       <!-- 使用 hs-button 替代原生 button，内置 loading 状态管理 -->
-      <hs-button type="primary" class="login-submit-btn mt-8" @tap="handleLogin">
-        立即登录
-      </hs-button>
+      <hs-button type="primary" class="login-submit-btn mt-8" @tap="handleLogin"> 立即登录 </hs-button>
     </hs-card>
   </hs-screen>
 </template>
@@ -97,7 +84,7 @@ const formData = reactive<LoginFormData>({
   password: '123456'
 })
 
-// 表单校验规则 - 使用 UTSJSONObject 组装
+// 表单校验规则 - 标准对象字面量（蒸汽模式直接写 js/ts 语法，无需 UTSJSONObject）
 const usernameRules: FormRule[] = [
   { required: true, message: '请输入登录账号' },
   { pattern: /^[A-Za-z0-9_@.-]{4,32}$/, message: '账号格式不正确' }
@@ -106,9 +93,10 @@ const passwordRules: FormRule[] = [
   { required: true, message: '请输入登录密码' },
   { pattern: /^[\s\S]{6,20}$/, message: '密码长度需在6-20位之间' }
 ]
-const formRules = new UTSJSONObject()
-formRules['username'] = usernameRules
-formRules['password'] = passwordRules
+const formRules : Record<string, any> = {
+  username: usernameRules,
+  password: passwordRules
+}
 
 // 登录方法 — 异步错误处理下沉到 store，页面只 await
 // store 内部消化异常，页面无需 try/catch
@@ -120,6 +108,7 @@ const handleLogin = async () => {
 }
 </script>
 
+<!-- 极个别场景示例：原子类无法表达时才用 style（实际 login 页仅此一处例外） -->
 <style>
 .login-form {
   padding-left: 0rpx;

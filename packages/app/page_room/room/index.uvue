@@ -2,7 +2,7 @@
   <view class="flex flex-col flex-1 bg-[#1a1a1a] relative">
     <!-- 主大屏：渲染本地或远端视频 -->
     <view ref="mainContainer" class="flex-1 flex items-center justify-center bg-[#2a2a2a] relative of-hidden" @tap="switchMainScreen">
-      <text class="absolute top-32 left-32 text-28 text-white/60 z-5 bg-black/40 px-20 py-4 rd-20">{{ mainIsLocal ? "我的画面" : "对方画面" }}</text>
+      <text class="absolute top-32 left-32 text-28 text-[rgba(255,255,255,0.6)] z-5 bg-[rgba(0,0,0,0.4)] px-20 py-4 rd-20">{{ mainIsLocal ? "我的画面" : "对方画面" }}</text>
     </view>
 
     <!-- 悬浮小窗：渲染另一路视频，点击切换主次 -->
@@ -12,7 +12,7 @@
       style="border: 2px solid rgba(255, 255, 255, 0.3)"
       @tap="switchMainScreen"
     >
-      <text class="absolute top-16 left-16 text-22 text-white/60 z-5 bg-black/40 px-16 py-2 rd-16">{{ mainIsLocal ? "对方画面" : "我的画面" }}</text>
+      <text class="absolute top-16 left-16 text-22 text-[rgba(255,255,255,0.6)] z-5 bg-[rgba(0,0,0,0.4)] px-16 py-2 rd-16">{{ mainIsLocal ? "对方画面" : "我的画面" }}</text>
     </view>
 
     <!-- 底部控制栏 -->
@@ -52,7 +52,7 @@
 
     <!-- 通话状态提示 -->
     <view class="absolute top-24 z-20" style="left: 50%; transform: translateX(-50%)">
-      <text class="text-28 text-white/80 bg-black/50 px-32 py-8 rd-24">{{ statusText }}</text>
+      <text class="text-28 text-[rgba(255,255,255,0.8)] bg-[rgba(0,0,0,0.5)] px-32 py-8 rd-24">{{ statusText }}</text>
     </view>
   </view>
 </template>
@@ -295,5 +295,3 @@ onUnload(() => {
 	FloatWindowService.destroy()
 })
 </script>
-
-<style></style>

@@ -18,5 +18,3 @@ function handleImageClick() : void {
 	uni.navigateBack()
 }
 </script>
-
-<style scoped></style>

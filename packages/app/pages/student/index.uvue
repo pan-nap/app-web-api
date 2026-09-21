@@ -1,12 +1,12 @@
 <template>
 	<hs-screen title="学生页">
-			<hs-card class="index-card">
-				<text class="text-lg font-bold text-gray-800 mb-20">学生信息查询</text>
-				<view class="flex flex-col index-form-layout">
-					<view class="flex flex-col index-form-field">
-						<text class="text-sm text-gray-500 mb-10">身份证号</text>
+			<hs-card>
+				<text class="text-36 font-bold text-gray-800 mb-20">学生信息查询</text>
+				<view class="flex flex-col mb-20">
+					<view class="flex flex-col mb-20">
+						<text class="text-28 text-gray-500 mb-10">身份证号</text>
 						<hs-input 
-							class="border border-gray-200 rounded-lg px-20 py-15 text-base"
+							class="border border-gray-200 rounded-lg px-20 py-15 text-32"
 							v-model="studentStore.state.idCard"
 							placeholder="请输入身份证号"
 							:maxlength="18"
@@ -15,14 +15,13 @@
 					</view>
 					<hs-button 
 						type="primary"
-						class="index-search-button"
 						@tap="handleSearch"
 					>
 						查询
 					</hs-button>
 					<hs-button 
 						type="primary"
-						class="mt-20  index-search-button"
+						class="mt-20"
 						@tap="handleLogout"
 					>
 						退出登录
@@ -30,24 +29,24 @@
 				</view>
 			</hs-card>
 
-			<hs-card class="index-card flex flex-col" v-for="(item,key) in studentStore.state.list" :key="key">
-				<view class="flex flex-row index-result-row">
+			<hs-card class="flex flex-col" v-for="(item,key) in studentStore.state.list" :key="key">
+				<view class="flex flex-row mb-20">
 						<text class="text-gray-500 basis-[150rpx]">姓名</text>
 						<text class="text-gray-800">{{ item?.name }}</text>
 					</view>
-					<view class="flex flex-row index-result-row">
+					<view class="flex flex-row mb-20">
 						<text class="text-gray-500 basis-[150rpx]">身份证号</text>
 						<text class="text-gray-800">{{ item?.idCard }}</text>
 					</view>
-					<view class="flex flex-row index-result-row">
+					<view class="flex flex-row mb-20">
 						<text class="text-gray-500 basis-[150rpx]">性别</text>
 						<text class="text-gray-800">{{ item?.gender }}</text>
 					</view>
-					<view class="flex flex-row index-result-row">
+					<view class="flex flex-row mb-20">
 						<text class="text-gray-500 basis-[150rpx]">年龄</text>
 						<text class="text-gray-800">{{ item?.age }}</text>
 					</view>
-					<view class="flex flex-row index-result-row">
+					<view class="flex flex-row mb-20">
 						<text class="text-gray-500 basis-[150rpx]">班级</text>
 						<text class="text-gray-800">{{ item?.className }}</text>
 					</view>
@@ -75,18 +74,3 @@
 		await studentStore.queryByIdCard(studentStore.state.idCard)
 	}
 </script>
-
-<style>
-	.index-form-layout {
-		margin-bottom: 20rpx;
-	}
-
-	.index-form-field {
-		margin-bottom: 20rpx;
-	}
-
-
-	.index-result-row {
-		margin-bottom: 20rpx;
-	}
-</style>

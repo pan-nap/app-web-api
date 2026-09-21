@@ -30,7 +30,3 @@ async function sendMsg() {
   }
 }
 </script>
-
-<style>
-
-</style>
