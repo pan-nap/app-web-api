@@ -7,12 +7,12 @@ description: hs-screen、hs-card、hs-form、hs-button 等组件使用规范
 
 ## uni-app x 组件分类
 
-| 分类 | 说明 | 使用方式 |
-|------|------|----------|
-| **内置组件** | view、text、button、scroll-view、input 等 | 直接写标签，无需引用和注册 |
-| **ext 组件** | 文档在官方但未内置到引擎的组件 | 需下载到项目 |
-| **前端 uvue 组件** | 按 Vue 规范写的 .uvue 文件 | 通过 easycom 或 import 使用 |
-| **uts 原生组件** | App 端专用，由原生开发者按 uts 组件规范编写 | 安装后直接写标签 |
+| 分类               | 说明                                        | 使用方式                    |
+| ------------------ | ------------------------------------------- | --------------------------- |
+| **内置组件**       | view、text、button、scroll-view、input 等   | 直接写标签，无需引用和注册  |
+| **ext 组件**       | 文档在官方但未内置到引擎的组件              | 需下载到项目                |
+| **前端 uvue 组件** | 按 Vue 规范写的 .uvue 文件                  | 通过 easycom 或 import 使用 |
+| **uts 原生组件**   | App 端专用，由原生开发者按 uts 组件规范编写 | 安装后直接写标签            |
 
 ### 组件名与属性
 
@@ -76,31 +76,33 @@ components/
 
 ## 表单组件使用
 
-表单校验规则通过 `UTSJSONObject` 动态组装：
+表单校验规则使用标准对象字面量（蒸汽模式直接写 js/ts 语法，无需 UTSJSONObject）：
 
 ```typescript
-import type { FormRule } from '@/uni_modules/hs-design/types/form'
+import type { FormRule } from "@/uni_modules/hs-design/types/form";
 
 const fieldRules: FormRule[] = [
-  { required: true, message: '必填提示' },
-  { pattern: /^[\s\S]{6,20}$/, message: '格式错误' }
-]
-const formRules = new UTSJSONObject()
-formRules['fieldName'] = fieldRules
+  { required: true, message: "必填提示" },
+  { pattern: /^[\s\S]{6,20}$/, message: "格式错误" }
+];
+// 标准 Record<string, any> 组装规则
+const formRules: Record<string, any> = {
+  fieldName: fieldRules
+};
 ```
 
 ## ref 类型规范
 
 ### 内置组件 ref 类型
 
-| 组件 | ref 类型 |
-|------|----------|
-| view、text、普通 DOM | `ref<UniElement \| null>(null)` |
-| scroll-view | `ref<UniScrollViewElement \| null>(null)` |
-| slider | `ref<UniSliderElement \| null>(null)` |
-| video | `ref<UniVideoElement \| null>(null)` |
-| 自定义组件（easycom） | `ref<组件名驼峰 + ComponentPublicInstance \| null>(null)` |
-| 自定义组件（非 easycom） | `ref<ComponentPublicInstance \| null>(null)` |
+| 组件                     | ref 类型                                                  |
+| ------------------------ | --------------------------------------------------------- |
+| view、text、普通 DOM     | `ref<UniElement \| null>(null)`                           |
+| scroll-view              | `ref<UniScrollViewElement \| null>(null)`                 |
+| slider                   | `ref<UniSliderElement \| null>(null)`                     |
+| video                    | `ref<UniVideoElement \| null>(null)`                      |
+| 自定义组件（easycom）    | `ref<组件名驼峰 + ComponentPublicInstance \| null>(null)` |
+| 自定义组件（非 easycom） | `ref<ComponentPublicInstance \| null>(null)`              |
 
 ### 调用子组件方法
 
@@ -115,17 +117,17 @@ formRules['fieldName'] = fieldRules
 ```typescript
 // ✅ 正确
 type Props = {
-  title?: string
-}
-defineProps<Props>()
+  title?: string;
+};
+defineProps<Props>();
 
 // ✅ 带默认值
 withDefaults(defineProps<Props>(), {
-  title: '默认标题'
-})
+  title: "默认标题"
+});
 
 // ❌ 错误 - Android 不支持
-defineProps<{ title?: string }>()
+defineProps<{ title?: string }>();
 ```
 
 ## hs-button 组件规范
@@ -141,6 +143,7 @@ defineProps<{ title?: string }>()
 ```
 
 页面 `@tap` 回调需返回 `Promise`（`async` 函数），组件内部会自动：
+
 1. 点击后设置 loading（按钮 disabled + 视觉反馈）
 2. 等待异步操作完成
 3. 完成后自动清除 loading
@@ -185,23 +188,25 @@ async function handleClick() {
 `useAttrs()` 在运行时返回 `Map<String, Any?>` 类型（非 `UTSJSONObject`），使用时必须注意：
 
 **禁止操作**：
+
 - ❌ `attrs as UTSJSONObject` — 触发 `ClassCastException`
 - ❌ 解构 `const { onClick, ...rest } = attrs` — 编译错误
 
 **安全访问方式**：
+
 - 模板中通过 `v-bind="bindAttrs"` 绑定过滤后的非事件属性
 - 脚本中通过 `attrs['onClick']` 下标语法获取父级事件
 
 **entries 遍历分端处理**：
 
 ```typescript
-const bindAttrs = {}
+const bindAttrs = {};
 
 // #ifdef APP-ANDROID
 // Kotlin 环境：attrs.entries 是 Map 的属性
 for (const entry of attrs.entries) {
-  if (entry.key != 'onClick') {
-    bindAttrs[entry.key] = entry.value
+  if (entry.key != "onClick") {
+    bindAttrs[entry.key] = entry.value;
   }
 }
 // #endif
@@ -209,8 +214,8 @@ for (const entry of attrs.entries) {
 // #ifndef APP-ANDROID
 // JS 环境：使用 Object.entries
 for (const [key, value] of Object.entries(attrs)) {
-  if (key != 'onClick') {
-    bindAttrs[key] = value
+  if (key != "onClick") {
+    bindAttrs[key] = value;
   }
 }
 // #endif
@@ -218,16 +223,17 @@ for (const [key, value] of Object.entries(attrs)) {
 
 ## 指令使用规范
 
-| 指令 | 说明 |
-|------|------|
-| **v-if / v-else / v-else-if** | 条件渲染；为假时元素不渲染 |
-| **v-show** | 切换 display 可见性，元素始终存在 |
-| **v-for** | 列表渲染；需写 **key**（建议唯一 id） |
-| **v-model** | 双向绑定，用于 input、textarea、组件等 |
-| **:prop / v-bind** | 动态绑定属性 |
-| **@event / v-on** | 绑定事件 |
-| **v-text** | 设置元素文本，覆盖原有内容 |
-| **v-html** | 设置 HTML；Android 上通过 rich-text 实现 |
+| 指令                          | 说明                                     |
+| ----------------------------- | ---------------------------------------- |
+| **v-if / v-else / v-else-if** | 条件渲染；为假时元素不渲染               |
+| **v-show**                    | 切换 display 可见性，元素始终存在        |
+| **v-for**                     | 列表渲染；需写 **key**（建议唯一 id）    |
+| **v-model**                   | 双向绑定，用于 input、textarea、组件等   |
+| **v-model:visible**           | 组件显隐状态双向绑定（如 hs-dialog）     |
+| **:prop / v-bind**            | 动态绑定属性                             |
+| **@event / v-on**             | 绑定事件                                 |
+| **v-text**                    | 设置元素文本，覆盖原有内容               |
+| **v-html**                    | 设置 HTML；Android 上通过 rich-text 实现 |
 
 ### 注意
 
@@ -255,14 +261,63 @@ UniApp X 中文字必须使用 `<text>` 标签包裹，字体属性（大小、�
 
 **可用属性**（仅 `<text>` 支持）：
 
-| 属性 | 说明 | 示例 class |
-|------|------|-----------|
-| `font-size` | 字体大小 | `text-22`、`text-56` |
-| `color` | 字体颜色 | `text-mainGray-500`、`text-mainGray-950` |
-| `font-weight` | 字体粗细 | `fw-700`、`fw-bold` |
-| `line-height` | 行高 | `leading-36` |
-| `text-align` | 对齐方式 | `text-center`、`text-left`、`text-right` |
-| `letter-spacing` | 字间距 | `tracking-2` |
-| `text-decoration` | 文字装饰 | `underline`、`line-through` |
+| 属性              | 说明     | 示例 class                               |
+| ----------------- | -------- | ---------------------------------------- |
+| `font-size`       | 字体大小 | `text-22`、`text-56`                     |
+| `color`           | 字体颜色 | `text-mainGray-500`、`text-mainGray-950` |
+| `font-weight`     | 字体粗细 | `fw-700`、`fw-bold`                      |
+| `line-height`     | 行高     | `leading-36`                             |
+| `text-align`      | 对齐方式 | `text-center`、`text-left`、`text-right` |
+| `letter-spacing`  | 字间距   | `tracking-2`                             |
+| `text-decoration` | 文字装饰 | `underline`、`line-through`              |
 
 > 注意：`<view>` 只支持布局类属性（flex、padding、margin、width、height 等），字体类属性不生效。
+
+## hs-dialog 弹窗组件规范
+
+`hs-dialog` 是基于 `page-container` 封装的弹窗组件，支持 el-popover 风格的使用方式。
+
+### 方式一：v-model:visible（推荐）
+
+```vue
+<hs-dialog v-model:visible="dialogVisible" position="center">
+  <view class="flex flex-col bg-white w-[70%] rd-24 p-36">
+    <text>弹窗内容</text>
+    <button @tap="dialogVisible = false">关闭</button>
+  </view>
+</hs-dialog>
+
+<button @tap="dialogVisible = true">打开弹窗</button>
+```
+
+### 方式二：ref.show()/hide()
+
+```vue
+<hs-dialog ref="dialogRef" position="center">
+  <view>弹窗内容</view>
+</hs-dialog>
+
+<button @tap="dialogRef?.show()">打开</button>
+<button @tap="dialogRef?.hide()">关闭</button>
+```
+
+### API
+
+| 方法              | 说明                          |
+| ----------------- | ----------------------------- |
+| `v-model:visible` | 双向绑定显隐状态              |
+| `open(config?)`   | 命令式打开（可覆盖 position） |
+| `close()`         | 命令式关闭                    |
+| `show(config?)`   | open() 别名                   |
+| `hide()`          | close() 别名                  |
+
+### Props
+
+| 属性                  | 类型    | 默认值   | 说明                                   |
+| --------------------- | ------- | -------- | -------------------------------------- |
+| `visible`             | boolean | false    | v-model:visible 双向绑定               |
+| `position`            | string  | 'bottom' | 弹出位置：top/bottom/left/right/center |
+| `round`               | boolean | false    | 是否显示圆角                           |
+| `overlay`             | boolean | true     | 是否显示遮罩                           |
+| `closeOnClickOverlay` | boolean | false    | 点击遮罩是否关闭                       |
+| `duration`            | number  | 300      | 动画时长（ms）                         |

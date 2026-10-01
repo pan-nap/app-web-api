@@ -1,9 +1,50 @@
 ---
 name: features-list-scroll
-description: 长列表 scroll-view、list-view、吸顶、嵌套滚动、sticky-header
+description: 长列表 scroll-view、list-view、吸顶、嵌套滚动、sticky-header、页面滚动
 ---
 
 # 长列表与滚动
+
+## 蒸汽模式页面滚动特性
+
+**蒸汽模式下，App 平台的页面默认可滚动**，与 Web 和小程序保持一致（需 HBuilder 5.12+）。
+
+| 模式         | 页面默认滚动      | 需要 scroll-view 包裹 |
+| ------------ | ----------------- | --------------------- |
+| VDOM 模式    | ❌ 不可滚动       | ✅ 必须显式包裹       |
+| **蒸汽模式** | ✅ **默认可滚动** | ❌ **不需要**         |
+
+### 禁用页面滚动
+
+如果页面内部有自己的滚动容器（如 scroll-view、list-view），需要在 `pages.json` 中禁用页面滚动，避免嵌套滚动冲突：
+
+```json
+{
+  "path": "chat/index",
+  "style": {
+    "navigationBarTitleText": "IM 聊天",
+    "disableScroll": true
+  }
+}
+```
+
+**推荐禁用页面滚动的场景**：
+
+- 页面根组件是 scroll-view、list-view、waterflow 等滚动容器
+- 使用了自定义导航栏、自定义 tabbar
+
+### hs-screen 组件
+
+`hs-screen` 是页面布局容器，蒸汽模式下**不再使用 scroll-view 包裹**，直接用 view 即可：
+
+```vue
+<!-- 蒸汽模式：页面默认可滚动，无需 scroll-view -->
+<hs-screen title="页面标题">
+  <view class="flex-1">
+    <!-- 内容区域 -->
+  </view>
+</hs-screen>
+```
 
 ## scroll-view 与 list-view
 
