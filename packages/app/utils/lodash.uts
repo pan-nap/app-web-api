@@ -94,7 +94,7 @@ export function isFunction(value: any): boolean {
  * @example isNull(null) // true
  * @example isNull(undefined) // true
  */
-export function isNull(value?: any | null): boolean {
+export function isNull(value?: any): boolean {
   // #ifdef APP
   return value == null;
   // #endif
@@ -183,7 +183,7 @@ export function has(object: any, key: string): boolean {
  * @example get({a: {b: 1}}, 'a.b') // 1
  * @example get({a: {b: 1}}, 'a.c', 'default') // 'default'
  */
-export function get(object: any, path: string, defaultValue: any | null = null): any | null {
+export function get(object: any, path: string, defaultValue: any = null): any {
   if (isNull(object)) {
     return defaultValue;
   }

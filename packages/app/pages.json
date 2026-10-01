@@ -57,7 +57,8 @@
         {
           "path": "chat/index",
           "style": {
-            "navigationBarTitleText": "IM 聊天"
+            "navigationBarTitleText": "IM 聊天",
+            "disableScroll": true
           }
         },
         {

@@ -19,23 +19,51 @@
       <text class="mt-4 text-24 text-[#7C90AB]">弹窗内容为独立页面，可传参与事件通信，自定义能力最强</text>
     </hs-card>
 
-    <!-- hs-dialog：page-container 命令式弹窗封装（内容由插槽传入） -->
-    <hs-dialog ref="dialogRef" position="center" :close-on-click-overlay="true">
-      <view class="flex flex-col bg-white px-36 py-40" :class="dialogMode == 'bottom' ? 'w-full rd-t-24 pb-60' : 'w-[70%] rd-24'">
-        <text class="text-36 fw-[700] text-[#191a1b]">{{ dialogTitle }}</text>
+    <!-- hs-dialog：el-popover 风格封装 -->
+    <!-- 方式一：v-model:visible 双向绑定 -->
+    <hs-card class="mt-12 flex flex-col" @tap="dialogVisible = true">
+      <text class="fw-[700] text-[#12171C]">hs-dialog（v-model:visible）</text>
+      <text class="mt-4 text-24 text-[#7C90AB]">类似 el-popover，通过 v-model:visible 控制显隐</text>
+    </hs-card>
+
+    <!-- 方式二：ref 调用 show()/hide() -->
+    <hs-card class="mt-12 flex flex-col" @tap="dialogRef2?.show()">
+      <text class="fw-[700] text-[#12171C]">hs-dialog（ref.show/hide）</text>
+      <text class="mt-4 text-24 text-[#7C90AB]">通过 ref 调用 show()/hide() 方法</text>
+    </hs-card>
+
+    <!-- hs-dialog 实例：v-model:visible 方式 -->
+    <hs-dialog v-model:visible="dialogVisible" position="center" :close-on-click-overlay="true">
+      <view class="flex flex-col bg-white w-[70%] rd-24 px-36 py-40">
+        <text class="text-36 fw-[700] text-[#191a1b]">v-model:visible 弹窗</text>
         <text class="mt-20 text-26 lh-[42rpx] text-[#636669]">
-          利用 page-container 作为弹窗容器，内部通过插槽传入自定义组件， 再封装为 ref 暴露的 open()/close() 命令式调用，业务侧无需关心显隐状态。
+          通过 v-model:visible 双向绑定控制显隐，关闭时自动同步为 false。
         </text>
-        <button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="closeDialog">关 闭</button>
+        <button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="dialogVisible = false">关 闭</button>
+      </view>
+    </hs-dialog>
+
+    <!-- hs-dialog 实例：ref 方式 -->
+    <hs-dialog ref="dialogRef2" position="center" :close-on-click-overlay="true">
+      <view class="flex flex-col bg-white w-[70%] rd-24 px-36 py-40">
+        <text class="text-36 fw-[700] text-[#191a1b]">ref.show() 弹窗</text>
+        <text class="mt-20 text-26 lh-[42rpx] text-[#636669]">
+          通过 ref 调用 show()/hide() 方法，兼容原有 open()/close() 调用。
+        </text>
+        <button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="dialogRef2?.hide()">关 闭</button>
       </view>
     </hs-dialog>
   </hs-screen>
 </template>
 
 <script setup>
-const dialogRef = ref<HsDialogComponentPublicInstance | null>(null)
-const dialogMode = ref<string>('center')
-const dialogTitle = ref<string>('')
+import { openDialogPage } from '@/hook/openDialogPage'
+
+// ===== v-model:visible 方式 =====
+const dialogVisible = ref<boolean>(false)
+
+// ===== ref 方式 =====
+const dialogRef2 = ref<HsDialogComponentPublicInstance | null>(null)
 
 const jumpTo = (url : string) => {
 	uni.navigateTo({
@@ -43,63 +71,22 @@ const jumpTo = (url : string) => {
 	})
 }
 
-// ===== 方案一：page-container 命令式弹窗 =====
-const openPageContainerDialog = () => {
-	dialogTitle.value = '命令式弹窗（page-container 封装）'
-	openDialog('center')
-}
-
-// 演示 open 支持按需覆盖弹出位置（center / bottom / top / left / right）
-const openDialog = (position : string) => {
-	const instance = dialogRef.value
-	if (instance == null) {
-		return
-	}
-	dialogMode.value = position
-	instance.open({ position })
-}
-
-const closeDialog = () => {
-	const instance = dialogRef.value
-	if (instance == null) {
-		return
-	}
-	instance.close()
-}
-
-// ===== 方案二：openDialogPage 独立弹窗页面 =====
+// ===== openDialogPage 独立弹窗页面 =====
 const openDialogPageDemo = () => {
-	uni.openDialogPage({
-		url: '/page_dialog/index/index?scene=dialog-page-demo',
-		animationType: 'fade-in',
-		animationDuration: 250,
-		fail: (err : any) => {
-			console.error('openDialogPage fail:', err)
-			uni.showToast({
-				title: '当前平台/版本暂不支持 dialogPage',
-				icon: 'none'
-			})
-		}
+	openDialogPage<{ action: string }>('/page_dialog/index/index', {
+		params: { scene: 'dialog-page-demo' }
+	}).then((result) => {
+		const action = result.action ?? ''
+		uni.showToast({
+			title: action == 'confirm' ? 'dialogPage 返回：确定' : 'dialogPage 返回：取消',
+			icon: 'none'
+		})
+	}).catch((err) => {
+		console.error('openDialogPage fail:', err)
+		uni.showToast({
+			title: '当前平台/版本暂不支持 dialogPage',
+			icon: 'none'
+		})
 	})
 }
-
-// 接收 dialogPage 页面通过事件总线回传的结果
-type DialogPageResult = {
-	action ?: string
-}
-const onDialogPageResult = (data : DialogPageResult) => {
-	const action = data.action ?? ''
-	uni.showToast({
-		title: action == 'confirm' ? 'dialogPage 返回：确定' : 'dialogPage 返回：取消',
-		icon: 'none'
-	})
-}
-
-onLoad(() => {
-	uni.$on('dialogPageResult', onDialogPageResult)
-})
-
-onUnload(() => {
-	uni.$off('dialogPageResult', onDialogPageResult)
-})
 </script>

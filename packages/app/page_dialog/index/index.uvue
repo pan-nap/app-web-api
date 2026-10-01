@@ -23,6 +23,8 @@
 </template>
 
 <script setup>
+import { closeDialogPage } from '@/hook/openDialogPage'
+
 const scene = ref<string>('')
 
 onLoad((options: OnLoadOptions) => {
@@ -34,30 +36,14 @@ onLoad((options: OnLoadOptions) => {
 
 // 点击遮罩关闭
 const closeByMask = () => {
-	// uni.closeDialogPage({
-	// 	animationType: 'fade-out',
-	// 	animationDuration: 200
-	// })
+	closeDialogPage({ action: 'close' })
 }
 
 const cancel = () => {
-	// 通过事件总线把结果回传宿主页面
-	emitResult('cancel')
-	uni.closeDialogPage({
-		animationType: 'fade-out',
-		animationDuration: 200
-	})
+	closeDialogPage({ action: 'cancel' })
 }
 
 const confirm = () => {
-	emitResult('confirm')
-	uni.closeDialogPage({
-		animationType: 'fade-out',
-		animationDuration: 200
-	})
-}
-
-const emitResult = (action: string) => {
-	uni.$emit('dialogPageResult', { action })
+	closeDialogPage({ action: 'confirm' })
 }
 </script>

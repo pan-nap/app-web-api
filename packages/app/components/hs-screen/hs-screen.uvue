@@ -16,11 +16,8 @@
 		</view>
 	</view>
 	<slot name="header"></slot>
-	<!-- 内容滚动区域 -->
-	<scroll-view v-if="scroll" :scroll-y="true" class="flex-1 py-10 flex flex-col bg-[#eef1f7]">
-		<slot></slot>
-	</scroll-view>
-	<view v-else class="flex-1 py-10 flex flex-col bg-[#eef1f7]">
+	<!-- 内容区域（蒸汽模式下页面默认可滚动，无需 scroll-view） -->
+	<view class="flex-1 py-10 flex flex-col bg-[#eef1f7]">
 		<slot></slot>
 	</view>
 </template>
@@ -34,7 +31,6 @@
 		title ?: string
 		title2? : string
 		verifyLogin ?: boolean
-		scroll ?: boolean
 	}
 
 	const props = withDefaults(defineProps<Props>(), {
@@ -43,7 +39,6 @@
 		title: '',
 		title2: '',
 		verifyLogin: true,
-		scroll: true,
 	})
 	const slots = useSlots()
 	const userStore = useUserStore()

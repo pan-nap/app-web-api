@@ -2,15 +2,15 @@ import config from "../config.json";
 import { showToast } from "@/utils/tool.uts";
 import { useUserStore } from "@/store/user.uts";
 
-const systermInfo = uni.getSystemInfoSync();
+const systemInfo = uni.getSystemInfoSync();
 
-type ResponseData = {
+interface ResponseData {
   code?: number;
   msg?: string;
   data?: any;
-};
+}
 
-function buildRequestData(data: any | null): Record<string, any> {
+function buildRequestData(data: any): Record<string, any> {
   let requestData: Record<string, any> = {};
   if (data != null) {
     const parsed = JSON.parse(JSON.stringify(data)) as Record<string, any>;
@@ -19,10 +19,10 @@ function buildRequestData(data: any | null): Record<string, any> {
     }
   }
   Object.assign(requestData, {
-    device: systermInfo.browserName,
-    browser: systermInfo.deviceModel,
-    os: systermInfo.deviceType,
-    version: systermInfo.osVersion
+    device: systemInfo.browserName,
+    browser: systemInfo.deviceModel,
+    os: systemInfo.deviceType,
+    version: systemInfo.osVersion
   });
   return requestData;
 }
@@ -42,8 +42,8 @@ function getAuthorizationHeader(): string | null {
   return userStore.isLogin() ? "Bearer " + userStore.state.access_token : null;
 }
 
-export default function (url: string, data: any | null, method: RequestMethod = "GET"): Promise<any> {
-  return new Promise<any>((reslove, reject) => {
+export function request(url: string, data: any, method: RequestMethod = "GET"): Promise<any> {
+  return new Promise<any>((resolve, reject) => {
     const requestData = buildRequestData(data);
     uni.request({
       url: getRequestUrl(url),
@@ -56,7 +56,7 @@ export default function (url: string, data: any | null, method: RequestMethod = 
       success(res) {
         const result = res.data as ResponseData;
         if (result.code == 1) {
-          reslove(result.data ?? {});
+          resolve(result.data ?? {});
         } else {
           const errorMessage = result.msg ?? "接口异常";
           showToast(errorMessage);
@@ -72,8 +72,10 @@ export default function (url: string, data: any | null, method: RequestMethod = 
   });
 }
 
-export function uploadFile(data: any | null): Promise<any> {
-  return new Promise<any>((reslove, reject) => {
+export default request;
+
+export function uploadFile(data: any): Promise<any> {
+  return new Promise<any>((resolve, reject) => {
     uni.uploadFile({
       url: getRequestUrl("/upload"),
       filePath: data,
@@ -89,12 +91,12 @@ export function uploadFile(data: any | null): Promise<any> {
         if (result.code == 1) {
           const responseData = result.data;
           if (responseData != null) {
-            reslove({
+            resolve({
               ...responseData,
               fullUrl: config["baseUrl"] + responseData.url
             });
           } else {
-            reslove({});
+            resolve({});
           }
         } else {
           const errorMessage = result.msg ?? "接口异常";

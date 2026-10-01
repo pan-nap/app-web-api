@@ -20,7 +20,7 @@ class Storage {
    *   console.log(userData);
    * }
    */
-  get(key: string): any | null {
+  get(key: string): any {
     return uni.getStorageSync(key);
   }
 
@@ -151,7 +151,7 @@ class Storage {
    * const tempToken = storage.once('temp_token');
    * // tempToken 使用后，存储中的 temp_token 已被删除
    */
-  once(key: string): any | null {
+  once(key: string): any {
     // 先获取数据
     const value = this.get(key);
     // 立即删除数据

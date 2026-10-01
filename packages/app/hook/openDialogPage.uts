@@ -1,0 +1,144 @@
+/**
+ * 弹窗页面返回结果
+ */
+export interface DialogPageResult<T = any> {
+  /** 操作类型 */
+  action: 'confirm' | 'cancel' | 'close' | string
+  /** 返回数据 */
+  data?: T
+}
+
+/**
+ * 打开弹窗页面配置
+ */
+export interface OpenDialogPageOptions {
+  /** 传递给子页面的参数，会拼接到 URL query */
+  params?: Record<string, any>
+  /** 弹窗动画类型，默认 fade-in */
+  animationType?: 'fade-in' | 'slide-in-bottom' | 'slide-in-right' | 'none'
+  /** 动画时长（ms），默认 250 */
+  animationDuration?: number
+}
+
+/**
+ * 命令式打开弹窗页面（异步函数）
+ *
+ * @example
+ * ```ts
+ * // .then 方式
+ * openDialogPage<{ name: string }>('/pages/dialog/edit').then((result) => {
+ *   if (result.action === 'confirm') {
+ *     console.log(result.data?.name)
+ *   }
+ * })
+ *
+ * // 带参数
+ * openDialogPage('/pages/dialog/detail', {
+ *   params: { id: 123 }
+ * }).then((result) => {
+ *   if (result.action === 'confirm') {
+ *     console.log(result.data)
+ *   }
+ * })
+ * ```
+ *
+ * 子页面返回数据方式：
+ * ```ts
+ * // 在子页面中，通过 URL 获取 eventName 并 emit 返回
+ * const eventName = uni.getCurrentPages().pop()?.eventName
+ * uni.$emit(eventName, { action: 'confirm', data: { name: 'test' } })
+ * uni.closeDialogPage()
+ * ```
+ */
+export async function openDialogPage<T = any>(
+  url: string,
+  options?: OpenDialogPageOptions
+): Promise<DialogPageResult<T>> {
+  const { params = {}, animationType = 'fade-in', animationDuration = 250 } = options ?? {}
+
+  // 生成唯一事件名（时间戳 + 随机数）
+  const eventName = `dialogPageResult_${Date.now()}_${Math.floor(Math.random() * 100000)}`
+
+  // 拼接 URL 参数
+  const queryParts: string[] = [`eventName=${eventName}`]
+  for (const key in params) {
+    const value = params[key]
+    if (value !== undefined && value !== null) {
+      queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+    }
+  }
+  const fullUrl = queryParts.length > 0 ? `${url}?${queryParts.join('&')}` : url
+
+  // 使用 Promise 包装事件监听
+  return new Promise<DialogPageResult<T>>((resolve, reject) => {
+    let isResolved = false
+
+    // 监听子页面返回
+    const handler = (data: DialogPageResult<T>) => {
+      if (isResolved) return
+      isResolved = true
+      uni.$off(eventName, handler)
+      resolve(data)
+    }
+
+    uni.$on(eventName, handler)
+
+    // 打开弹窗页面
+    uni.openDialogPage({
+      url: fullUrl,
+      animationType,
+      animationDuration,
+      success: () => {
+        // 页面打开成功，等待子页面 emit 数据
+      },
+      fail: (err: any) => {
+        if (isResolved) return
+        isResolved = true
+        uni.$off(eventName, handler)
+        console.error('openDialogPage fail:', err)
+        reject(err)
+      }
+    })
+  })
+}
+
+/**
+ * 子页面获取父页面传入的事件名
+ * 用于子页面调用 uni.$emit 返回数据
+ *
+ * @example
+ * ```ts
+ * // 子页面中
+ * const eventName = getDialogEventName()
+ * if (eventName) {
+ *   uni.$emit(eventName, { action: 'confirm', data: { ... } })
+ *   uni.closeDialogPage()
+ * }
+ * ```
+ */
+export function getDialogEventName(): string | null {
+  const pages = uni.getCurrentPages()
+  const currentPage = pages[pages.length - 1]
+  const query = currentPage?.$page?.options ?? (currentPage as any).options ?? {}
+  return query.eventName ?? null
+}
+
+/**
+ * 子页面关闭弹窗并返回数据（便捷方法）
+ *
+ * @example
+ * ```ts
+ * // 确认并返回数据
+ * closeDialogPage({ action: 'confirm', data: { id: 1 } })
+ *
+ * // 取消
+ * closeDialogPage({ action: 'cancel' })
+ * ```
+ */
+export function closeDialogPage<T = any>(result: DialogPageResult<T> = { action: 'close' }) {
+  const eventName = getDialogEventName()
+  if (eventName) {
+    uni.$emit(eventName, result)
+  }
+  uni.closeDialogPage()
+}

@@ -1,6 +1,6 @@
 <template>
   <page-container
-    :show="visible"
+    :show="displayVisible"
     :position="currentPosition"
     :round="props.round"
     :overlay="props.overlay"
@@ -19,6 +19,8 @@
 
 <script setup>
 type Props = {
+	// v-model:visible 双向绑定显隐
+	visible ?: boolean
 	// 弹出位置：top / bottom / left / right / center
 	position ?: string
 	// 是否显示圆角
@@ -40,6 +42,7 @@ type Props = {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+	visible: false,
 	position: 'bottom',
 	round: false,
 	overlay: true,
@@ -51,8 +54,21 @@ const props = withDefaults(defineProps<Props>(), {
 	zIndex: 100
 })
 
-const visible = ref<boolean>(false)
+const emit = defineEmits<{
+	(e: 'update:visible', value: boolean): void
+}>()
+
+// 内部显隐状态（优先使用 props.visible）
+const internalVisible = ref<boolean>(props.visible ?? false)
 const currentPosition = ref<string>(props.position)
+
+// 监听 props.visible 变化
+watch(() => props.visible, (val) => {
+	internalVisible.value = val ?? false
+})
+
+// 计算实际显示的显隐状态
+const displayVisible = computed(() => props.visible ?? internalVisible.value)
 
 type DialogConfig = {
 	position ?: string
@@ -66,18 +82,31 @@ const open = (config ?: DialogConfig) => {
 	if (config?.position != null) {
 		currentPosition.value = config.position!
 	}
-	visible.value = true
+	internalVisible.value = true
+	emit('update:visible', true)
 }
 
 /**
  * 命令式关闭弹窗（触发离开动画）
  */
 const close = () => {
-	visible.value = false
+	internalVisible.value = false
+	emit('update:visible', false)
 }
 
+/**
+ * show() 方法别名（兼容 el-popover 风格）
+ */
+const show = (config ?: DialogConfig) => open(config)
+
+/**
+ * hide() 方法别名（兼容 el-popover 风格）
+ */
+const hide = () => close()
+
 const onAfterLeave = () => {
-	visible.value = false
+	internalVisible.value = false
+	emit('update:visible', false)
 }
 
 const onClickOverlay = (_e: UniPointerEvent) => {
@@ -87,5 +116,5 @@ const onClickOverlay = (_e: UniPointerEvent) => {
 }
 
 // 暴露命令式实例方法，页面可通过 ref 拿到后直接调用
-defineExpose({ open, close })
+defineExpose({ open, close, show, hide })
 </script>
