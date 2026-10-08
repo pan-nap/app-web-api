@@ -1,8 +1,6 @@
 import { useNavigate } from './navigate.uts'
-import { useRequest } from './request.uts'
 
 export function useInterceptors(app : VueApp) {
 	useNavigate()
-	useRequest()
 	return app
 }
