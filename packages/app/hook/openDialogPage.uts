@@ -45,7 +45,7 @@ export interface OpenDialogPageOptions {
  * 子页面返回数据方式：
  * ```ts
  * // 在子页面中，通过 URL 获取 eventName 并 emit 返回
- * const eventName = uni.getCurrentPages().pop()?.eventName
+ * const eventName = getDialogEventName()
  * uni.$emit(eventName, { action: 'confirm', data: { name: 'test' } })
  * uni.closeDialogPage()
  * ```
@@ -117,7 +117,7 @@ export async function openDialogPage<T = any>(
  * ```
  */
 export function getDialogEventName(): string | null {
-  const pages = uni.getCurrentPages()
+  const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
   const query = currentPage?.$page?.options ?? (currentPage as any).options ?? {}
   return query.eventName ?? null

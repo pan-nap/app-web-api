@@ -34,7 +34,7 @@
       </view>
 
       <!-- 消息列表 -->
-      <scroll-view class="flex-1 px-24" :scroll-y="true" :scroll-into-view="imStore.state.scrollAnchor" @scrolltolower="loadMoreHistory">
+      <scroll-view class="flex-1 px-24" :scroll-into-view="imStore.state.scrollAnchor" @scrolltolower="loadMoreHistory">
         <view class="pt-20">
           <view v-if="imStore.state.messages.length == 0" class="flex items-center justify-center pt-200">
             <text class="text-28 text-[#bbb]">暂无消息，输入对方 ID 后发送第一条消息吧</text>

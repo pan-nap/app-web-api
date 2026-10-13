@@ -4,7 +4,7 @@
       <slot></slot>
     </view>
     <page-container
-      :show="displayVisible"
+      :show="modelValue"
       :position="currentPosition"
       :round="props.round"
       :overlay="props.overlay"
@@ -23,8 +23,8 @@
 
 <script setup>
 type Props = {
-	// v-model:visible 双向绑定显隐
-	visible ?: boolean
+	// v-model 双向绑定显隐
+	modelValue ?: boolean
 	// 弹出位置：top / bottom / left / right / center
 	position ?: string
 	// 是否显示圆角
@@ -46,7 +46,7 @@ type Props = {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	visible: false,
+	modelValue: false,
 	position: 'bottom',
 	round: false,
 	overlay: true,
@@ -59,20 +59,10 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-	(e: 'update:visible', value: boolean): void
+	(e: 'update:modelValue', value: boolean): void
 }>()
-
-// 内部显隐状态（优先使用 props.visible）
-const internalVisible = ref<boolean>(props.visible ?? false)
 const currentPosition = ref<string>(props.position)
 
-// 监听 props.visible 变化
-watch(() => props.visible, (val) => {
-	internalVisible.value = val ?? false
-})
-
-// 计算实际显示的显隐状态
-const displayVisible = computed(() => props.visible ?? internalVisible.value)
 
 type DialogConfig = {
 	position ?: string
@@ -86,16 +76,14 @@ const open = (config ?: DialogConfig) => {
 	if (config?.position != null) {
 		currentPosition.value = config.position!
 	}
-	internalVisible.value = true
-	emit('update:visible', true)
+	emit('update:modelValue', true)
 }
 
 /**
  * 命令式关闭弹窗（触发离开动画）
  */
 const close = () => {
-	internalVisible.value = false
-	emit('update:visible', false)
+	emit('update:modelValue', false)
 }
 
 /**
@@ -116,8 +104,7 @@ const onTriggerTap = () => {
 }
 
 const onAfterLeave = () => {
-	internalVisible.value = false
-	emit('update:visible', false)
+	emit('update:modelValue', false)
 }
 
 const onClickOverlay = (_e: UniPointerEvent) => {

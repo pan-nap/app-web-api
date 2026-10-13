@@ -6,62 +6,13 @@
     <hs-card @tap="jumpTo('/pages/bluetooth/index')"><text>跳转蓝牙页面</text></hs-card>
     <hs-card @tap="jumpTo('/page_room/room/index')"><text>跳转视频通话页面</text></hs-card>
     <hs-card @tap="jumpTo('/page_im/login/index')"><text>跳转即时通讯页面</text></hs-card>
-
-    <!-- 方案一：基于 page-container 封装的命令式弹窗 -->
-    <hs-card class="mt-12 flex flex-col" @tap="openPageContainerDialog">
-      <text class="fw-[700] text-[#12171C]">page-container 命令式弹窗</text>
-      <text class="mt-4 text-24 text-[#7C90AB]">page-container 容器 + 插槽内容 + open()/close() 命令式调用</text>
-    </hs-card>
-
-    <!-- 方案二：openDialogPage 独立弹窗页面 -->
+    <!-- 独立弹窗 -->
     <hs-card class="mt-12 flex flex-col" @tap="openDialogPageDemo">
       <text class="fw-[700] text-[#12171C]">openDialogPage 弹窗页面</text>
       <text class="mt-4 text-24 text-[#7C90AB]">弹窗内容为独立页面，可传参与事件通信，自定义能力最强</text>
     </hs-card>
-
-    <!-- hs-dialog：el-popover 风格封装 -->
-    <!-- 方式一：v-model:visible 双向绑定 -->
-    <hs-card class="mt-12 flex flex-col" @tap="dialogVisible = true">
-      <text class="fw-[700] text-[#12171C]">hs-dialog（v-model:visible）</text>
-      <text class="mt-4 text-24 text-[#7C90AB]">类似 el-popover，通过 v-model:visible 控制显隐</text>
-    </hs-card>
-
-    <!-- 方式二：ref 调用 show()/hide() -->
-    <hs-card class="mt-12 flex flex-col" @tap="dialogRef2?.show()">
-      <text class="fw-[700] text-[#12171C]">hs-dialog（ref.show/hide）</text>
-      <text class="mt-4 text-24 text-[#7C90AB]">通过 ref 调用 show()/hide() 方法</text>
-    </hs-card>
-
-    <!-- 方式三：触发插槽（el-popover 风格），点击默认插槽内容即打开弹窗（见下方演示实例） -->
-    <hs-card class="mt-12 flex flex-col">
-      <text class="fw-[700] text-[#12171C]">hs-dialog（触发插槽）</text>
-      <text class="mt-4 text-24 text-[#7C90AB]">默认插槽作触发元素，点击即打开，无需外部状态变量，见下方演示</text>
-    </hs-card>
-
-    <!-- hs-dialog 实例：v-model:visible 方式 -->
-    <hs-dialog v-model:visible="dialogVisible" position="center" :close-on-click-overlay="true">
-      <view class="flex flex-col bg-white w-[70%] rd-24 px-36 py-40">
-        <text class="text-36 fw-[700] text-[#191a1b]">v-model:visible 弹窗</text>
-        <text class="mt-20 text-26 lh-[42rpx] text-[#636669]">
-          通过 v-model:visible 双向绑定控制显隐，关闭时自动同步为 false。
-        </text>
-        <button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="dialogVisible = false">关 闭</button>
-      </view>
-    </hs-dialog>
-
-    <!-- hs-dialog 实例：ref 方式 -->
-    <hs-dialog ref="dialogRef2" position="center" :close-on-click-overlay="true">
-      <view class="flex flex-col bg-white w-[70%] rd-24 px-36 py-40">
-        <text class="text-36 fw-[700] text-[#191a1b]">ref.show() 弹窗</text>
-        <text class="mt-20 text-26 lh-[42rpx] text-[#636669]">
-          通过 ref 调用 show()/hide() 方法，兼容原有 open()/close() 调用。
-        </text>
-        <button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="dialogRef2?.hide()">关 闭</button>
-      </view>
-    </hs-dialog>
-
     <!-- hs-dialog 实例：触发插槽方式（el-popover 风格） -->
-    <hs-dialog ref="triggerDialogRef" position="center" :close-on-click-overlay="true">
+    <hs-dialog v-model="visible" position="bottom" :close-on-click-overlay="false">
       <hs-card class="mt-12 flex flex-col">
         <text class="fw-[700] text-[#12171C]">点击我打开弹窗（popover 风格）</text>
         <text class="mt-4 text-24 text-[#7C90AB]">默认插槽 = 触发元素，#content 插槽 = 弹窗内容</text>
@@ -72,7 +23,7 @@
           <text class="mt-20 text-26 lh-[42rpx] text-[#636669]">
             点击默认插槽内的触发元素自动打开弹窗，无需外部状态变量，类似 el-popover。
           </text>
-          <button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="hideTriggerDialog()">关 闭</button>
+          <button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="visible = false">关 闭</button>
         </view>
       </template>
     </hs-dialog>
@@ -82,17 +33,9 @@
 <script setup>
 import { openDialogPage } from '@/hook/openDialogPage'
 
-// ===== v-model:visible 方式 =====
-const dialogVisible = ref<boolean>(false)
-
-// ===== ref 方式 =====
-const dialogRef2 = ref<HsDialogComponentPublicInstance | null>(null)
 
 // ===== 触发插槽方式（el-popover 风格）：实例 ref 仅供弹窗内部“关闭”按钮使用 =====
-const triggerDialogRef = ref<HsDialogComponentPublicInstance | null>(null)
-const hideTriggerDialog = () => {
-	triggerDialogRef.value?.hide()
-}
+const visible = ref(false)
 
 const jumpTo = (url : string) => {
 	uni.navigateTo({
