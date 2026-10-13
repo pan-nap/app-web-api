@@ -32,6 +32,12 @@
       <text class="mt-4 text-24 text-[#7C90AB]">通过 ref 调用 show()/hide() 方法</text>
     </hs-card>
 
+    <!-- 方式三：触发插槽（el-popover 风格），点击默认插槽内容即打开弹窗（见下方演示实例） -->
+    <hs-card class="mt-12 flex flex-col">
+      <text class="fw-[700] text-[#12171C]">hs-dialog（触发插槽）</text>
+      <text class="mt-4 text-24 text-[#7C90AB]">默认插槽作触发元素，点击即打开，无需外部状态变量，见下方演示</text>
+    </hs-card>
+
     <!-- hs-dialog 实例：v-model:visible 方式 -->
     <hs-dialog v-model:visible="dialogVisible" position="center" :close-on-click-overlay="true">
       <view class="flex flex-col bg-white w-[70%] rd-24 px-36 py-40">
@@ -53,6 +59,23 @@
         <button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="dialogRef2?.hide()">关 闭</button>
       </view>
     </hs-dialog>
+
+    <!-- hs-dialog 实例：触发插槽方式（el-popover 风格） -->
+    <hs-dialog ref="triggerDialogRef" position="center" :close-on-click-overlay="true">
+      <hs-card class="mt-12 flex flex-col">
+        <text class="fw-[700] text-[#12171C]">点击我打开弹窗（popover 风格）</text>
+        <text class="mt-4 text-24 text-[#7C90AB]">默认插槽 = 触发元素，#content 插槽 = 弹窗内容</text>
+      </hs-card>
+      <template #content>
+        <view class="flex flex-col bg-white w-[70%] rd-24 px-36 py-40">
+          <text class="text-36 fw-[700] text-[#191a1b]">触发插槽弹窗</text>
+          <text class="mt-20 text-26 lh-[42rpx] text-[#636669]">
+            点击默认插槽内的触发元素自动打开弹窗，无需外部状态变量，类似 el-popover。
+          </text>
+          <button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="hideTriggerDialog()">关 闭</button>
+        </view>
+      </template>
+    </hs-dialog>
   </hs-screen>
 </template>
 
@@ -64,6 +87,12 @@ const dialogVisible = ref<boolean>(false)
 
 // ===== ref 方式 =====
 const dialogRef2 = ref<HsDialogComponentPublicInstance | null>(null)
+
+// ===== 触发插槽方式（el-popover 风格）：实例 ref 仅供弹窗内部“关闭”按钮使用 =====
+const triggerDialogRef = ref<HsDialogComponentPublicInstance | null>(null)
+const hideTriggerDialog = () => {
+	triggerDialogRef.value?.hide()
+}
 
 const jumpTo = (url : string) => {
 	uni.navigateTo({

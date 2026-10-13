@@ -1,20 +1,24 @@
 <template>
-  <page-container
-    :show="displayVisible"
-    :position="currentPosition"
-    :round="props.round"
-    :overlay="props.overlay"
-    :overlay-style="overlayStyle"
-    :custom-style="customStyle"
-    :duration="props.duration"
-    :z-index="props.zIndex"
-    :close-on-slide-down="props.closeOnSlideDown"
-    @clickoverlay="onClickOverlay"
-    @afterleave="onAfterLeave"
-  >
-    <!-- 弹窗内容由使用方通过插槽传入自定义组件 -->
-    <slot></slot>
-  </page-container>
+  <view>
+    <view @tap="onTriggerTap">
+      <slot></slot>
+    </view>
+    <page-container
+      :show="displayVisible"
+      :position="currentPosition"
+      :round="props.round"
+      :overlay="props.overlay"
+      :overlay-style="overlayStyle"
+      :custom-style="customStyle"
+      :duration="props.duration"
+      :z-index="props.zIndex"
+      :close-on-slide-down="props.closeOnSlideDown"
+      @clickoverlay="onClickOverlay"
+      @afterleave="onAfterLeave"
+    >
+      <slot name="content"></slot>
+    </page-container>
+  </view>
 </template>
 
 <script setup>
@@ -103,6 +107,13 @@ const show = (config ?: DialogConfig) => open(config)
  * hide() 方法别名（兼容 el-popover 风格）
  */
 const hide = () => close()
+
+/**
+ * 触发模式：点击默认插槽（触发元素）打开弹窗
+ */
+const onTriggerTap = () => {
+	open()
+}
 
 const onAfterLeave = () => {
 	internalVisible.value = false

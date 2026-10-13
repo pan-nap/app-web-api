@@ -277,7 +277,27 @@ UniApp X 中文字必须使用 `<text>` 标签包裹，字体属性（大小、�
 
 `hs-dialog` 是基于 `page-container` 封装的弹窗组件，支持 el-popover 风格的使用方式。
 
-### 方式一：v-model:visible（推荐）
+> 插槽约定：传入 `#content` 插槽即启用**触发模式**，此时默认插槽作为触发元素；不传 `#content` 时保持经典用法，默认插槽即弹窗内容。
+
+### 方式一：触发插槽（el-popover 风格，推荐）
+
+点击默认插槽内的触发元素自动打开弹窗，无需外部状态变量：
+
+```vue
+<hs-dialog ref="dialogRef" position="center" :close-on-click-overlay="true">
+  <!-- 默认插槽 = 触发元素 -->
+  <hs-card><text>点击打开弹窗</text></hs-card>
+  <!-- #content 插槽 = 弹窗内容 -->
+  <template #content>
+    <view class="flex flex-col bg-white w-[70%] rd-24 p-36">
+      <text>弹窗内容</text>
+      <button @tap="dialogRef?.hide()">关闭</button>
+    </view>
+  </template>
+</hs-dialog>
+```
+
+### 方式二：v-model:visible
 
 ```vue
 <hs-dialog v-model:visible="dialogVisible" position="center">
@@ -290,7 +310,7 @@ UniApp X 中文字必须使用 `<text>` 标签包裹，字体属性（大小、�
 <button @tap="dialogVisible = true">打开弹窗</button>
 ```
 
-### 方式二：ref.show()/hide()
+### 方式三：ref.show()/hide()
 
 ```vue
 <hs-dialog ref="dialogRef" position="center">
@@ -303,13 +323,15 @@ UniApp X 中文字必须使用 `<text>` 标签包裹，字体属性（大小、�
 
 ### API
 
-| 方法              | 说明                          |
-| ----------------- | ----------------------------- |
-| `v-model:visible` | 双向绑定显隐状态              |
-| `open(config?)`   | 命令式打开（可覆盖 position） |
-| `close()`         | 命令式关闭                    |
-| `show(config?)`   | open() 别名                   |
-| `hide()`          | close() 别名                  |
+| 方法              | 说明                                                                   |
+| ----------------- | ---------------------------------------------------------------------- |
+| 默认插槽          | 触发模式（传 `#content` 时）下为触发元素，点击打开弹窗；否则为弹窗内容 |
+| `#content` 插槽   | 触发模式下的弹窗内容                                                   |
+| `v-model:visible` | 双向绑定显隐状态                                                       |
+| `open(config?)`   | 命令式打开（可覆盖 position）                                          |
+| `close()`         | 命令式关闭                                                             |
+| `show(config?)`   | open() 别名                                                            |
+| `hide()`          | close() 别名                                                           |
 
 ### Props
 
