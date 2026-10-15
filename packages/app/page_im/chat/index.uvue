@@ -191,7 +191,9 @@ function pickAndSendImage() : void {
 		sourceType: ["album", "camera"],
 		success: function (res) : void {
 			// #ifdef WEB|MP
-			imStore.sendImageMessage(res)
+			const webPaths = res.tempFilePaths as string[]
+			const webPath = webPaths.length > 0 ? webPaths[0] : ""
+			imStore.sendImageMessage(webPath)
 			// #endif
 			// #ifdef APP-ANDROID|APP-HARMONY|APP-IOS
 			const result = res as ChooseImageSuccess;
@@ -287,7 +289,7 @@ function showMessageActions(msgId : string, event : any) : void {
 	uni.showActionSheet({
 		itemList: ["撤回消息", "删除消息"],
 		success: function (res) : void {
-			const tapIndex = (res as ShowActionSheetRes).tapIndex
+			const tapIndex = res.tapIndex
 			if (tapIndex == 0) {
 				imStore.revokeMessage(msgId);
 			} else if (tapIndex == 1) {

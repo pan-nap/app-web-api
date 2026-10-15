@@ -1,0 +1,232 @@
+<template>
+  <view>
+    <view>
+      <button type="button" class="mt-10 mb-10" @tap="onGetApi()">获取API</button>
+      <view>
+        <input
+          placeholder="当前swagger地址"
+          v-model="state.swagger"
+          class="border-solid border-1 border-[#ABB2BF] h-[3.5vh] pl-12 rd-12"
+        />
+      </view>
+    </view>
+    <view v-if="state.apis.length > 0">
+      <view class="py-1vw">
+        <view>
+          <input
+            placeholder="搜索API"
+            v-model="state.search"
+            class="border-solid border-1 border-[#ABB2BF] h-[3.5vh] pl-12 rd-12"
+            @blur="onSearch"
+          />
+        </view>
+      </view>
+    </view>
+    <view v-if="state.searchApi.length > 0">
+      <scroll-view class="h-[75vh] bg-[#272822] p-20">
+        <view class="flex flex-row items-center gap-2">
+          <text selectable class="text-[#F92672]">import &nbsp;</text>
+          <text selectable class="text-white">request &nbsp;</text>
+          <text selectable class="text-[#F92672]">from &nbsp;</text>
+          <text selectable class="text-[#E6DB5B]">'@/utils/request';\n</text>
+        </view>
+        <view
+          v-for="(api, idx) in state.searchApi"
+          :key="idx"
+          class="text-white bg-[#272822]"
+        >
+          <text selectable class="text-[#8A8C99]">/**\n</text>
+          <text selectable class="text-[#8A8C99]">* 接口分类: {{ api.description }} - {{ api.tags }}\n</text>
+          <text selectable class="text-[#8A8C99]">* 接口名称: {{ api.summary }}\n</text>
+          <text selectable class="text-[#8A8C99]">* 接口地址: {{ api.url }}\n</text>
+          <text selectable class="text-[#8A8C99]">* 请求方式: {{ api.method }}\n</text>
+          <text v-for="(parame, s1) in api.parameters" :key="s1">
+            <text selectable class="text-[#8A8C99]">
+              *
+              <text selectable class="text-[#C678DD]">@param</text>
+              <text selectable class="text-[#E5C07B]">&nbsp;{[{{ parame.type }}]}</text>
+              <text selectable class="text-[#E06C75]">&nbsp;{{ parame.name }}</text>
+              [{{ parame.description }}] 是否必填: {{ parame.required ? "是" : "否" }}\n
+            </text>
+          </text>
+          <text selectable class="text-[#8A8C99]">
+            *
+            <text selectable class="text-[#C678DD]">@return</text>
+            <text selectable class="text-[#E5C07B]">&nbsp;{[Promise&lt;any&gt;]}</text>
+            接口响应数据\n
+          </text>
+          <text selectable class="text-[#8A8C99]">*/\n</text>
+          <!-- 方法体 -->
+          <view class="flex flex-row items-center gap-2">
+            <text selectable class="text-[#F92672]">export</text>
+            <text selectable class="text-[#66D9EF] " >&nbsp;&nbsp;function&nbsp;</text>
+            <text selectable class="text-[#6AC62E] " >{{ onToLowerCase(api.url) }}</text>
+            <text selectable style="display: ;">(data: any = {}) {\n</text>
+          </view>
+          <!-- 调用 request 组成部分 -->
+           <view class="flex flex-row items-center gap-2">
+            <text selectable class="text-[#F92672]">&nbsp;&nbsp;return</text>
+            <text selectable class="text-[#66D9EF]">&nbsp;request</text>
+            <text selectable>(&nbsp;'{{ api.url }}', data, '{{ api.method }}'</text>
+            <text selectable>);\n</text>
+           </view>
+          <text selectable>}\n\n</text>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+type ApiItem = {
+  description: string
+  tags: string
+  summary: string
+  url: string
+  method: string
+  parameters: ApiParameter[]
+  proxy: string
+}
+
+type ApiParameter = {
+  type: string
+  name: string
+  description: string
+  required: boolean
+}
+
+const state = reactive({
+  show: false,
+  index: 0,
+  searchApi: [] as ApiItem[],
+  search: "",
+  ids: [] as string[],
+  apis: [] as ApiItem[],
+  swagger: "http://192.168.10.72:3001"
+})
+
+/**
+ * 请求接口文档
+ * 注意：不加 dataType:'json'，手动 JSON.parse。
+ * 原因是 uni 内部自动 parse 会构造 UTSJSONObject，若 JSON 中存在与只读成员同名的 key（如 get）会报错；
+ * 当前后端文档结构已拍平，但保留手动解析以避免框架解析差异。
+ */
+function request(url: string): Promise<any> {
+  return new Promise((resolve) => {
+    uni.request({
+      url,
+      success: (res) => {
+        let data = res.data
+        if (typeof data == 'string') {
+          data = JSON.parse(data as string)
+        }
+        resolve(data)
+      }
+    })
+  })
+}
+
+/**
+ * 获取 API 列表（后端返回拍平结构 { tags, apis }，method 为字符串值，避开 UTSJSONObject 只读 key 冲突）
+ */
+const onGetApi = () => {
+  request(state.swagger + "/v3/api-docs")
+    .then((res : any) => {
+      uni.showToast({
+        title: "获取API缓存到本地中",
+        icon: "none"
+      })
+      console.log("res---=>>>>>", typeof res, res)
+      state.apis = []
+      const list = res.apis as Array<any>
+      if (list != null) {
+        list.forEach((item: any) => {
+          const apis: ApiItem = {
+            description: (item.description ?? "") as string,
+            tags: (item.tags ?? "") as string,
+            summary: (item.summary ?? "") as string,
+            url: (item.path ?? "") as string,
+            method: (item.method ?? "") as string,
+            parameters: item.parameters != null ? item.parameters as ApiParameter[] : [],
+            proxy: state.swagger
+          }
+          state.apis.push(apis)
+        })
+      }
+      console.log("state.apis====>", state.apis)
+    })
+    .catch((error) => {
+      console.debug("error:", error)
+    })
+}
+
+/**
+ * URL 转驼峰命名（/student/{id} -> student_id）
+ */
+const onToLowerCase = (str: string): string => {
+  const cleanPath = str.replace(/\{/g, "_").replace(/\}/g, "")
+  const strArray = cleanPath.split("/")
+  const len = strArray.length
+  const lastStr = strArray[len - 1]
+  if (lastStr.indexOf("_") > -1) {
+    const lastStrArr = lastStr.split("_")
+    let newStr = lastStrArr[0]
+    for (let i = 0; i < lastStrArr.length - 1; i++) {
+      if (lastStrArr[i + 1].length === 0) {
+        continue
+      }
+      newStr += lastStrArr[i + 1].charAt(0).toUpperCase() + lastStrArr[i + 1].substring(1)
+    }
+    return newStr
+  } else {
+    return lastStr
+  }
+}
+
+/**
+ * 搜索
+ */
+const onSearch = () => {
+  state.searchApi = onFuzzyQuery(state.apis, state.search.trim())
+  if (state.searchApi.length === 0) {
+    uni.showToast({
+      title: "未搜索到接口数据",
+      icon: "none"
+    })
+  }
+}
+
+/**
+ * 模糊查询
+ */
+const onFuzzyQuery = (list: ApiItem[], keyWord: string): ApiItem[] => {
+  const arr: ApiItem[] = []
+  for (let i = 0; i < list.length; i++) {
+    if (keyWord.length === 0) {
+      arr.push(list[i])
+      continue
+    }
+    if (list[i].summary.split(keyWord).length > 1) {
+      arr.push(list[i])
+    } else if (
+      list[i].description.split(keyWord).length > 1 &&
+      arr.map((item) => item.url).indexOf(list[i].url) === -1
+    ) {
+      arr.push(list[i])
+    } else if (
+      list[i].tags.split(keyWord).length > 1 &&
+      arr.map((item) => item.url).indexOf(list[i].url) === -1
+    ) {
+      arr.push(list[i])
+    } else if (
+      list[i].url.split(keyWord).length > 1 &&
+      arr.map((item) => item.url).indexOf(list[i].url) === -1
+    ) {
+      arr.push(list[i])
+    }
+  }
+  return arr
+}
+
+onGetApi()
+</script>

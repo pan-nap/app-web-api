@@ -116,6 +116,12 @@ export default defineConfig({
 					target: 'https://dev.huasuerp.com:6060/',
 					ws: true,
 				},
+				"/rcs-web": {
+          target: 'https://dev.huasuerp.com:6060',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/rcs-web/, "/rcs-web")
+        }
 		}
 	},
 });

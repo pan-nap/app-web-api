@@ -119,7 +119,7 @@ export async function openDialogPage<T = any>(
 export function getDialogEventName(): string | null {
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
-  const query = currentPage?.$page?.options ?? (currentPage as any).options ?? {}
+  const query = (currentPage as any)?.$page?.options ?? (currentPage as any).options ?? {}
   return query.eventName ?? null
 }
 

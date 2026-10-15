@@ -195,8 +195,8 @@ importers:
         specifier: workspace:*
         version: link:../emr
       hs-admin-ui:
-        specifier: https://oss-cn-beijing.hserp.cn/scmp/920001/2026/09/11/2026091194276738.tgz
-        version: https://oss-cn-beijing.hserp.cn/scmp/920001/2026/09/11/2026091194276738.tgz(vue@3.5.38(typescript@6.0.3))
+        specifier: https://oss-cn-beijing.hserp.cn/scmp/920001/2026/10/15/2026101575382952.tgz
+        version: https://oss-cn-beijing.hserp.cn/scmp/920001/2026/10/15/2026101575382952.tgz(vue@3.5.38(typescript@6.0.3))
       lodash-es:
         specifier: ^4.18.1
         version: 4.18.1
@@ -3028,9 +3028,9 @@ packages:
     resolution: {integrity: sha512-kyCuEOWjJqZuDbRHzL8V93NzQhwIB71oFWSyzVo+KPZI+pnQPPxucdkrOZvkLRnrf5URsQM+IJ09Dw29cRALIA==}
     engines: {node: '>=10'}
 
-  hs-admin-ui@https://oss-cn-beijing.hserp.cn/scmp/920001/2026/09/11/2026091194276738.tgz:
-    resolution: {tarball: https://oss-cn-beijing.hserp.cn/scmp/920001/2026/09/11/2026091194276738.tgz}
-    version: 17.7.3
+  hs-admin-ui@https://oss-cn-beijing.hserp.cn/scmp/920001/2026/10/15/2026101575382952.tgz:
+    resolution: {tarball: https://oss-cn-beijing.hserp.cn/scmp/920001/2026/10/15/2026101575382952.tgz}
+    version: 17.7.5
     engines: {node: ^20.19.0 || >=22.12.0}
 
   html-encoding-sniffer@4.0.0:
@@ -7937,7 +7937,7 @@ snapshots:
     dependencies:
       lru-cache: 6.0.0
 
-  hs-admin-ui@https://oss-cn-beijing.hserp.cn/scmp/920001/2026/09/11/2026091194276738.tgz(vue@3.5.38(typescript@6.0.3)):
+  hs-admin-ui@https://oss-cn-beijing.hserp.cn/scmp/920001/2026/10/15/2026101575382952.tgz(vue@3.5.38(typescript@6.0.3)):
     dependencies:
       '@better-scroll/core': 2.5.1
       '@element-plus/icons-vue': 2.3.1(vue@3.5.38(typescript@6.0.3))

@@ -1,4 +1,5 @@
 import authRouter from './auth.js';
+import apiDocRouter from './apiDoc.js';
 import studentRouter from './students.js';
 import orderRouter from './orders.js';
 import dictionaryRouter from './dictionary.js';
@@ -8,6 +9,7 @@ import documentRouter from './documents.js';
 
 export function registerRoutes(app) {
   app.use(authRouter.routes()).use(authRouter.allowedMethods());
+  app.use(apiDocRouter.routes()).use(apiDocRouter.allowedMethods());
   app.use(studentRouter.routes()).use(studentRouter.allowedMethods());
   app.use(orderRouter.routes()).use(orderRouter.allowedMethods());
   app.use(dictionaryRouter.routes()).use(dictionaryRouter.allowedMethods());
