@@ -12,24 +12,24 @@
     </view>
     <view v-if="state.apis.length > 0">
       <view class="py-1vw">
-        <view>
-          <input
+        <input
             placeholder="搜索API"
             v-model="state.search"
             class="border-solid border-1 border-[#ABB2BF] h-[3.5vh] pl-12 rd-12"
             @blur="onSearch"
           />
-        </view>
       </view>
     </view>
     <view v-if="state.searchApi.length > 0">
-      <scroll-view class="h-[75vh] bg-[#272822] p-20">
-        <view class="flex flex-row items-center gap-2">
-          <text selectable class="text-[#F92672]">import &nbsp;</text>
-          <text selectable class="text-white">request &nbsp;</text>
-          <text selectable class="text-[#F92672]">from &nbsp;</text>
-          <text selectable class="text-[#E6DB5B]">'@/utils/request';\n</text>
-        </view>
+      <scroll-view class="h-[70vh] bg-[#272822] p-20">
+        <!-- 整行代码放在同一个 text 内，子 text 仅做行内高亮，避免选中复制时被拆成多行 -->
+        <!-- token 间空格必须用 &nbsp;：普通空格会被 text 节点首尾剪裁掉 -->
+        <text selectable class="text-white">
+          <text class="text-[#F92672]">import&nbsp;</text>
+          <text class="text-white">request&nbsp;</text>
+          <text class="text-[#F92672]">from&nbsp;</text>
+          <text class="text-[#E6DB5B]">'@/utils/request';\n\n</text>
+        </text>
         <view
           v-for="(api, idx) in state.searchApi"
           :key="idx"
@@ -56,21 +56,17 @@
             接口响应数据\n
           </text>
           <text selectable class="text-[#8A8C99]">*/\n</text>
-          <!-- 方法体 -->
-          <view class="flex flex-row items-center gap-2">
-            <text selectable class="text-[#F92672]">export</text>
-            <text selectable class="text-[#66D9EF] " >&nbsp;&nbsp;function&nbsp;</text>
-            <text selectable class="text-[#6AC62E] " >{{ onToLowerCase(api.url) }}</text>
-            <text selectable style="display: ;">(data: any = {}) {\n</text>
-          </view>
-          <!-- 调用 request 组成部分 -->
-           <view class="flex flex-row items-center gap-2">
-            <text selectable class="text-[#F92672]">&nbsp;&nbsp;return</text>
-            <text selectable class="text-[#66D9EF]">&nbsp;request</text>
-            <text selectable>(&nbsp;'{{ api.url }}', data, '{{ api.method }}'</text>
-            <text selectable>);\n</text>
-           </view>
-          <text selectable>}\n\n</text>
+          <!-- 方法体 + request 调用：一整个 text 节点，换行由字符串里的 \n 控制 -->
+          <text selectable class="text-white">
+            <text class="text-[#F92672]">export&nbsp;</text>
+            <text class="text-[#66D9EF]">function&nbsp;</text>
+            <text class="text-[#6AC62E]">{{ onFunctionName(api.url, api.method) }}</text>
+            <text>(data: any = {}) {\n</text>
+            <text class="text-[#F92672]">&nbsp;&nbsp;return&nbsp;</text>
+            <text class="text-[#66D9EF]">request</text>
+            <text>('{{ api.url }}', data, '{{ api.method }}');\n</text>
+            <text>}\n\n</text>
+          </text>
         </view>
       </scroll-view>
     </view>
@@ -102,7 +98,7 @@ const state = reactive({
   search: "",
   ids: [] as string[],
   apis: [] as ApiItem[],
-  swagger: "http://192.168.10.72:3001"
+  swagger: "/sf-web"
 })
 
 /**
@@ -116,11 +112,7 @@ function request(url: string): Promise<any> {
     uni.request({
       url,
       success: (res) => {
-        let data = res.data
-        if (typeof data == 'string') {
-          data = JSON.parse(data as string)
-        }
-        resolve(data)
+        resolve(res.data)
       }
     })
   })
@@ -136,7 +128,6 @@ const onGetApi = () => {
         title: "获取API缓存到本地中",
         icon: "none"
       })
-      console.log("res---=>>>>>", typeof res, res)
       state.apis = []
       const list = res.apis as Array<any>
       if (list != null) {
@@ -153,7 +144,6 @@ const onGetApi = () => {
           state.apis.push(apis)
         })
       }
-      console.log("state.apis====>", state.apis)
     })
     .catch((error) => {
       console.debug("error:", error)
@@ -161,26 +151,89 @@ const onGetApi = () => {
 }
 
 /**
- * URL 转驼峰命名（/student/{id} -> student_id）
+ * 生成函数名：请求方式前缀 + 路径大驼峰
+ * 同一路径不同请求方式（GET/POST/PUT/DELETE /student）必须产生不同函数名，否则会重名
+ * 例：GET /student/{id} -> getStudentId，DELETE /student/{id} -> deleteStudentId
  */
-const onToLowerCase = (str: string): string => {
-  const cleanPath = str.replace(/\{/g, "_").replace(/\}/g, "")
-  const strArray = cleanPath.split("/")
-  const len = strArray.length
-  const lastStr = strArray[len - 1]
-  if (lastStr.indexOf("_") > -1) {
-    const lastStrArr = lastStr.split("_")
-    let newStr = lastStrArr[0]
-    for (let i = 0; i < lastStrArr.length - 1; i++) {
-      if (lastStrArr[i + 1].length === 0) {
-        continue
-      }
-      newStr += lastStrArr[i + 1].charAt(0).toUpperCase() + lastStrArr[i + 1].substring(1)
-    }
-    return newStr
-  } else {
-    return lastStr
+const onFunctionName = (url: string, method: string): string => {
+  return onMethodVerb(method) + onPathToPascal(url)
+}
+
+/**
+ * 请求方式转函数名前缀
+ */
+const onMethodVerb = (method: string): string => {
+  const m = method.toUpperCase()
+  if (m === "GET") {
+    return "get"
   }
+  if (m === "POST") {
+    return "post"
+  }
+  if (m === "PUT") {
+    return "update"
+  }
+  if (m === "DELETE") {
+    return "delete"
+  }
+  return m.toLowerCase()
+}
+
+/**
+ * URL 转大驼峰（/ 与 - 与 _ 均作为单词分隔，{id} 只保留参数名）
+ * 例：/student/{id} -> StudentId，/order/{id}/pay-code -> OrderIdPayCode
+ */
+const onPathToPascal = (url: string): string => {
+  const cleanPath = url
+    .replace(/\{/g, "")
+    .replace(/\}/g, "")
+    .replace(/-/g, "/")
+    .replace(/_/g, "/")
+  const parts = cleanPath.split("/")
+  let name = ""
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]
+    if (part.length === 0) {
+      continue
+    }
+    name += part.charAt(0).toUpperCase() + part.substring(1)
+  }
+  return name
+}
+
+/**
+ * 生成单个接口的纯文本代码
+ * 页面上展示的是分节点高亮代码，从控件选中复制会丢失排版，
+ * 因此复制统一走这里拼接的纯文本，保证粘贴结果与图片一致
+ */
+const onBuildCode = (api: ApiItem): string => {
+  let code = "/**\n"
+  code += "* 接口分类: " + api.description + " - " + api.tags + "\n"
+  code += "* 接口名称: " + api.summary + "\n"
+  code += "* 接口地址: " + api.url + "\n"
+  code += "* 请求方式: " + api.method + "\n"
+  for (let i = 0; i < api.parameters.length; i++) {
+    const parame = api.parameters[i]
+    code += "* @param {" + parame.type + "} " + parame.name + " [" + parame.description + "] 是否必填: " + (parame.required ? "是" : "否") + "\n"
+  }
+  code += "* @return {Promise<any>} 接口响应数据\n"
+  code += "*/\n"
+  code += "export function " + onFunctionName(api.url, api.method) + "(data: any = {}) {\n"
+  code += "  return request('" + api.url + "', data, '" + api.method + "');\n"
+  code += "}\n"
+  return code
+}
+
+
+/**
+ * 拼接接口代码列表（顶部带 import）
+ */
+const onBuildCodeList = (list: ApiItem[]): string => {
+  let code = "import request from '@/utils/request';\n\n"
+  for (let i = 0; i < list.length; i++) {
+    code += onBuildCode(list[i]) + "\n"
+  }
+  return code
 }
 
 /**
@@ -198,6 +251,7 @@ const onSearch = () => {
 
 /**
  * 模糊查询
+ * 按 url + method 去重，保证同一路径的不同请求方式都能展示
  */
 const onFuzzyQuery = (list: ApiItem[], keyWord: string): ApiItem[] => {
   const arr: ApiItem[] = []
@@ -210,17 +264,17 @@ const onFuzzyQuery = (list: ApiItem[], keyWord: string): ApiItem[] => {
       arr.push(list[i])
     } else if (
       list[i].description.split(keyWord).length > 1 &&
-      arr.map((item) => item.url).indexOf(list[i].url) === -1
+      arr.map((item) => item.url + item.method).indexOf(list[i].url + list[i].method) === -1
     ) {
       arr.push(list[i])
     } else if (
       list[i].tags.split(keyWord).length > 1 &&
-      arr.map((item) => item.url).indexOf(list[i].url) === -1
+      arr.map((item) => item.url + item.method).indexOf(list[i].url + list[i].method) === -1
     ) {
       arr.push(list[i])
     } else if (
       list[i].url.split(keyWord).length > 1 &&
-      arr.map((item) => item.url).indexOf(list[i].url) === -1
+      arr.map((item) => item.url + item.method).indexOf(list[i].url + list[i].method) === -1
     ) {
       arr.push(list[i])
     }

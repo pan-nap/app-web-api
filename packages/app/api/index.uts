@@ -1,0 +1,512 @@
+import request from '@/utils/request';
+
+/**
+* 接口分类: 登录、登出与健康检查 - 认证授权
+* 接口名称: 用户登录
+* 接口地址: /login
+* 请求方式: POST
+* @param {[string]} username [用户名] 是否必填: 是
+* @param {[string]} password [密码] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postLogin(data: any = {}) {
+  return request('/login', data, 'POST');
+}
+
+/**
+* 接口分类: 登录、登出与健康检查 - 认证授权
+* 接口名称: 退出登录
+* 接口地址: /logout
+* 请求方式: POST
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postLogout(data: any = {}) {
+  return request('/logout', data, 'POST');
+}
+
+/**
+* 接口分类: 登录、登出与健康检查 - 认证授权
+* 接口名称: 服务状态检查
+* 接口地址: /home
+* 请求方式: GET
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getHome(data: any = {}) {
+  return request('/home', data, 'GET');
+}
+
+/**
+* 接口分类: 学生信息的增删改查与批量操作 - 学生管理
+* 接口名称: 查询学生列表
+* 接口地址: /student
+* 请求方式: GET
+* @param {[string]} idCard [身份证号] 是否必填: 否
+* @param {[integer]} page [页码] 是否必填: 否
+* @param {[integer]} pageSize [每页条数] 是否必填: 否
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getStudent(data: any = {}) {
+  return request('/student', data, 'GET');
+}
+
+/**
+* 接口分类: 学生信息的增删改查与批量操作 - 学生管理
+* 接口名称: 创建学生
+* 接口地址: /student
+* 请求方式: POST
+* @param {[string]} name [姓名] 是否必填: 是
+* @param {[string]} idCard [身份证号] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postStudent(data: any = {}) {
+  return request('/student', data, 'POST');
+}
+
+/**
+* 接口分类: 学生信息的增删改查与批量操作 - 学生管理
+* 接口名称: 查询学生详情
+* 接口地址: /student/{id}
+* 请求方式: GET
+* @param {[string]} id [学生ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getStudentId(data: any = {}) {
+  return request('/student/{id}', data, 'GET');
+}
+
+/**
+* 接口分类: 学生信息的增删改查与批量操作 - 学生管理
+* 接口名称: 更新学生
+* 接口地址: /student/{id}
+* 请求方式: PUT
+* @param {[string]} id [学生ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function updateStudentId(data: any = {}) {
+  return request('/student/{id}', data, 'PUT');
+}
+
+/**
+* 接口分类: 学生信息的增删改查与批量操作 - 学生管理
+* 接口名称: 删除学生
+* 接口地址: /student/{id}
+* 请求方式: DELETE
+* @param {[string]} id [学生ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function deleteStudentId(data: any = {}) {
+  return request('/student/{id}', data, 'DELETE');
+}
+
+/**
+* 接口分类: 学生信息的增删改查与批量操作 - 学生管理
+* 接口名称: 批量更新学生
+* 接口地址: /student/batch
+* 请求方式: PUT
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function updateStudentBatch(data: any = {}) {
+  return request('/student/batch', data, 'PUT');
+}
+
+/**
+* 接口分类: 学生信息的增删改查与批量操作 - 学生管理
+* 接口名称: 批量删除学生
+* 接口地址: /student/batch/delete
+* 请求方式: POST
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postStudentBatchDelete(data: any = {}) {
+  return request('/student/batch/delete', data, 'POST');
+}
+
+/**
+* 接口分类: 收银订单、明细与收款码 - 订单管理
+* 接口名称: 查询订单列表
+* 接口地址: /order
+* 请求方式: GET
+* @param {[integer]} page [页码] 是否必填: 否
+* @param {[integer]} pageSize [每页条数] 是否必填: 否
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getOrder(data: any = {}) {
+  return request('/order', data, 'GET');
+}
+
+/**
+* 接口分类: 收银订单、明细与收款码 - 订单管理
+* 接口名称: 创建订单
+* 接口地址: /order
+* 请求方式: POST
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postOrder(data: any = {}) {
+  return request('/order', data, 'POST');
+}
+
+/**
+* 接口分类: 收银订单、明细与收款码 - 订单管理
+* 接口名称: 查询订单详情
+* 接口地址: /order/{id}
+* 请求方式: GET
+* @param {[string]} id [订单ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getOrderId(data: any = {}) {
+  return request('/order/{id}', data, 'GET');
+}
+
+/**
+* 接口分类: 收银订单、明细与收款码 - 订单管理
+* 接口名称: 更新订单
+* 接口地址: /order/{id}
+* 请求方式: PUT
+* @param {[string]} id [订单ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function updateOrderId(data: any = {}) {
+  return request('/order/{id}', data, 'PUT');
+}
+
+/**
+* 接口分类: 收银订单、明细与收款码 - 订单管理
+* 接口名称: 删除订单
+* 接口地址: /order/{id}
+* 请求方式: DELETE
+* @param {[string]} id [订单ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function deleteOrderId(data: any = {}) {
+  return request('/order/{id}', data, 'DELETE');
+}
+
+/**
+* 接口分类: 收银订单、明细与收款码 - 订单管理
+* 接口名称: 查询订单明细
+* 接口地址: /order/{id}/items
+* 请求方式: GET
+* @param {[string]} id [订单ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getOrderIdItems(data: any = {}) {
+  return request('/order/{id}/items', data, 'GET');
+}
+
+/**
+* 接口分类: 收银订单、明细与收款码 - 订单管理
+* 接口名称: 更新订单明细
+* 接口地址: /order/item/{id}
+* 请求方式: PUT
+* @param {[string]} id [订单明细ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function updateOrderItemId(data: any = {}) {
+  return request('/order/item/{id}', data, 'PUT');
+}
+
+/**
+* 接口分类: 收银订单、明细与收款码 - 订单管理
+* 接口名称: 生成收款码
+* 接口地址: /order/{id}/pay-code
+* 请求方式: POST
+* @param {[string]} id [订单ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postOrderIdPayCode(data: any = {}) {
+  return request('/order/{id}/pay-code', data, 'POST');
+}
+
+/**
+* 接口分类: 收银订单、明细与收款码 - 订单管理
+* 接口名称: 批量删除订单
+* 接口地址: /order/batch/delete
+* 请求方式: POST
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postOrderBatchDelete(data: any = {}) {
+  return request('/order/batch/delete', data, 'POST');
+}
+
+/**
+* 接口分类: 系统字典项维护 - 字典管理
+* 接口名称: 查询字典列表
+* 接口地址: /dictionary
+* 请求方式: GET
+* @param {[integer]} page [页码] 是否必填: 否
+* @param {[integer]} pageSize [每页条数] 是否必填: 否
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getDictionary(data: any = {}) {
+  return request('/dictionary', data, 'GET');
+}
+
+/**
+* 接口分类: 系统字典项维护 - 字典管理
+* 接口名称: 创建字典
+* 接口地址: /dictionary
+* 请求方式: POST
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postDictionary(data: any = {}) {
+  return request('/dictionary', data, 'POST');
+}
+
+/**
+* 接口分类: 系统字典项维护 - 字典管理
+* 接口名称: 查询字典详情
+* 接口地址: /dictionary/{id}
+* 请求方式: GET
+* @param {[string]} id [字典ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getDictionaryId(data: any = {}) {
+  return request('/dictionary/{id}', data, 'GET');
+}
+
+/**
+* 接口分类: 系统字典项维护 - 字典管理
+* 接口名称: 更新字典
+* 接口地址: /dictionary/{id}
+* 请求方式: PUT
+* @param {[string]} id [字典ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function updateDictionaryId(data: any = {}) {
+  return request('/dictionary/{id}', data, 'PUT');
+}
+
+/**
+* 接口分类: 系统字典项维护 - 字典管理
+* 接口名称: 删除字典
+* 接口地址: /dictionary/{id}
+* 请求方式: DELETE
+* @param {[string]} id [字典ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function deleteDictionaryId(data: any = {}) {
+  return request('/dictionary/{id}', data, 'DELETE');
+}
+
+/**
+* 接口分类: 员工信息的增删改查与批量操作 - 员工管理
+* 接口名称: 查询员工列表
+* 接口地址: /employee
+* 请求方式: GET
+* @param {[integer]} page [页码] 是否必填: 否
+* @param {[integer]} pageSize [每页条数] 是否必填: 否
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getEmployee(data: any = {}) {
+  return request('/employee', data, 'GET');
+}
+
+/**
+* 接口分类: 员工信息的增删改查与批量操作 - 员工管理
+* 接口名称: 创建员工
+* 接口地址: /employee
+* 请求方式: POST
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postEmployee(data: any = {}) {
+  return request('/employee', data, 'POST');
+}
+
+/**
+* 接口分类: 员工信息的增删改查与批量操作 - 员工管理
+* 接口名称: 查询员工详情
+* 接口地址: /employee/{id}
+* 请求方式: GET
+* @param {[string]} id [员工ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getEmployeeId(data: any = {}) {
+  return request('/employee/{id}', data, 'GET');
+}
+
+/**
+* 接口分类: 员工信息的增删改查与批量操作 - 员工管理
+* 接口名称: 更新员工
+* 接口地址: /employee/{id}
+* 请求方式: PUT
+* @param {[string]} id [员工ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function updateEmployeeId(data: any = {}) {
+  return request('/employee/{id}', data, 'PUT');
+}
+
+/**
+* 接口分类: 员工信息的增删改查与批量操作 - 员工管理
+* 接口名称: 删除员工
+* 接口地址: /employee/{id}
+* 请求方式: DELETE
+* @param {[string]} id [员工ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function deleteEmployeeId(data: any = {}) {
+  return request('/employee/{id}', data, 'DELETE');
+}
+
+/**
+* 接口分类: 员工信息的增删改查与批量操作 - 员工管理
+* 接口名称: 批量删除员工
+* 接口地址: /employee/batch/delete
+* 请求方式: POST
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postEmployeeBatchDelete(data: any = {}) {
+  return request('/employee/batch/delete', data, 'POST');
+}
+
+/**
+* 接口分类: 文书模板与变量值 - 文书管理
+* 接口名称: 查询文书列表
+* 接口地址: /document
+* 请求方式: GET
+* @param {[integer]} page [页码] 是否必填: 否
+* @param {[integer]} pageSize [每页条数] 是否必填: 否
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getDocument(data: any = {}) {
+  return request('/document', data, 'GET');
+}
+
+/**
+* 接口分类: 文书模板与变量值 - 文书管理
+* 接口名称: 创建文书
+* 接口地址: /document
+* 请求方式: POST
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postDocument(data: any = {}) {
+  return request('/document', data, 'POST');
+}
+
+/**
+* 接口分类: 文书模板与变量值 - 文书管理
+* 接口名称: 查询文书详情
+* 接口地址: /document/{id}
+* 请求方式: GET
+* @param {[string]} id [文书ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getDocumentId(data: any = {}) {
+  return request('/document/{id}', data, 'GET');
+}
+
+/**
+* 接口分类: 文书模板与变量值 - 文书管理
+* 接口名称: 更新文书
+* 接口地址: /document/{id}
+* 请求方式: PUT
+* @param {[string]} id [文书ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function updateDocumentId(data: any = {}) {
+  return request('/document/{id}', data, 'PUT');
+}
+
+/**
+* 接口分类: 文书模板与变量值 - 文书管理
+* 接口名称: 删除文书
+* 接口地址: /document/{id}
+* 请求方式: DELETE
+* @param {[string]} id [文书ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function deleteDocumentId(data: any = {}) {
+  return request('/document/{id}', data, 'DELETE');
+}
+
+/**
+* 接口分类: 文书模板与变量值 - 文书管理
+* 接口名称: 批量删除文书
+* 接口地址: /document/batch/delete
+* 请求方式: POST
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postDocumentBatchDelete(data: any = {}) {
+  return request('/document/batch/delete', data, 'POST');
+}
+
+/**
+* 接口分类: 文书模板与变量值 - 文书管理
+* 接口名称: 查询文书模板
+* 接口地址: /document/{id}/template
+* 请求方式: GET
+* @param {[string]} id [文书ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getDocumentIdTemplate(data: any = {}) {
+  return request('/document/{id}/template', data, 'GET');
+}
+
+/**
+* 接口分类: 文书模板与变量值 - 文书管理
+* 接口名称: 查询文书变量值
+* 接口地址: /document/{id}/values
+* 请求方式: GET
+* @param {[string]} id [文书ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function getDocumentIdValues(data: any = {}) {
+  return request('/document/{id}/values', data, 'GET');
+}
+
+/**
+* 接口分类: 文书模板与变量值 - 文书管理
+* 接口名称: 保存文书变量值
+* 接口地址: /document/{id}/values
+* 请求方式: PUT
+* @param {[string]} id [文书ID] 是否必填: 是
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function updateDocumentIdValues(data: any = {}) {
+  return request('/document/{id}/values', data, 'PUT');
+}
+
+/**
+* 接口分类: 单文件/批量上传与删除 - 文件上传
+* 接口名称: 上传单个文件
+* 接口地址: /upload
+* 请求方式: POST
+* @param {[string]} path [存储子目录] 是否必填: 否
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postUpload(data: any = {}) {
+  return request('/upload', data, 'POST');
+}
+
+/**
+* 接口分类: 单文件/批量上传与删除 - 文件上传
+* 接口名称: 批量上传文件
+* 接口地址: /upload/batch
+* 请求方式: POST
+* @param {[string]} path [存储子目录] 是否必填: 否
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function postUploadBatch(data: any = {}) {
+  return request('/upload/batch', data, 'POST');
+}
+
+/**
+* 接口分类: 单文件/批量上传与删除 - 文件上传
+* 接口名称: 删除文件
+* 接口地址: /upload
+* 请求方式: DELETE
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function deleteUpload(data: any = {}) {
+  return request('/upload', data, 'DELETE');
+}
+
+/**
+* 接口分类: 单文件/批量上传与删除 - 文件上传
+* 接口名称: 批量删除文件
+* 接口地址: /upload/batch
+* 请求方式: DELETE
+* @return {[Promise<any>]} 接口响应数据
+*/
+export function deleteUploadBatch(data: any = {}) {
+  return request('/upload/batch', data, 'DELETE');
+}
