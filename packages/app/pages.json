@@ -37,6 +37,12 @@
       "style": {
         "navigationBarTitleText": "stomp测试页"
       }
+    },
+    {
+      "path": "pages/refresher/index",
+      "style": {
+        "navigationBarTitleText": "刷新与加载Demo"
+      }
     }
   ],
   "subPackages": [
@@ -102,7 +108,9 @@
     "navigationBarTitleText": "uni-app x",
     "navigationBarBackgroundColor": "#F8F8F8",
     "backgroundColor": "#F8F8F8",
-    "navigationStyle": "custom"
+    "navigationStyle": "custom",
+    // 默认约定：页面统一用 hs-screen（自定义导航栏 + 内容区 scroll-view 内部滚动），禁用页面级滚动避免回弹穿过导航栏；个别需要页面滚动的写在页面 style 里覆盖 disableScroll: false
+    "disableScroll": true
   },
   "uniIdRouter": {}
 }

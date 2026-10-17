@@ -10,21 +10,45 @@ interface ResponseData {
   data?: any;
 }
 
-function buildRequestData(data: any): Record<string, any> {
-  let requestData: Record<string, any> = {};
-  if (data != null) {
-    const parsed = JSON.parse(JSON.stringify(data)) as Record<string, any>;
-    if (parsed != null) {
-      requestData = parsed;
-    }
+// 错误提示防抖：并发接口同时报错时，时间窗口内只显示一条错误信息
+const ERROR_TOAST_DEBOUNCE_MS = 1000;
+let errorToastTimer: number | null = null;
+
+function showErrorToastOnce(msg: string) {
+  if (errorToastTimer != null) {
+    // 窗口期内已有错误提示在展示，后续并发错误不再重复弹出
+    return;
   }
-  Object.assign(requestData, {
-    device: systemInfo.browserName,
-    browser: systemInfo.deviceModel,
-    os: systemInfo.deviceType,
-    version: systemInfo.osVersion
-  });
-  return requestData;
+  showToast(msg);
+  errorToastTimer = setTimeout(() => {
+    errorToastTimer = null;
+  }, ERROR_TOAST_DEBOUNCE_MS);
+}
+
+// 并发请求防抖：同一接口+同一参数的请求在“进行中”时，后续并发调用直接复用同一个 Promise，不重复发请求
+const pendingRequests = new Map<string, Promise<any>>();
+
+function buildRequestKey(method: string, url: string, requestData: any): string {
+  return method + "|" + url + "|" + JSON.stringify(requestData);
+}
+
+function dedupRequest(key: string, executor: (resolve: (value: any) => void, reject: (reason: any) => void) => void): Promise<any> {
+  const existing = pendingRequests.get(key);
+  if (existing != null) {
+    return existing;
+  }
+  const shared = new Promise<any>(executor).then(
+    (res: any) => {
+      pendingRequests.delete(key);
+      return res;
+    },
+    (err: any) => {
+      pendingRequests.delete(key);
+      throw err;
+    }
+  );
+  pendingRequests.set(key, shared);
+  return shared;
 }
 
 function getRequestUrl(url: string): string {
@@ -42,9 +66,14 @@ function getAuthorizationHeader(): string | null {
   return userStore.isLogin() ? "Bearer " + userStore.state.access_token : null;
 }
 
-export function request(url: string, data: any, method: RequestMethod = "GET"): Promise<any> {
-  return new Promise<any>((resolve, reject) => {
-    const requestData = buildRequestData(data);
+export default function request(url: string, data: any, method: RequestMethod = "GET"): Promise<any> {
+  const requestData = Object.assign(data || {}, {
+    device: systemInfo.browserName,
+    browser: systemInfo.deviceModel,
+    os: systemInfo.deviceType,
+    version: systemInfo.osVersion
+  });
+  return dedupRequest(buildRequestKey(method, url, requestData), (resolve, reject) => {
     uni.request({
       url: getRequestUrl(url),
       data: requestData,
@@ -59,26 +88,24 @@ export function request(url: string, data: any, method: RequestMethod = "GET"): 
           resolve(result.data ?? {});
         } else {
           const errorMessage = result.msg ?? "接口异常";
-          showToast(errorMessage);
+          showErrorToastOnce(errorMessage);
           reject(errorMessage);
         }
       },
       fail(err: RequestFail) {
         const errMsg = err.errMsg;
-        showToast(errMsg);
+        showErrorToastOnce(errMsg);
         reject(err);
       }
     });
   });
 }
 
-export default request;
-
-export function uploadFile(data: any): Promise<any> {
+export function uploadFile(filePath: string): Promise<any> {
   return new Promise<any>((resolve, reject) => {
     uni.uploadFile({
       url: getRequestUrl("/upload"),
-      filePath: data,
+      filePath,
       name: "file",
       formData: {
         path: "app"
@@ -100,13 +127,13 @@ export function uploadFile(data: any): Promise<any> {
           }
         } else {
           const errorMessage = result.msg ?? "接口异常";
-          showToast(errorMessage);
+          showErrorToastOnce(errorMessage);
           reject(errorMessage);
         }
       },
       fail(err: RequestFail) {
         const errMsg = err.errMsg;
-        showToast(errMsg);
+        showErrorToastOnce(errMsg);
         reject(err);
       }
     });

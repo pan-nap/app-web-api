@@ -35,16 +35,35 @@ description: 长列表 scroll-view、list-view、吸顶、嵌套滚动、sticky-
 
 ### hs-screen 组件
 
-`hs-screen` 是页面布局容器，蒸汽模式下**不再使用 scroll-view 包裹**，直接用 view 即可：
+`hs-screen` 是“顶部固定导航栏 + 内容区”的全屏布局容器，根节点与内容区都用 `flex-1` 把高度锁定为一屏。注意：**这种锁定高度的布局下，内容超长时不会撑出页面，Web 端页面默认滚动不会触发（内容被定高容器裁住）**，因此内容区默认用 scroll-view 做内部滚动：
 
 ```vue
-<!-- 蒸汽模式：页面默认可滚动，无需 scroll-view -->
+<!-- 默认：内容区 scroll-view 内部滚动（蒸汽模式纵向滚动默认开启，不要写 scroll-y） -->
 <hs-screen title="页面标题">
-  <view class="flex-1">
-    <!-- 内容区域 -->
-  </view>
+  <view>内容区域</view>
+</hs-screen>
+
+<!-- 页面自带滚动容器（如消息列表）：传 :scroll="false" 回退为 view，避免双层 scroll-view 嵌套 -->
+<hs-screen title2="IM 聊天" :scroll="false">
+  <scroll-view class="flex-1">…</scroll-view>
+</hs-screen>
+
+<!-- 需要滚动监听/下拉刷新：直接在 hs-screen 上监听，事件由内容区 scroll-view 透传 -->
+<hs-screen
+  title="列表页"
+  refresher-enabled
+  :refresher-triggered="triggered"
+  @scrolltolower="loadMore"
+  @scroll="onScroll"
+  @refresherrefresh="onRefresh"
+>
+  <view>内容区域</view>
 </hs-screen>
 ```
+
+**项目默认约定**：页面统一使用 hs-screen 内部滚动模式，`pages.json` 的 `globalStyle` 已配置 `disableScroll: true`（配合全局 `navigationStyle: "custom"`）；个别需要页面级滚动的页面在自身 style 中覆盖 `disableScroll: false`。hs-screen 转发能力：props `refresherEnabled`/`refresherTriggered`，事件 `scroll`/`scrolltolower`/`scrolltoupper`/`refresherrefresh`；开启 `refresher-enabled` 后自带自定义下拉提示“正在加载中”（slot="refresher" + refresher-default-style="none"，官方要求自定义元素必须设宽高且不能放首个子节点）；滚动定位（scroll-top/scroll-into-view）需页面自带内部 scroll-view 时用 `:scroll="false"` 方案自行实现。
+
+> “页面默认可滚动、无需 scroll-view”只适用于内容自然流动、不设全屏定高锁定的页面；自定义导航栏 + flex 撑满一屏的布局应使用内部滚动容器，并配合 pages.json 的 `disableScroll: true`。
 
 ## scroll-view 与 list-view
 
@@ -69,4 +88,17 @@ description: 长列表 scroll-view、list-view、吸顶、嵌套滚动、sticky-
 
 ## 关键点
 
-- 长列表优先用 **list-view**；吸顶在 list-view 中用 **sticky-header**；需要"顶部固定 + 下面可滚"的复杂联动用 **嵌套 scroll-view**。
+- 长列表优先用 **list-view**；吸顶在 list-view 中用 **sticky-header**；需要“顶部固定 + 下面可滚”的复杂联动用 **嵌套 scroll-view**。
+
+## disableScroll / 内部滚动后的生命周期平替
+
+页面不可滚动时（配置了 `disableScroll: true`，或内容被 flex 定高锁住从未撑出页面），`onPageScroll`、`onReachBottom`、`uni.pageScrollTo()` 均不会触发/不可用（官方 page.md 明确）。改用 scroll-view 自身能力：
+
+| 页面级（失效）                                | scroll-view 替代                                                                                                                                  |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onPageScroll`                                | `@scroll` 事件                                                                                                                                    |
+| `onReachBottom`                               | `@scrolltolower`（可配 `lower-threshold`）                                                                                                        |
+| `uni.pageScrollTo()`                          | `scroll-top` 属性 / `scroll-into-view` 锚点                                                                                                       |
+| `enablePullDownRefresh` + `onPullDownRefresh` | `refresher-enabled` + `@refresherrefresh`（蒸汽模式无页面下拉刷新，官方要求用 scroll-view api；注意 `disableScroll: true` 时 App 端不能下拉刷新） |
+
+参考实现：`page_im/chat/index.uvue` 用 `@scrolltolower` 加载历史、`:scroll-into-view` 锚定底部。

@@ -3,6 +3,7 @@
     <hs-card @tap="jumpTo('/pages/student/index')"><text>跳转学生页面</text></hs-card>
     <hs-card @tap="jumpTo('/pages/mqtt/index')"><text>跳转mqtt页面</text></hs-card>
     <hs-card @tap="jumpTo('/pages/stomp/index')"><text>跳转stomp页面</text></hs-card>
+    <hs-card @tap="jumpTo('/pages/refresher/index')"><text>跳转下拉刷新/上拉加载Demo</text></hs-card>
     <hs-card @tap="jumpTo('/pages/bluetooth/index')"><text>跳转蓝牙页面</text></hs-card>
     <hs-card @tap="jumpTo('/page_room/room/index')"><text>跳转视频通话页面</text></hs-card>
     <hs-card @tap="jumpTo('/page_im/login/index')"><text>跳转即时通讯页面</text></hs-card>
