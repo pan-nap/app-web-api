@@ -22,15 +22,6 @@ const userInfo = reactive<User>({
   id: ""
 });
 
-function toUser(data: Record<string, any>): User {
-  return {
-    access_token: (data.access_token ?? "") as string,
-    username: (data.username ?? "") as string,
-    pageTitle: (data.pageTitle ?? "") as string,
-    id: (data.id ?? "") as string
-  };
-}
-
 class UserStore {
   state: User = userInfo;
 
@@ -61,8 +52,8 @@ class UserStore {
 
   async login(data: LoginFormData): Promise<void> {
     try {
-      const res = await request("/login", data, "POST");
-      this.setUserInfo(toUser(res as Record<string, any>));
+      const res = await request<User>("/login", data, "POST");
+      this.setUserInfo(res);
       uni.reLaunch({
         url: "/pages/index/index"
       });

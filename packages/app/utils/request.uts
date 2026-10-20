@@ -5,137 +5,142 @@ import { useUserStore } from "@/store/user.uts";
 const systemInfo = uni.getSystemInfoSync();
 
 interface ResponseData {
-  code?: number;
-  msg?: string;
-  data?: any;
+	code ?: number;
+	msg ?: string;
+	data ?: any;
 }
 
 // 错误提示防抖：并发接口同时报错时，时间窗口内只显示一条错误信息
 const ERROR_TOAST_DEBOUNCE_MS = 1000;
-let errorToastTimer: number | null = null;
+let errorToastTimer : number | null = null;
 
-function showErrorToastOnce(msg: string) {
-  if (errorToastTimer != null) {
-    // 窗口期内已有错误提示在展示，后续并发错误不再重复弹出
-    return;
-  }
-  showToast(msg);
-  errorToastTimer = setTimeout(() => {
-    errorToastTimer = null;
-  }, ERROR_TOAST_DEBOUNCE_MS);
+function showErrorToastOnce(msg : string) {
+	if (errorToastTimer != null) {
+		// 窗口期内已有错误提示在展示，后续并发错误不再重复弹出
+		return;
+	}
+	showToast(msg);
+	errorToastTimer = setTimeout(() => {
+		errorToastTimer = null;
+	}, ERROR_TOAST_DEBOUNCE_MS);
 }
 
 // 并发请求防抖：同一接口+同一参数的请求在“进行中”时，后续并发调用直接复用同一个 Promise，不重复发请求
 const pendingRequests = new Map<string, Promise<any>>();
 
-function buildRequestKey(method: string, url: string, requestData: any): string {
-  return method + "|" + url + "|" + JSON.stringify(requestData);
+function buildRequestKey(method : string, url : string, requestData : any) : string {
+	return method + "|" + url + "|" + JSON.stringify(requestData);
 }
 
-function dedupRequest(key: string, executor: (resolve: (value: any) => void, reject: (reason: any) => void) => void): Promise<any> {
-  const existing = pendingRequests.get(key);
-  if (existing != null) {
-    return existing;
-  }
-  const shared = new Promise<any>(executor).then(
-    (res: any) => {
-      pendingRequests.delete(key);
-      return res;
-    },
-    (err: any) => {
-      pendingRequests.delete(key);
-      throw err;
-    }
-  );
-  pendingRequests.set(key, shared);
-  return shared;
+function dedupRequest(key : string, executor : (resolve : (value : any) => void, reject : (reason : any) => void) => void) : Promise<any> {
+	const existing = pendingRequests.get(key);
+	if (existing != null) {
+		return existing;
+	}
+	const shared = new Promise<any>(executor).then(
+		(res : any) => {
+			pendingRequests.delete(key);
+			return res;
+		},
+		(err : any) => {
+			pendingRequests.delete(key);
+			throw err;
+		}
+	);
+	pendingRequests.set(key, shared);
+	return shared;
 }
 
-function getRequestUrl(url: string): string {
-  // #ifdef WEB
-  return "/sf-web" + url;
-  // #endif
-  // #ifndef WEB
-  const baseUrl = config["baseUrl"] as string;
-  return baseUrl + url;
-  // #endif
+function getRequestUrl(url : string) : string {
+	// #ifdef WEB
+	return "/sf-web" + url;
+	// #endif
+	// #ifndef WEB
+	const baseUrl = config["baseUrl"] as string;
+	return baseUrl + url;
+	// #endif
 }
 
-function getAuthorizationHeader(): string | null {
+// Android 端 uni.request 的 header 不允许 null 值（原生层会抛 602001 系统错误），未登录时不附加 Authorization
+function buildRequestHeader() {
   const userStore = useUserStore();
-  return userStore.isLogin() ? "Bearer " + userStore.state.access_token : null;
+	const header = {
+		"Content-Type": "application/json"
+	};
+	if (userStore.isLogin()) {
+		header["Authorization"] = "Bearer " + userStore.state.access_token;
+	}
+	return header;
 }
 
-export default function request(url: string, data: any, method: RequestMethod = "GET"): Promise<any> {
-  const requestData = Object.assign(data || {}, {
-    device: systemInfo.browserName,
-    browser: systemInfo.deviceModel,
-    os: systemInfo.deviceType,
-    version: systemInfo.osVersion
-  });
-  return dedupRequest(buildRequestKey(method, url, requestData), (resolve, reject) => {
-    uni.request({
-      url: getRequestUrl(url),
-      data: requestData,
-      method,
-      header: {
-        "Content-Type": "application/json",
-        Authorization: getAuthorizationHeader()
-      },
-      success(res) {
-        const result = res.data as ResponseData;
-        if (result.code == 1) {
-          resolve(result.data ?? {});
-        } else {
-          const errorMessage = result.msg ?? "接口异常";
-          showErrorToastOnce(errorMessage);
-          reject(errorMessage);
-        }
-      },
-      fail(err: RequestFail) {
-        const errMsg = err.errMsg;
-        showErrorToastOnce(errMsg);
-        reject(err);
-      }
-    });
-  });
+export default function request(url : string, data : any, method : RequestMethod = "GET") : Promise<any> {
+	const { other_log_info = {}, ...other } = data || {}
+	const requestData = Object.assign(other, {
+		other_log_info: {
+			...other_log_info,
+			device: systemInfo.uniPlatform,
+			browser: systemInfo.system,
+			os: systemInfo.deviceType,
+			version: systemInfo.osVersion
+		}
+	});
+	return dedupRequest(buildRequestKey(method, url, requestData), (resolve, reject) => {
+		uni.request({
+			url: getRequestUrl(url),
+			data: requestData,
+			method,
+			header: buildRequestHeader(),
+			success(res) {
+				const result = res.data as ResponseData;
+				if (result.code == 1) {
+					resolve(result.data ?? {});
+				} else {
+					const errorMessage = result.msg ?? "接口异常";
+					showErrorToastOnce(errorMessage);
+					reject(errorMessage);
+				}
+			},
+			fail(err : RequestFail) {
+				showErrorToastOnce(err.errMsg);
+				reject(err);
+			}
+		});
+	});
 }
 
-export function uploadFile(filePath: string): Promise<any> {
-  return new Promise<any>((resolve, reject) => {
-    uni.uploadFile({
-      url: getRequestUrl("/upload"),
-      filePath,
-      name: "file",
-      formData: {
-        path: "app"
-      },
-      header: {
-        Authorization: getAuthorizationHeader()
-      },
-      success(res) {
-        const result = JSON.parse(res.data) as ResponseData;
-        if (result.code == 1) {
-          const responseData = result.data;
-          if (responseData != null) {
-            resolve({
-              ...responseData,
-              fullUrl: config["baseUrl"] + responseData.url
-            });
-          } else {
-            resolve({});
-          }
-        } else {
-          const errorMessage = result.msg ?? "接口异常";
-          showErrorToastOnce(errorMessage);
-          reject(errorMessage);
-        }
-      },
-      fail(err: RequestFail) {
-        const errMsg = err.errMsg;
-        showErrorToastOnce(errMsg);
-        reject(err);
-      }
-    });
-  });
+export function uploadFile(filePath : string) : Promise<any> {
+	return new Promise<any>((resolve, reject) => {
+		uni.uploadFile({
+			url: getRequestUrl("/upload"),
+			filePath,
+			name: "file",
+			formData: {
+				path: "app"
+			},
+			header: buildRequestHeader(),
+			success(res) {
+				const result = JSON.parse(res.data) as ResponseData;
+				if (result.code == 1) {
+					const responseData = result.data;
+					if (responseData != null) {
+						resolve({
+							...responseData,
+							fullUrl: config["baseUrl"] + responseData.url
+						});
+					} else {
+						resolve({});
+					}
+				} else {
+					const errorMessage = result.msg ?? "接口异常";
+					showErrorToastOnce(errorMessage);
+					reject(errorMessage);
+				}
+			},
+			fail(err : RequestFail) {
+				const errMsg = err.errMsg;
+				showErrorToastOnce(errMsg);
+				reject(err);
+			}
+		});
+	});
 }

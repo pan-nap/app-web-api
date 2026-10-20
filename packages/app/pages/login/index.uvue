@@ -1,8 +1,8 @@
 <template>
   <hs-screen :verify-login="false" hide-back hide-bar title="登录页">
     <view class="mb-28 flex flex-col p-8 pt-18">
-      <view class="flex flex-row items-center justify-center rd-full bg-[#253354] px-18 py-10">
-        <text class="text-22 tracking-2">HS CASHIER</text>
+      <view class="flex flex-row items-center justify-center rd-full bg-[#253354] px-18 py-30">
+        <text class="text-22 tracking-2 text-white">HS CASHIER</text>
       </view>
       <text class="mt-26 text-56 fw-[700] text-[#12171C]">欢迎回来</text>
       <text class="mt-16 text-28 text-[#738199]">使用新表单组件完成账号登录，快速进入收银与门店运营工作台。</text>

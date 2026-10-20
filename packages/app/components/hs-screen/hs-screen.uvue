@@ -1,5 +1,5 @@
 <template>
-	<view class="flex-1 flex flex-col" :style="[{paddingTop: `${statusBarHeight}px`}]" >
+	<view class="flex-1 flex flex-col bg-[#eef1f7]" :style="[{paddingTop: `${statusBarHeight}px`}]" >
 		<view v-if="!hideBar" style="height: 44px" class="bg-white flex flex-row items-center">
 			<view class="basis-[100rpx] shrink-0 px-20 h-[44px] flex flex-row justify-center items-center">
 				<view v-if="!hideBack" @click="navBack" class="flex-1 flex flex-row justify-center items-center">
@@ -20,7 +20,7 @@
 		<!-- 内容区域：外层 flex-1 把高度锁定为一屏，Web 端内容不会撑出页面、页面默认滚动不会触发，
 				故用 scroll-view 做内容区内部滚动（蒸汽模式纵向滚动默认开启，不要写 scroll-y）；
 				页面自带滚动容器时传 :scroll="false" 回退为 view，避免双层 scroll-view 嵌套 -->
-		<scroll-view v-if="scroll" class="flex-1 py-10 flex flex-col bg-[#eef1f7]" :refresher-enabled="refresherEnabled"
+		<scroll-view v-if="scroll" class="flex-1 py-10 flex flex-col" :refresher-enabled="refresherEnabled"
 			:refresher-triggered="refresherTriggered" refresher-default-style="none"
 			@scroll="(e: any) => emit('scroll', e)"
 			@scrolltolower="emit('scrolltolower')" @scrolltoupper="emit('scrolltoupper')"
@@ -28,10 +28,10 @@
 			<slot></slot>
 			<!-- 自定义下拉刷新提示：slot="refresher" 必须设宽高，且安卓/iOS 下不能放在首个子节点位置（官方 scroll-view 文档） -->
 			<view v-if="refresherEnabled" slot="refresher" class="h-[45px] flex flex-row items-center justify-center">
-				<text class="text-28 text-[#999]">正在加载中</text>
+				<text class="text-28 text-[#999]">下拉刷新中。。。</text>
 			</view>
 		</scroll-view>
-		<view v-else class="flex-1 py-10 flex flex-col bg-[#eef1f7]">
+		<view v-else class="flex-1 py-10 flex flex-col">
 			<slot></slot>
 		</view>
 	</view>
