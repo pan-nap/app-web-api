@@ -1,0 +1,37 @@
+// ========== hs-md5 UTS插件 - HarmonyOS平台入口 ==========
+// 底层使用 @ohos.security.cryptoFramework 的 MD5 摘要算法（updateSync/digestSync 需 API 12+）
+
+import { cryptoFramework } from "@kit.CryptoArchitectureKit";
+import util from "@ohos.util";
+
+/** 字节数组转 32 位小写十六进制 */
+function bytesToHex(bytes: Uint8Array): string {
+	const digits = "0123456789abcdef";
+	let hex = "";
+	for (let i = 0; i < bytes.length; i++) {
+		const v = (bytes[i] as number) & 0xff;
+		hex = hex + digits.charAt(Math.floor(v / 16)) + digits.charAt(v % 16);
+	}
+	return hex;
+}
+
+export class Md5Service {
+	/** 计算字符串的 MD5 摘要（32 位小写十六进制），输入为空时返回空字符串 */
+	static hash(input: string | null): string {
+		if (input == null) return "";
+		let hex = "";
+		try {
+			// 每次新建摘要实例，Md 接口无 reset 方法
+			const md = cryptoFramework.createMd("MD5");
+			const encoder = new util.TextEncoder("utf-8");
+			const dataBlob: cryptoFramework.DataBlob = { data: encoder.encodeInto(input!) };
+			md.updateSync(dataBlob);
+			const out: cryptoFramework.DataBlob = md.digestSync();
+			hex = bytesToHex(out.data);
+		} catch (e: any) {
+			console.error("hs-md5: 鸿蒙 MD5 计算失败 - " + (e != null ? e.toString() : ""));
+			return "";
+		}
+		return hex;
+	}
+}

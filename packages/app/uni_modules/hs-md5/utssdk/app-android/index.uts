@@ -1,0 +1,33 @@
+// ========== hs-md5 UTS插件 - Android平台入口 ==========
+// 直接使用 JDK 原生 MessageDigest 实现 MD5
+
+import MessageDigest from "java.security.MessageDigest";
+
+/** 字节值(0~255) -> 两位小写十六进制，避免逐字节 toString 的补零问题 */
+function buildHexByteTable(): string[] {
+	const digits = "0123456789abcdef";
+	const table: string[] = [];
+	for (let i = 0; i < 256; i++) {
+		table.push(digits.charAt(Math.floor(i / 16)) + digits.charAt(i % 16));
+	}
+	return table;
+}
+
+export class Md5Service {
+	/** 计算字符串的 MD5 摘要（32 位小写十六进制），输入为空时返回空字符串 */
+	static hash(input: string | null): string {
+		if (input == null) return "";
+		const digest = MessageDigest.getInstance("MD5");
+		// getBytes("UTF-8") 与各端 UTF-8 语义一致；toByteArray 非 UTS 内置 API
+		const bytes = digest.digest((input! as string).getBytes("UTF-8"));
+		const hexTable = buildHexByteTable();
+		let hex = "";
+		for (let i = 0; i < bytes.length; i++) {
+			// Kotlin Byte 有符号，+256 归一为 0~255
+			let v = bytes[i] as number;
+			if (v < 0) v = v + 256;
+			hex = hex + hexTable[v];
+		}
+		return hex;
+	}
+}

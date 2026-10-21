@@ -1,0 +1,4 @@
+/* hs-md5 UTS 插件错误定义 */
+/* MD5 为纯计算函数，失败时返回空字符串，不抛出 UniError；此文件保留以对齐插件结构 */
+
+export const UniErrorSubject = "hs-md5";

@@ -1,0 +1,11 @@
+// ========== hs-md5 UTS插件 - iOS平台入口 ==========
+// 底层使用同目录 Swift 混编类 Md5BridgeHelper（CommonCrypto）
+
+export class Md5Service {
+	/** 计算字符串的 MD5 摘要（32 位小写十六进制），输入为空时返回空字符串 */
+	static hash(input: string | null): string {
+		if (input == null) return "";
+		// 直接传字符串，UTF-8 编码在 Swift 混编层完成
+		return Md5BridgeHelper.md5HexOfString(input!);
+	}
+}

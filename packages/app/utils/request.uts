@@ -1,6 +1,7 @@
 import config from "../config.json";
 import { showToast } from "@/utils/tool.uts";
 import { useUserStore } from "@/store/user.uts";
+import { Md5Service } from "@/uni_modules/hs-md5";
 
 const systemInfo = uni.getSystemInfoSync();
 
@@ -29,7 +30,8 @@ function showErrorToastOnce(msg: string) {
 const pendingRequests = new Map<string, Promise<any>>();
 
 function buildRequestKey(method: string, url: string, requestData: any): string {
-	return method + "|" + url + "|" + JSON.stringify(requestData);
+	// 参数序列化后做 MD5，避免超长 key 占用内存；method|url 保留明文便于调试排查
+	return method + "|" + url + "|" + Md5Service.hash(JSON.stringify(requestData));
 }
 
 function dedupRequest(key: string, executor: (resolve: (value: any) => void, reject: (reason: any) => void) => void): Promise<any> {
@@ -73,7 +75,7 @@ function buildRequestHeader() {
 	return header;
 }
 
-export default function request(url: string, data: any, method: RequestMethod = "GET"): Promise<any> {
+export default function request<T = any>(url: string, data: any, method: RequestMethod = "GET"): Promise<T> {
 	const userStore = useUserStore();
 	const { other_log_info = {}, ...other } = data || {};
 	const requestData = Object.assign(other, {

@@ -1,0 +1,12 @@
+/**
+ * interface.uts
+ * hs-md5 UTS 插件接口定义文件
+ * 用于在 HBuilderX 中提供语法提示
+ * 实际实现在各平台目录的 index.uts 中
+ */
+
+/** MD5 摘要服务 */
+export class Md5Service {
+	/** 计算字符串的 MD5 摘要（32 位小写十六进制），输入为空时返回空字符串 */
+	static hash(input: string | null): string;
+}
