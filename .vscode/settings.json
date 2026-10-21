@@ -21,6 +21,15 @@
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  // 兜底：直接打开仓库根目录（非 收银.code-workspace 多根模式）时，documentSelectors 写在根 folder 设置里才能生效；
+  // 多根模式下以 收银.code-workspace 的 settings 为准（两处内容需保持一致）
+  "prettier.documentSelectors": ["**/*.uts", "**/*.uvue"],
+  "[uts]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[uvue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   // 操作时作为单词分隔符的字符
   "editor.wordSeparators": "`~!@#%^&*()=+[{]}\\|;:'\",.<>/?",
   // 一个制表符等于的空格数

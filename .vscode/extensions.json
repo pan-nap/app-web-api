@@ -2,6 +2,8 @@
   "recommendations": [
     "vue.volar",
     "vue.vscode-typescript-vue-plugin",
-    "dbaeumer.vscode-eslint"
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "dcloud-ide.hbuilderx-language-services"
   ]
 }

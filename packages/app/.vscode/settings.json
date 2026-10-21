@@ -18,6 +18,14 @@
   "[vue]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  // .uts / .uvue 文件格式化程序（语言 id 由 uni-app x 语言服务插件注册，
+  // 解析器在 packages/app/.prettierrc.json5 的 overrides 中指定，切勿用 files.associations 改映射）
+  "[uts]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[uvue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

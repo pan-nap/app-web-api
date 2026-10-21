@@ -5,16 +5,16 @@ import { useUserStore } from "@/store/user.uts";
 const systemInfo = uni.getSystemInfoSync();
 
 interface ResponseData {
-	code ?: number;
-	msg ?: string;
-	data ?: any;
+	code?: number;
+	msg?: string;
+	data?: any;
 }
 
 // 错误提示防抖：并发接口同时报错时，时间窗口内只显示一条错误信息
 const ERROR_TOAST_DEBOUNCE_MS = 1000;
-let errorToastTimer : number | null = null;
+let errorToastTimer: number | null = null;
 
-function showErrorToastOnce(msg : string) {
+function showErrorToastOnce(msg: string) {
 	if (errorToastTimer != null) {
 		// 窗口期内已有错误提示在展示，后续并发错误不再重复弹出
 		return;
@@ -28,21 +28,21 @@ function showErrorToastOnce(msg : string) {
 // 并发请求防抖：同一接口+同一参数的请求在“进行中”时，后续并发调用直接复用同一个 Promise，不重复发请求
 const pendingRequests = new Map<string, Promise<any>>();
 
-function buildRequestKey(method : string, url : string, requestData : any) : string {
+function buildRequestKey(method: string, url: string, requestData: any): string {
 	return method + "|" + url + "|" + JSON.stringify(requestData);
 }
 
-function dedupRequest(key : string, executor : (resolve : (value : any) => void, reject : (reason : any) => void) => void) : Promise<any> {
+function dedupRequest(key: string, executor: (resolve: (value: any) => void, reject: (reason: any) => void) => void): Promise<any> {
 	const existing = pendingRequests.get(key);
 	if (existing != null) {
 		return existing;
 	}
 	const shared = new Promise<any>(executor).then(
-		(res : any) => {
+		(res: any) => {
 			pendingRequests.delete(key);
 			return res;
 		},
-		(err : any) => {
+		(err: any) => {
 			pendingRequests.delete(key);
 			throw err;
 		}
@@ -51,7 +51,7 @@ function dedupRequest(key : string, executor : (resolve : (value : any) => void,
 	return shared;
 }
 
-function getRequestUrl(url : string) : string {
+function getRequestUrl(url: string): string {
 	// #ifdef WEB
 	return "/sf-web" + url;
 	// #endif
@@ -63,7 +63,7 @@ function getRequestUrl(url : string) : string {
 
 // Android 端 uni.request 的 header 不允许 null 值（原生层会抛 602001 系统错误），未登录时不附加 Authorization
 function buildRequestHeader() {
-  const userStore = useUserStore();
+	const userStore = useUserStore();
 	const header = {
 		"Content-Type": "application/json"
 	};
@@ -73,11 +73,13 @@ function buildRequestHeader() {
 	return header;
 }
 
-export default function request(url : string, data : any, method : RequestMethod = "GET") : Promise<any> {
-	const { other_log_info = {}, ...other } = data || {}
+export default function request(url: string, data: any, method: RequestMethod = "GET"): Promise<any> {
+	const userStore = useUserStore();
+	const { other_log_info = {}, ...other } = data || {};
 	const requestData = Object.assign(other, {
 		other_log_info: {
 			...other_log_info,
+			pageTitle: userStore.state.pageTitle,
 			device: systemInfo.uniPlatform,
 			browser: systemInfo.system,
 			os: systemInfo.deviceType,
@@ -100,7 +102,7 @@ export default function request(url : string, data : any, method : RequestMethod
 					reject(errorMessage);
 				}
 			},
-			fail(err : RequestFail) {
+			fail(err: RequestFail) {
 				showErrorToastOnce(err.errMsg);
 				reject(err);
 			}
@@ -108,7 +110,7 @@ export default function request(url : string, data : any, method : RequestMethod
 	});
 }
 
-export function uploadFile(filePath : string) : Promise<any> {
+export function uploadFile(filePath: string): Promise<any> {
 	return new Promise<any>((resolve, reject) => {
 		uni.uploadFile({
 			url: getRequestUrl("/upload"),
@@ -136,7 +138,7 @@ export function uploadFile(filePath : string) : Promise<any> {
 					reject(errorMessage);
 				}
 			},
-			fail(err : RequestFail) {
+			fail(err: RequestFail) {
 				const errMsg = err.errMsg;
 				showErrorToastOnce(errMsg);
 				reject(err);

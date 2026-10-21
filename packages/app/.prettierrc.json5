@@ -1,0 +1,22 @@
+{
+	// 与 .vscode/settings.json 中的 prettier.* 配置保持一致
+	semi: true, // 分号
+	singleQuote: false, // 双引号
+	trailingComma: "none", // 去掉结尾的逗号
+	printWidth: 150,
+	useTabs: true, // .uts 源码为 Tab 缩进，格式化后保持 Tab
+	tabWidth: 2,
+	endOfLine: "lf",
+	overrides: [
+		{
+			// .uts 是 TypeScript 子集，显式指定用 typescript 解析（Prettier 原生不认识 .uts 后缀）
+			files: "*.uts",
+			options: { parser: "typescript" }
+		},
+		{
+			// .uvue 是 Vue SFC 结构，用 vue 解析（template/style 会被格式化，<script lang="uts"> 块保持原样）
+			files: "*.uvue",
+			options: { parser: "vue" }
+		}
+	]
+}
