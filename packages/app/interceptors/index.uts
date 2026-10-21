@@ -1,6 +1,6 @@
-import { useNavigate } from './navigate.uts'
+import { useNavigate } from "./navigate.uts";
 
-export function useInterceptors(app : VueApp) {
-	useNavigate()
-	return app
+export function useInterceptors(app: VueApp) {
+	useNavigate();
+	return app;
 }

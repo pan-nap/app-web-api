@@ -1,0 +1,5 @@
+# 构建产物与第三方 SDK，不参与格式化
+unpackage
+dist
+node_modules
+js_sdk

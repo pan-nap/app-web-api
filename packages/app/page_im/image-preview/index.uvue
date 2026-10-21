@@ -1,7 +1,7 @@
 <template>
-  <view class="flex-1 bg-black flex items-center justify-center">
-    <image :src="imagePath" mode="aspectFit" class="w-full h-full" @click="handleImageClick"></image>
-  </view>
+	<view class="flex-1 bg-black flex items-center justify-center">
+		<image :src="imagePath" mode="aspectFit" class="w-full h-full" @click="handleImageClick"></image>
+	</view>
 </template>
 
 <script setup>

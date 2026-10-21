@@ -1,24 +1,24 @@
 <template>
-  <view>
-    <view @tap="onTriggerTap">
-      <slot></slot>
-    </view>
-    <page-container
-      :show="modelValue"
-      :position="currentPosition"
-      :round="props.round"
-      :overlay="props.overlay"
-      :overlay-style="overlayStyle"
-      :custom-style="customStyle"
-      :duration="props.duration"
-      :z-index="props.zIndex"
-      :close-on-slide-down="props.closeOnSlideDown"
-      @clickoverlay="onClickOverlay"
-      @afterleave="onAfterLeave"
-    >
-      <slot name="content"></slot>
-    </page-container>
-  </view>
+	<view>
+		<view @tap="onTriggerTap">
+			<slot></slot>
+		</view>
+		<page-container
+			:show="modelValue"
+			:position="currentPosition"
+			:round="props.round"
+			:overlay="props.overlay"
+			:overlay-style="overlayStyle"
+			:custom-style="customStyle"
+			:duration="props.duration"
+			:z-index="props.zIndex"
+			:close-on-slide-down="props.closeOnSlideDown"
+			@clickoverlay="onClickOverlay"
+			@afterleave="onAfterLeave"
+		>
+			<slot name="content"></slot>
+		</page-container>
+	</view>
 </template>
 
 <script setup>

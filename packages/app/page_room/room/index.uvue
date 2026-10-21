@@ -1,60 +1,64 @@
 <template>
-  <view class="flex flex-col flex-1 bg-[#1a1a1a] relative">
-    <!-- 主大屏：渲染本地或远端视频 -->
-    <view ref="mainContainer" class="flex-1 flex items-center justify-center bg-[#2a2a2a] relative of-hidden" @tap="switchMainScreen">
-      <text class="absolute top-32 left-32 text-28 text-[rgba(255,255,255,0.6)] z-5 bg-[rgba(0,0,0,0.4)] px-20 py-4 rd-20">{{ mainIsLocal ? "我的画面" : "对方画面" }}</text>
-    </view>
+	<view class="flex flex-col flex-1 bg-[#1a1a1a] relative">
+		<!-- 主大屏：渲染本地或远端视频 -->
+		<view ref="mainContainer" class="flex-1 flex items-center justify-center bg-[#2a2a2a] relative of-hidden" @tap="switchMainScreen">
+			<text class="absolute top-32 left-32 text-28 text-[rgba(255,255,255,0.6)] z-5 bg-[rgba(0,0,0,0.4)] px-20 py-4 rd-20">{{
+				mainIsLocal ? "我的画面" : "对方画面"
+			}}</text>
+		</view>
 
-    <!-- 悬浮小窗：渲染另一路视频，点击切换主次 -->
-    <view
-      ref="pipContainer"
-      class="absolute top-80 right-32 w-240 h-360 rd-24 of-hidden z-10 bg-[#333]"
-      style="border: 2px solid rgba(255, 255, 255, 0.3)"
-      @tap="switchMainScreen"
-    >
-      <text class="absolute top-16 left-16 text-22 text-[rgba(255,255,255,0.6)] z-5 bg-[rgba(0,0,0,0.4)] px-16 py-2 rd-16">{{ mainIsLocal ? "对方画面" : "我的画面" }}</text>
-    </view>
+		<!-- 悬浮小窗：渲染另一路视频，点击切换主次 -->
+		<view
+			ref="pipContainer"
+			class="absolute top-80 right-32 w-240 h-360 rd-24 of-hidden z-10 bg-[#333]"
+			style="border: 2px solid rgba(255, 255, 255, 0.3)"
+			@tap="switchMainScreen"
+		>
+			<text class="absolute top-16 left-16 text-22 text-[rgba(255,255,255,0.6)] z-5 bg-[rgba(0,0,0,0.4)] px-16 py-2 rd-16">{{
+				mainIsLocal ? "对方画面" : "我的画面"
+			}}</text>
+		</view>
 
-    <!-- 底部控制栏 -->
-    <view class="absolute bottom-0 left-0 right-0 z-15 px-32 pt-48 pb-96 flex flex-col items-center justify-center">
-      <view class="flex flex-row justify-center items-center">
-        <view class="flex flex-col items-center justify-center" @tap="toggleCamera">
-          <view
-            class="w-104 h-104 flex items-center justify-center rd-full"
-            :class="cameraOn ? 'bg-[rgba(51,51,51,0.9)]' : 'bg-[rgba(229,57,53,0.8)]'"
-          >
-            <text class="text-48">{{ cameraOn ? "📷" : "🚫" }}</text>
-          </view>
-          <text class="text-22 text-[#ccc] mt-12">{{ cameraOn ? "关闭摄像头" : "开启摄像头" }}</text>
-        </view>
+		<!-- 底部控制栏 -->
+		<view class="absolute bottom-0 left-0 right-0 z-15 px-32 pt-48 pb-96 flex flex-col items-center justify-center">
+			<view class="flex flex-row justify-center items-center">
+				<view class="flex flex-col items-center justify-center" @tap="toggleCamera">
+					<view
+						class="w-104 h-104 flex items-center justify-center rd-full"
+						:class="cameraOn ? 'bg-[rgba(51,51,51,0.9)]' : 'bg-[rgba(229,57,53,0.8)]'"
+					>
+						<text class="text-48">{{ cameraOn ? "📷" : "🚫" }}</text>
+					</view>
+					<text class="text-22 text-[#ccc] mt-12">{{ cameraOn ? "关闭摄像头" : "开启摄像头" }}</text>
+				</view>
 
-        <view class="flex flex-col items-center justify-center ml-48" @tap="toggleMic">
-          <view class="w-104 h-104 flex items-center justify-center rd-full" :class="micOn ? 'bg-[rgba(51,51,51,0.9)]' : 'bg-[rgba(229,57,53,0.8)]'">
-            <text class="text-48">{{ micOn ? "🎤" : "🔇" }}</text>
-          </view>
-          <text class="text-22 text-[#ccc] mt-12">{{ micOn ? "静音" : "取消静音" }}</text>
-        </view>
+				<view class="flex flex-col items-center justify-center ml-48" @tap="toggleMic">
+					<view class="w-104 h-104 flex items-center justify-center rd-full" :class="micOn ? 'bg-[rgba(51,51,51,0.9)]' : 'bg-[rgba(229,57,53,0.8)]'">
+						<text class="text-48">{{ micOn ? "🎤" : "🔇" }}</text>
+					</view>
+					<text class="text-22 text-[#ccc] mt-12">{{ micOn ? "静音" : "取消静音" }}</text>
+				</view>
 
-        <view class="flex flex-col items-center justify-center ml-48" @tap="toggleHome">
-          <view class="w-104 h-104 flex items-center justify-center rd-full">
-            <text class="text-48">👤</text>
-          </view>
-          <text class="text-22 text-[#ccc] mt-12">首页</text>
-        </view>
-      </view>
+				<view class="flex flex-col items-center justify-center ml-48" @tap="toggleHome">
+					<view class="w-104 h-104 flex items-center justify-center rd-full">
+						<text class="text-48">👤</text>
+					</view>
+					<text class="text-22 text-[#ccc] mt-12">首页</text>
+				</view>
+			</view>
 
-      <view class="flex flex-col items-center justify-center mt-20" @tap="hangUp">
-        <view class="w-104 h-104 flex items-center justify-center rd-full bg-[#e53935]">
-          <text class="text-48">📞</text>
-        </view>
-      </view>
-    </view>
+			<view class="flex flex-col items-center justify-center mt-20" @tap="hangUp">
+				<view class="w-104 h-104 flex items-center justify-center rd-full bg-[#e53935]">
+					<text class="text-48">📞</text>
+				</view>
+			</view>
+		</view>
 
-    <!-- 通话状态提示 -->
-    <view class="absolute top-24 z-20" style="left: 50%; transform: translateX(-50%)">
-      <text class="text-28 text-[rgba(255,255,255,0.8)] bg-[rgba(0,0,0,0.5)] px-32 py-8 rd-24">{{ statusText }}</text>
-    </view>
-  </view>
+		<!-- 通话状态提示 -->
+		<view class="absolute top-24 z-20" style="left: 50%; transform: translateX(-50%)">
+			<text class="text-28 text-[rgba(255,255,255,0.8)] bg-[rgba(0,0,0,0.5)] px-32 py-8 rd-24">{{ statusText }}</text>
+		</view>
+	</view>
 </template>
 
 <script setup>

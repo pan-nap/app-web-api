@@ -10,26 +10,26 @@
  * - 9010005 userSig 过期
  * - 9010006 被踢下线
  */
-export type IMErrorCode = 9010001 | 9010002 | 9010003 | 9010004 | 9010005 | 9010006
+export type IMErrorCode = 9010001 | 9010002 | 9010003 | 9010004 | 9010005 | 9010006;
 
-export const UniErrorSubject = 'hs-im'
+export const UniErrorSubject = "hs-im";
 
 export const IMErrors: Map<IMErrorCode, string> = new Map([
-  [9010001, 'IM SDK 初始化失败'],
-  [9010002, '未登录'],
-  [9010003, '登录参数无效'],
-  [9010004, '消息发送失败'],
-  [9010005, 'userSig 过期'],
-  [9010006, '被踢下线'],
-])
+	[9010001, "IM SDK 初始化失败"],
+	[9010002, "未登录"],
+	[9010003, "登录参数无效"],
+	[9010004, "消息发送失败"],
+	[9010005, "userSig 过期"],
+	[9010006, "被踢下线"]
+]);
 
 export class IMErrorImpl extends UniError implements IUniError {
-  override errCode: IMErrorCode
+	override errCode: IMErrorCode;
 
-  constructor(errCode: IMErrorCode) {
-    super()
-    this.errSubject = UniErrorSubject
-    this.errCode = errCode
-    this.errMsg = IMErrors.get(errCode) ?? ''
-  }
+	constructor(errCode: IMErrorCode) {
+		super();
+		this.errSubject = UniErrorSubject;
+		this.errCode = errCode;
+		this.errMsg = IMErrors.get(errCode) ?? "";
+	}
 }

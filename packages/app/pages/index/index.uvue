@@ -1,34 +1,32 @@
 <template>
-  <hs-screen hide-back title="首页">
-    <hs-card @tap="jumpTo('/pages/student/index')"><text>跳转学生页面</text></hs-card>
-    <hs-card @tap="jumpTo('/pages/mqtt/index')"><text>跳转mqtt页面</text></hs-card>
-    <hs-card @tap="jumpTo('/pages/stomp/index')"><text>跳转stomp页面</text></hs-card>
-    <hs-card @tap="jumpTo('/pages/refresher/index')"><text>跳转下拉刷新/上拉加载Demo</text></hs-card>
-    <hs-card @tap="jumpTo('/pages/bluetooth/index')"><text>跳转蓝牙页面</text></hs-card>
-    <hs-card @tap="jumpTo('/page_room/room/index')"><text>跳转视频通话页面</text></hs-card>
-    <hs-card @tap="jumpTo('/page_im/login/index')"><text>跳转即时通讯页面</text></hs-card>
-    <!-- 独立弹窗 -->
-    <hs-card class="mt-12 flex flex-col" @tap="openDialogPageDemo">
-      <text class="fw-[700] text-[#12171C]">openDialogPage 弹窗页面</text>
-      <text class="mt-4 text-24 text-[#7C90AB]">弹窗内容为独立页面，可传参与事件通信，自定义能力最强</text>
-    </hs-card>
-    <!-- hs-dialog 实例：触发插槽方式（el-popover 风格） -->
-    <hs-dialog v-model="visible" position="bottom" :close-on-click-overlay="false">
-      <hs-card class="mt-12 flex flex-col">
-        <text class="fw-[700] text-[#12171C]">点击我打开弹窗（popover 风格）</text>
-        <text class="mt-4 text-24 text-[#7C90AB]">默认插槽 = 触发元素，#content 插槽 = 弹窗内容</text>
-      </hs-card>
-      <template #content>
-        <view class="flex flex-col bg-white w-[70%] rd-24 px-36 py-40">
-          <text class="text-36 fw-[700] text-[#191a1b]">触发插槽弹窗</text>
-          <text class="mt-20 text-26 lh-[42rpx] text-[#636669]">
-            点击默认插槽内的触发元素自动打开弹窗，无需外部状态变量，类似 el-popover。
-          </text>
-          <button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="visible = false">关 闭</button>
-        </view>
-      </template>
-    </hs-dialog>
-  </hs-screen>
+	<hs-screen hide-back title="首页">
+		<hs-card @tap="jumpTo('/pages/student/index')"><text>跳转学生页面</text></hs-card>
+		<hs-card @tap="jumpTo('/pages/mqtt/index')"><text>跳转mqtt页面</text></hs-card>
+		<hs-card @tap="jumpTo('/pages/stomp/index')"><text>跳转stomp页面</text></hs-card>
+		<hs-card @tap="jumpTo('/pages/refresher/index')"><text>跳转下拉刷新/上拉加载Demo</text></hs-card>
+		<hs-card @tap="jumpTo('/pages/bluetooth/index')"><text>跳转蓝牙页面</text></hs-card>
+		<hs-card @tap="jumpTo('/page_room/room/index')"><text>跳转视频通话页面</text></hs-card>
+		<hs-card @tap="jumpTo('/page_im/login/index')"><text>跳转即时通讯页面</text></hs-card>
+		<!-- 独立弹窗 -->
+		<hs-card class="mt-12 flex flex-col" @tap="openDialogPageDemo">
+			<text class="fw-[700] text-[#12171C]">openDialogPage 弹窗页面</text>
+			<text class="mt-4 text-24 text-[#7C90AB]">弹窗内容为独立页面，可传参与事件通信，自定义能力最强</text>
+		</hs-card>
+		<!-- hs-dialog 实例：触发插槽方式（el-popover 风格） -->
+		<hs-dialog v-model="visible" position="bottom" :close-on-click-overlay="false">
+			<hs-card class="mt-12 flex flex-col">
+				<text class="fw-[700] text-[#12171C]">点击我打开弹窗（popover 风格）</text>
+				<text class="mt-4 text-24 text-[#7C90AB]">默认插槽 = 触发元素，#content 插槽 = 弹窗内容</text>
+			</hs-card>
+			<template #content>
+				<view class="flex flex-col bg-white w-[70%] rd-24 px-36 py-40">
+					<text class="text-36 fw-[700] text-[#191a1b]">触发插槽弹窗</text>
+					<text class="mt-20 text-26 lh-[42rpx] text-[#636669]"> 点击默认插槽内的触发元素自动打开弹窗，无需外部状态变量，类似 el-popover。 </text>
+					<button class="mt-32 bg-[#2376f3] text-white text-30 rd-12" @tap="visible = false">关 闭</button>
+				</view>
+			</template>
+		</hs-dialog>
+	</hs-screen>
 </template>
 
 <script setup>

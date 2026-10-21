@@ -1,13 +1,13 @@
 <template>
-  <view class="hs-form-item">
-    <text v-if="label" class="hs-form-item__label">{{ label }}</text>
-    <view class="hs-form-item__field">
-      <view class="hs-form-item__slot">
-        <slot></slot>
-      </view>
-      <text v-if="errMsg" class="hs-form-item__error">{{ errMsg }}</text>
-    </view>
-  </view>
+	<view class="hs-form-item">
+		<text v-if="label" class="hs-form-item__label">{{ label }}</text>
+		<view class="hs-form-item__field">
+			<view class="hs-form-item__slot">
+				<slot></slot>
+			</view>
+			<text v-if="errMsg" class="hs-form-item__error">{{ errMsg }}</text>
+		</view>
+	</view>
 </template>
 
 <script setup>
@@ -150,35 +150,35 @@ provide('hsFormItem', formItemContext)
 
 <style>
 .hs-form-item {
-  display: flex;
-  flex-direction: row;
+	display: flex;
+	flex-direction: row;
 }
 .hs-form-item__label {
-  font-size: 30rpx;
-  color: #222;
-  margin-bottom: 12rpx;
-  margin-right: 24rpx;
-  margin-top: 10rpx;
+	font-size: 30rpx;
+	color: #222;
+	margin-bottom: 12rpx;
+	margin-right: 24rpx;
+	margin-top: 10rpx;
 }
 .hs-form-item__slot {
-  display: flex;
-  flex: 1;
-  flex-direction: row;
-  position: relative;
+	display: flex;
+	flex: 1;
+	flex-direction: row;
+	position: relative;
 }
 .hs-form-item__field {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  position: relative;
-  padding-bottom: 36rpx;
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	position: relative;
+	padding-bottom: 36rpx;
 }
 .hs-form-item__error {
-  color: #f53f3f;
-  font-size: 24rpx;
-  line-height: 36rpx;
-  position: absolute;
-  bottom: 0;
-  left: 0;
+	color: #f53f3f;
+	font-size: 24rpx;
+	line-height: 36rpx;
+	position: absolute;
+	bottom: 0;
+	left: 0;
 }
 </style>

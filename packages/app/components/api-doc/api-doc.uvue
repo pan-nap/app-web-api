@@ -1,76 +1,63 @@
 <template>
-  <view>
-    <view>
-      <button type="button" class="mt-10 mb-10" @tap="onGetApi()">获取API</button>
-      <view>
-        <input
-          placeholder="当前swagger地址"
-          v-model="state.swagger"
-          class="border-solid border-1 border-[#ABB2BF] h-[3.5vh] pl-12 rd-12"
-        />
-      </view>
-    </view>
-    <view v-if="state.apis.length > 0">
-      <view class="py-1vw">
-        <input
-            placeholder="搜索API"
-            v-model="state.search"
-            class="border-solid border-1 border-[#ABB2BF] h-[3.5vh] pl-12 rd-12"
-            @blur="onSearch"
-          />
-      </view>
-    </view>
-    <view v-if="state.searchApi.length > 0">
-      <scroll-view class="h-[70vh] bg-[#272822] p-20">
-        <!-- 整行代码放在同一个 text 内，子 text 仅做行内高亮，避免选中复制时被拆成多行 -->
-        <!-- token 间空格必须用 &nbsp;：普通空格会被 text 节点首尾剪裁掉 -->
-        <text selectable class="text-white">
-          <text class="text-[#F92672]">import&nbsp;</text>
-          <text class="text-white">request&nbsp;</text>
-          <text class="text-[#F92672]">from&nbsp;</text>
-          <text class="text-[#E6DB5B]">'@/utils/request';\n\n</text>
-        </text>
-        <view
-          v-for="(api, idx) in state.searchApi"
-          :key="idx"
-          class="text-white bg-[#272822]"
-        >
-          <text selectable class="text-[#8A8C99]">/**\n</text>
-          <text selectable class="text-[#8A8C99]">* 接口分类: {{ api.description }} - {{ api.tags }}\n</text>
-          <text selectable class="text-[#8A8C99]">* 接口名称: {{ api.summary }}\n</text>
-          <text selectable class="text-[#8A8C99]">* 接口地址: {{ api.url }}\n</text>
-          <text selectable class="text-[#8A8C99]">* 请求方式: {{ api.method }}\n</text>
-          <text v-for="(parame, s1) in api.parameters" :key="s1">
-            <text selectable class="text-[#8A8C99]">
-              *
-              <text selectable class="text-[#C678DD]">@param</text>
-              <text selectable class="text-[#E5C07B]">&nbsp;{[{{ parame.type }}]}</text>
-              <text selectable class="text-[#E06C75]">&nbsp;{{ parame.name }}</text>
-              [{{ parame.description }}] 是否必填: {{ parame.required ? "是" : "否" }}\n
-            </text>
-          </text>
-          <text selectable class="text-[#8A8C99]">
-            *
-            <text selectable class="text-[#C678DD]">@return</text>
-            <text selectable class="text-[#E5C07B]">&nbsp;{[Promise&lt;any&gt;]}</text>
-            接口响应数据\n
-          </text>
-          <text selectable class="text-[#8A8C99]">*/\n</text>
-          <!-- 方法体 + request 调用：一整个 text 节点，换行由字符串里的 \n 控制 -->
-          <text selectable class="text-white">
-            <text class="text-[#F92672]">export&nbsp;</text>
-            <text class="text-[#66D9EF]">function&nbsp;</text>
-            <text class="text-[#6AC62E]">{{ onFunctionName(api.url, api.method) }}</text>
-            <text>(data: any = {}) {\n</text>
-            <text class="text-[#F92672]">&nbsp;&nbsp;return&nbsp;</text>
-            <text class="text-[#66D9EF]">request</text>
-            <text>('{{ api.url }}', data, '{{ api.method }}');\n</text>
-            <text>}\n\n</text>
-          </text>
-        </view>
-      </scroll-view>
-    </view>
-  </view>
+	<view>
+		<view>
+			<button type="button" class="mt-10 mb-10" @tap="onGetApi()">获取API</button>
+			<view>
+				<input placeholder="当前swagger地址" v-model="state.swagger" class="border-solid border-1 border-[#ABB2BF] h-[3.5vh] pl-12 rd-12" />
+			</view>
+		</view>
+		<view v-if="state.apis.length > 0">
+			<view class="py-1vw">
+				<input placeholder="搜索API" v-model="state.search" class="border-solid border-1 border-[#ABB2BF] h-[3.5vh] pl-12 rd-12" @blur="onSearch" />
+			</view>
+		</view>
+		<view v-if="state.searchApi.length > 0">
+			<scroll-view class="h-[70vh] bg-[#272822] p-20">
+				<!-- 整行代码放在同一个 text 内，子 text 仅做行内高亮，避免选中复制时被拆成多行 -->
+				<!-- token 间空格必须用 &nbsp;：普通空格会被 text 节点首尾剪裁掉 -->
+				<text selectable class="text-white">
+					<text class="text-[#F92672]">import&nbsp;</text>
+					<text class="text-white">request&nbsp;</text>
+					<text class="text-[#F92672]">from&nbsp;</text>
+					<text class="text-[#E6DB5B]">'@/utils/request';\n\n</text>
+				</text>
+				<view v-for="(api, idx) in state.searchApi" :key="idx" class="text-white bg-[#272822]">
+					<text selectable class="text-[#8A8C99]">/**\n</text>
+					<text selectable class="text-[#8A8C99]">* 接口分类: {{ api.description }} - {{ api.tags }}\n</text>
+					<text selectable class="text-[#8A8C99]">* 接口名称: {{ api.summary }}\n</text>
+					<text selectable class="text-[#8A8C99]">* 接口地址: {{ api.url }}\n</text>
+					<text selectable class="text-[#8A8C99]">* 请求方式: {{ api.method }}\n</text>
+					<text v-for="(parame, s1) in api.parameters" :key="s1">
+						<text selectable class="text-[#8A8C99]">
+							*
+							<text selectable class="text-[#C678DD]">@param</text>
+							<text selectable class="text-[#E5C07B]">&nbsp;{[{{ parame.type }}]}</text>
+							<text selectable class="text-[#E06C75]">&nbsp;{{ parame.name }}</text>
+							[{{ parame.description }}] 是否必填: {{ parame.required ? "是" : "否" }}\n
+						</text>
+					</text>
+					<text selectable class="text-[#8A8C99]">
+						*
+						<text selectable class="text-[#C678DD]">@return</text>
+						<text selectable class="text-[#E5C07B]">&nbsp;{[Promise&lt;any&gt;]}</text>
+						接口响应数据\n
+					</text>
+					<text selectable class="text-[#8A8C99]">*/\n</text>
+					<!-- 方法体 + request 调用：一整个 text 节点，换行由字符串里的 \n 控制 -->
+					<text selectable class="text-white">
+						<text class="text-[#F92672]">export&nbsp;</text>
+						<text class="text-[#66D9EF]">function&nbsp;</text>
+						<text class="text-[#6AC62E]">{{ onFunctionName(api.url, api.method) }}</text>
+						<text>(data: any = {}) {\n</text>
+						<text class="text-[#F92672]">&nbsp;&nbsp;return&nbsp;</text>
+						<text class="text-[#66D9EF]">request</text>
+						<text>('{{ api.url }}', data, '{{ api.method }}');\n</text>
+						<text>}\n\n</text>
+					</text>
+				</view>
+			</scroll-view>
+		</view>
+	</view>
 </template>
 
 <script setup>

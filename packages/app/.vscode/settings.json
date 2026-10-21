@@ -1,49 +1,49 @@
 {
-  // eslint 保存格式化
-  "eslint.enable": true,
-  "eslint.run": "onType",
-  "eslint.options": {
-    "extensions": [".js", ".ts", ".jsx", ".tsx", ".vue"]
-  },
-  // 编辑器保存格式化
-  "editor.codeActionsOnSave": {
-    "source.fixAll": "never",
-    "source.fixAll.eslint": "explicit"
-  },
-  // .ts 文件格式化程序
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  // .vue 文件格式化程序
-  "[vue]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  // .uts / .uvue 文件格式化程序（语言 id 由 uni-app x 语言服务插件注册，
-  // 解析器在 packages/app/.prettierrc.json5 的 overrides 中指定，切勿用 files.associations 改映射）
-  "[uts]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[uvue]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  // 操作时作为单词分隔符的字符
-  "editor.wordSeparators": "`~!@#%^&*()=+[{]}\\|;:'\",.<>/?",
-  // 一个制表符等于的空格数
-  "editor.tabSize": 2,
-  "editor.multiCursorLimit": 10000,
-  // 行尾字符
-  "files.eol": "\n",
-  // 保存的时候使用 prettier 进行格式化
-  "editor.formatOnSave": true,
-  // css文件忽略警告
-  "css.lint.unknownAtRules": "ignore",
-  "prettier.semi": true, // 分号
-  "prettier.singleQuote": false, // 单引号
-  "prettier.trailingComma": "none", // 去掉结尾的逗号
-  "prettier.printWidth": 150,
-  "vue.codeActions.enabled": false,
-  "git.ignoreLimitWarning": true
+	// eslint 保存格式化
+	"eslint.enable": true,
+	"eslint.run": "onType",
+	"eslint.options": {
+		"extensions": [".js", ".ts", ".jsx", ".tsx", ".vue"]
+	},
+	// 编辑器保存格式化
+	"editor.codeActionsOnSave": {
+		"source.fixAll": "never",
+		"source.fixAll.eslint": "explicit"
+	},
+	// .ts 文件格式化程序
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// .vue 文件格式化程序
+	"[vue]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// .uts / .uvue 文件格式化程序（语言 id 由 uni-app x 语言服务插件注册，
+	// 解析器在 packages/app/.prettierrc.json5 的 overrides 中指定，切勿用 files.associations 改映射）
+	"[uts]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[uvue]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// 操作时作为单词分隔符的字符
+	"editor.wordSeparators": "`~!@#%^&*()=+[{]}\\|;:'\",.<>/?",
+	// 一个制表符等于的空格数
+	"editor.tabSize": 2,
+	"editor.multiCursorLimit": 10000,
+	// 行尾字符
+	"files.eol": "\n",
+	// 保存的时候使用 prettier 进行格式化
+	"editor.formatOnSave": true,
+	// css文件忽略警告
+	"css.lint.unknownAtRules": "ignore",
+	"prettier.semi": true, // 分号
+	"prettier.singleQuote": false, // 单引号
+	"prettier.trailingComma": "none", // 去掉结尾的逗号
+	"prettier.printWidth": 150,
+	"vue.codeActions.enabled": false,
+	"git.ignoreLimitWarning": true
 }

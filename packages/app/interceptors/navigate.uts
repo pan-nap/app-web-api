@@ -1,29 +1,29 @@
-import { useUserStore } from '@/store/user.uts'
+import { useUserStore } from "@/store/user.uts";
 
-let url : string = ''
-const Navigate : AddInterceptorOptions = {
-	invoke: function (options : NavigateToOptions) {
-		url = options.url
+let url: string = "";
+const Navigate: AddInterceptorOptions = {
+	invoke: function (options: NavigateToOptions) {
+		url = options.url;
 		if (!useUserStore().isLogin()) {
 			uni.redirectTo({
-				url: '/pages/login/index'
-			})
-			return false
+				url: "/pages/login/index"
+			});
+			return false;
 		}
-		return true
+		return true;
 	},
-	fail(err : NavigateToFail) {
-		if (err.errMsg.includes('switchTab')) {
+	fail(err: NavigateToFail) {
+		if (err.errMsg.includes("switchTab")) {
 			uni.switchTab({
 				url,
 				complete() {
-					url = ''
+					url = "";
 				}
-			})
+			});
 		}
 	}
-}
+};
 
 export function useNavigate() {
-	uni.addInterceptor('navigateTo', Navigate)
+	uni.addInterceptor("navigateTo", Navigate);
 }

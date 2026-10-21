@@ -1,116 +1,116 @@
 {
-  "pages": [
-    {
-      "path": "pages/index/index",
-      "style": {
-        "navigationBarTitleText": "首页"
-      }
-    },
-    // #ifdef H5
-    {
-      "path": "components/api-doc/api-doc",
-      "style": {
-        "navigationBarTitleText": "接口文档"
-      }
-    },
-    // #endif
-    {
-      "path": "pages/login/index",
-      "style": {
-        "navigationBarTitleText": "登录"
-      }
-    },
-    {
-      "path": "pages/student/index",
-      "style": {
-        "navigationBarTitleText": "学生页"
-      }
-    },
-    {
-      "path": "pages/mqtt/index",
-      "style": {
-        "navigationBarTitleText": "mqtt页"
-      }
-    },
-    {
-      "path": "pages/stomp/index",
-      "style": {
-        "navigationBarTitleText": "stomp测试页"
-      }
-    },
-    {
-      "path": "pages/refresher/index",
-      "style": {
-        "navigationBarTitleText": "刷新与加载Demo"
-      }
-    }
-  ],
-  "subPackages": [
-    {
-      "root": "page_dialog",
-      "pages": [
-        {
-          "path": "index/index",
-          "style": {
-            "navigationStyle": "custom",
-            "disableScroll": true
-          }
-        }
-      ]
-    },
+	"pages": [
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "首页"
+			}
+		},
+		// #ifdef H5
+		{
+			"path": "components/api-doc/api-doc",
+			"style": {
+				"navigationBarTitleText": "接口文档"
+			}
+		},
+		// #endif
+		{
+			"path": "pages/login/index",
+			"style": {
+				"navigationBarTitleText": "登录"
+			}
+		},
+		{
+			"path": "pages/student/index",
+			"style": {
+				"navigationBarTitleText": "学生页"
+			}
+		},
+		{
+			"path": "pages/mqtt/index",
+			"style": {
+				"navigationBarTitleText": "mqtt页"
+			}
+		},
+		{
+			"path": "pages/stomp/index",
+			"style": {
+				"navigationBarTitleText": "stomp测试页"
+			}
+		},
+		{
+			"path": "pages/refresher/index",
+			"style": {
+				"navigationBarTitleText": "刷新与加载Demo"
+			}
+		}
+	],
+	"subPackages": [
+		{
+			"root": "page_dialog",
+			"pages": [
+				{
+					"path": "index/index",
+					"style": {
+						"navigationStyle": "custom",
+						"disableScroll": true
+					}
+				}
+			]
+		},
 
-    {
-      "root": "page_im",
-      "pages": [
-        {
-          "path": "login/index",
-          "style": {
-            "navigationBarTitleText": "IM 登录"
-          }
-        },
-        {
-          "path": "chat/index",
-          "style": {
-            "navigationBarTitleText": "IM 聊天",
-            "disableScroll": true
-          }
-        },
-        {
-          "path": "video-player/index",
-          "style": {
-            "navigationBarTitleText": "视频播放"
-          }
-        },
-        {
-          "path": "image-preview/index",
-          "style": {
-            "navigationBarTitleText": "图片预览"
-          }
-        }
-      ]
-    },
-    // #ifdef APP
-    {
-      "root": "page_room",
-      "pages": [
-        {
-          "path": "room/index",
-          "style": {
-            "navigationBarTitleText": "视频通话"
-          }
-        }
-      ]
-    }
-    // #endif
-  ],
-  "globalStyle": {
-    "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "uni-app x",
-    "navigationBarBackgroundColor": "#F8F8F8",
-    "backgroundColor": "#F8F8F8",
-    "navigationStyle": "custom",
-    // 默认约定：页面统一用 hs-screen（自定义导航栏 + 内容区 scroll-view 内部滚动），禁用页面级滚动避免回弹穿过导航栏；个别需要页面滚动的写在页面 style 里覆盖 disableScroll: false
-    "disableScroll": true
-  },
-  "uniIdRouter": {}
+		{
+			"root": "page_im",
+			"pages": [
+				{
+					"path": "login/index",
+					"style": {
+						"navigationBarTitleText": "IM 登录"
+					}
+				},
+				{
+					"path": "chat/index",
+					"style": {
+						"navigationBarTitleText": "IM 聊天",
+						"disableScroll": true
+					}
+				},
+				{
+					"path": "video-player/index",
+					"style": {
+						"navigationBarTitleText": "视频播放"
+					}
+				},
+				{
+					"path": "image-preview/index",
+					"style": {
+						"navigationBarTitleText": "图片预览"
+					}
+				}
+			]
+		},
+		// #ifdef APP
+		{
+			"root": "page_room",
+			"pages": [
+				{
+					"path": "room/index",
+					"style": {
+						"navigationBarTitleText": "视频通话"
+					}
+				}
+			]
+		}
+		// #endif
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app x",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8",
+		"navigationStyle": "custom",
+		// 默认约定：页面统一用 hs-screen（自定义导航栏 + 内容区 scroll-view 内部滚动），禁用页面级滚动避免回弹穿过导航栏；个别需要页面滚动的写在页面 style 里覆盖 disableScroll: false
+		"disableScroll": true
+	},
+	"uniIdRouter": {}
 }

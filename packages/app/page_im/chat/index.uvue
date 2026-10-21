@@ -1,156 +1,158 @@
 <template>
-  <!-- 页面内有消息列表 scroll-view，关闭 hs-screen 外层滚动避免嵌套 -->
-  <hs-screen title2="IM 聊天" :scroll="false">
-    <template #title>
-      <text class="text-34 fw-[600] text-[#333] mr-12">IM 聊天</text>
-      <text :class="imStore.state.loginStatus == 2 ? 'text-[#4caf50]' : 'text-[#bbb]'" class="text-20 mr-8">●</text>
-      <text class="text-24 text-[#888]">{{ imStore.state.statusText }}</text>
-    </template>
-    <template #right>
-      <text @tap="imStore.state.isLoggedIn ? handleLogout() : null" class="text-28 text-[#e53935]" v-if="imStore.state.isLoggedIn">登出</text>
-    </template>
+	<!-- 页面内有消息列表 scroll-view，关闭 hs-screen 外层滚动避免嵌套 -->
+	<hs-screen title2="IM 聊天" :scroll="false">
+		<template #title>
+			<text class="text-34 fw-[600] text-[#333] mr-12">IM 聊天</text>
+			<text :class="imStore.state.loginStatus == 2 ? 'text-[#4caf50]' : 'text-[#bbb]'" class="text-20 mr-8">●</text>
+			<text class="text-24 text-[#888]">{{ imStore.state.statusText }}</text>
+		</template>
+		<template #right>
+			<text @tap="imStore.state.isLoggedIn ? handleLogout() : null" class="text-28 text-[#e53935]" v-if="imStore.state.isLoggedIn">登出</text>
+		</template>
 
-    <!-- 错误提示 -->
-    <view v-if="imStore.state.errorText.length > 0" class="px-24 pt-16">
-      <view class="bg-[#fff3f3] rd-12 px-24 py-16 flex flex-row items-center justify-between">
-        <text class="text-26 text-[#e53935] flex-1">{{ imStore.state.errorText }}</text>
-        <text class="text-28 text-[#999] ml-16" @tap="clearError">✕</text>
-      </view>
-    </view>
+		<!-- 错误提示 -->
+		<view v-if="imStore.state.errorText.length > 0" class="px-24 pt-16">
+			<view class="bg-[#fff3f3] rd-12 px-24 py-16 flex flex-row items-center justify-between">
+				<text class="text-26 text-[#e53935] flex-1">{{ imStore.state.errorText }}</text>
+				<text class="text-28 text-[#999] ml-16" @tap="clearError">✕</text>
+			</view>
+		</view>
 
-    <!-- 已登录：聊天界面 -->
-    <view class="flex-1 flex flex-col" v-if="imStore.state.isLoggedIn">
-      <!-- 聊天对象设置 -->
-      <view class="flex flex-row items-center px-24 py-16 bg-white" style="border-bottom: 1rpx solid #e5e5e5">
-        <text class="text-26 text-[#555] mr-12">聊天对象：</text>
-        <input
-          class="flex-1 h-72 bg-[#f5f5f5] rd-12 px-20 text-28 text-[#333]"
-          type="text"
-          placeholder="输入对方用户 ID"
-          v-model="imStore.state.peerUserId"
-        />
-        <view class="ml-16 px-24 py-12 bg-[#e3f2fd] rd-12" @tap="loadHistory">
-          <text class="text-24 text-[#1976d2]">加载记录</text>
-        </view>
-      </view>
+		<!-- 已登录：聊天界面 -->
+		<view class="flex-1 flex flex-col" v-if="imStore.state.isLoggedIn">
+			<!-- 聊天对象设置 -->
+			<view class="flex flex-row items-center px-24 py-16 bg-white" style="border-bottom: 1rpx solid #e5e5e5">
+				<text class="text-26 text-[#555] mr-12">聊天对象：</text>
+				<input
+					class="flex-1 h-72 bg-[#f5f5f5] rd-12 px-20 text-28 text-[#333]"
+					type="text"
+					placeholder="输入对方用户 ID"
+					v-model="imStore.state.peerUserId"
+				/>
+				<view class="ml-16 px-24 py-12 bg-[#e3f2fd] rd-12" @tap="loadHistory">
+					<text class="text-24 text-[#1976d2]">加载记录</text>
+				</view>
+			</view>
 
-      <!-- 消息列表 -->
-      <scroll-view class="flex-1 px-24" :scroll-into-view="imStore.state.scrollAnchor" @scrolltolower="loadMoreHistory">
-        <view class="pt-20">
-          <view v-if="imStore.state.messages.length == 0" class="flex items-center justify-center pt-200">
-            <text class="text-28 text-[#bbb]">暂无消息，输入对方 ID 后发送第一条消息吧</text>
-          </view>
-          <view
-            v-for="(msg, index) in imStore.state.messages"
-            :key="index"
-            :id="'msg-' + index"
-            class="flex flex-col mb-20"
-            :class="msg.isSelf ? 'items-flex-end' : 'items-flex-start'"
-          >
-            <!-- 消息发送者 -->
-            <text class="text-22 text-[#999] mb-6 px-8" v-if="!msg.isSelf">{{ msg.sender }}</text>
+			<!-- 消息列表 -->
+			<scroll-view class="flex-1 px-24" :scroll-into-view="imStore.state.scrollAnchor" @scrolltolower="loadMoreHistory">
+				<view class="pt-20">
+					<view v-if="imStore.state.messages.length == 0" class="flex items-center justify-center pt-200">
+						<text class="text-28 text-[#bbb]">暂无消息，输入对方 ID 后发送第一条消息吧</text>
+					</view>
+					<view
+						v-for="(msg, index) in imStore.state.messages"
+						:key="index"
+						:id="'msg-' + index"
+						class="flex flex-col mb-20"
+						:class="msg.isSelf ? 'items-flex-end' : 'items-flex-start'"
+					>
+						<!-- 消息发送者 -->
+						<text class="text-22 text-[#999] mb-6 px-8" v-if="!msg.isSelf">{{ msg.sender }}</text>
 
-            <!-- 根据消息类型渲染不同气泡 -->
-            <!-- 文本消息 -->
-            <view
-              v-if="msg.type == 0"
-              :class="msg.isSelf ? 'bg-[#1976d2]' : 'bg-white'"
-              class="max-w-500 px-24 py-18 rd-20 relative"
-              :style="msg.isSelf ? 'border-bottom-right-radius: 4rpx;' : 'border-bottom-left-radius: 4rpx; border: 1rpx solid #e5e5e5;'"
-              @longpress="showMessageActions(msg.msgId, $event)"
-            >
-              <text class="text-30 lh-[44rpx]" :class="msg.isSelf ? 'text-white' : 'text-[#333]'">{{ msg.text }}</text>
-            </view>
+						<!-- 根据消息类型渲染不同气泡 -->
+						<!-- 文本消息 -->
+						<view
+							v-if="msg.type == 0"
+							:class="msg.isSelf ? 'bg-[#1976d2]' : 'bg-white'"
+							class="max-w-500 px-24 py-18 rd-20 relative"
+							:style="msg.isSelf ? 'border-bottom-right-radius: 4rpx;' : 'border-bottom-left-radius: 4rpx; border: 1rpx solid #e5e5e5;'"
+							@longpress="showMessageActions(msg.msgId, $event)"
+						>
+							<text class="text-30 lh-[44rpx]" :class="msg.isSelf ? 'text-white' : 'text-[#333]'">{{ msg.text }}</text>
+						</view>
 
-            <!-- 图片消息 -->
-            <view v-if="msg.type == 1" class="rd-16 overflow-hidden relative" @tap="previewImage(msg.extra)">
-              <view class="w-300 h-300 bg-[#e0e0e0] flex items-center justify-center">
-                <image :src="getExtraPath(msg.extra)" class="flex-1" mode="widthFix" />
-              </view>
-              <text class="absolute bottom-8 right-12 text-22 text-white bg-[rgba(0,0,0,0.4)] px-8 rd-4">{{ msg.text }}</text>
-            </view>
+						<!-- 图片消息 -->
+						<view v-if="msg.type == 1" class="rd-16 overflow-hidden relative" @tap="previewImage(msg.extra)">
+							<view class="w-300 h-300 bg-[#e0e0e0] flex items-center justify-center">
+								<image :src="getExtraPath(msg.extra)" class="flex-1" mode="widthFix" />
+							</view>
+							<text class="absolute bottom-8 right-12 text-22 text-white bg-[rgba(0,0,0,0.4)] px-8 rd-4">{{ msg.text }}</text>
+						</view>
 
-            <!-- 视频消息 -->
-            <view v-if="msg.type == 2" class="rd-16 overflow-hidden relative" @tap="previewVideo(msg.extra)">
-              <view class="w-300 h-300 bg-[#e0e0e0] flex items-center justify-center">
-                <image :src="getSnapshotPath(msg.extra)" class="flex-1" mode="widthFix" />
-              </view>
-              <text class="absolute bottom-8 right-12 text-22 text-white bg-[rgba(0,0,0,0.4)] px-8 rd-4">{{ msg.text }}</text>
-            </view>
+						<!-- 视频消息 -->
+						<view v-if="msg.type == 2" class="rd-16 overflow-hidden relative" @tap="previewVideo(msg.extra)">
+							<view class="w-300 h-300 bg-[#e0e0e0] flex items-center justify-center">
+								<image :src="getSnapshotPath(msg.extra)" class="flex-1" mode="widthFix" />
+							</view>
+							<text class="absolute bottom-8 right-12 text-22 text-white bg-[rgba(0,0,0,0.4)] px-8 rd-4">{{ msg.text }}</text>
+						</view>
 
-            <!-- 语音消息 -->
-            <view
-              v-if="msg.type == 3"
-              :class="msg.isSelf ? 'bg-[#1976d2]' : 'bg-white'"
-              class="max-w-400 px-24 py-16 rd-20 flex flex-row items-center"
-              :style="msg.isSelf ? 'border-bottom-right-radius: 4rpx;' : 'border-bottom-left-radius: 4rpx; border: 1rpx solid #e5e5e5;'"
-              @tap="playVoice(msg.extra)"
-            >
-              <text class="text-28 mr-12">🎤</text>
-              <text class="text-26" :class="msg.isSelf ? 'text-white' : 'text-[#555]'">{{ msg.text }}</text>
-              <text class="text-22 ml-12" :class="msg.isSelf ? 'text-[rgba(255,255,255,0.7)]' : 'text-[#999]'">{{ getVoiceDuration(msg.extra) }}″</text>
-            </view>
+						<!-- 语音消息 -->
+						<view
+							v-if="msg.type == 3"
+							:class="msg.isSelf ? 'bg-[#1976d2]' : 'bg-white'"
+							class="max-w-400 px-24 py-16 rd-20 flex flex-row items-center"
+							:style="msg.isSelf ? 'border-bottom-right-radius: 4rpx;' : 'border-bottom-left-radius: 4rpx; border: 1rpx solid #e5e5e5;'"
+							@tap="playVoice(msg.extra)"
+						>
+							<text class="text-28 mr-12">🎤</text>
+							<text class="text-26" :class="msg.isSelf ? 'text-white' : 'text-[#555]'">{{ msg.text }}</text>
+							<text class="text-22 ml-12" :class="msg.isSelf ? 'text-[rgba(255,255,255,0.7)]' : 'text-[#999]'"
+								>{{ getVoiceDuration(msg.extra) }}″</text
+							>
+						</view>
 
-            <!-- 自定义消息 -->
-            <view v-if="msg.type == 4" :class="msg.isSelf ? 'bg-[#9c27b0]' : 'bg-[#f3e5f5]'" class="max-w-500 px-24 py-16 rd-20">
-              <text class="text-24 fw-[600] mb-6" :class="msg.isSelf ? 'text-[rgba(255,255,255,0.9)]' : 'text-[#7b1fa2]'">{{ msg.text }}</text>
-              <text class="text-26 lh-[40rpx]" :class="msg.isSelf ? 'text-[rgba(255,255,255,0.8)]' : 'text-[#555]'">{{ msg.extra }}</text>
-            </view>
+						<!-- 自定义消息 -->
+						<view v-if="msg.type == 4" :class="msg.isSelf ? 'bg-[#9c27b0]' : 'bg-[#f3e5f5]'" class="max-w-500 px-24 py-16 rd-20">
+							<text class="text-24 fw-[600] mb-6" :class="msg.isSelf ? 'text-[rgba(255,255,255,0.9)]' : 'text-[#7b1fa2]'">{{ msg.text }}</text>
+							<text class="text-26 lh-[40rpx]" :class="msg.isSelf ? 'text-[rgba(255,255,255,0.8)]' : 'text-[#555]'">{{ msg.extra }}</text>
+						</view>
 
-            <!-- 消息时间戳 -->
-            <text class="text-20 text-[#ccc] mt-4 px-8">{{ formatTime(msg.timestamp) }}</text>
-          </view>
-        </view>
-        <!-- 滚动锚点 -->
-        <view id="msg-bottom" class="h-2"></view>
-      </scroll-view>
+						<!-- 消息时间戳 -->
+						<text class="text-20 text-[#ccc] mt-4 px-8">{{ formatTime(msg.timestamp) }}</text>
+					</view>
+				</view>
+				<!-- 滚动锚点 -->
+				<view id="msg-bottom" class="h-2"></view>
+			</scroll-view>
 
-      <!-- 输入栏 -->
-      <view class="flex flex-col bg-white" style="border-top: 1rpx solid #e5e5e5">
-        <!-- 快捷操作栏 -->
-        <view class="flex flex-row items-center px-16 pt-8 pb-4">
-          <view class="px-16 py-12 bg-[#f5f5f5] rd-8 mr-12" @tap="pickAndSendImage">
-            <text class="text-24 text-[#555]">🖼 图片</text>
-          </view>
-          <view class="px-16 py-12 bg-[#f5f5f5] rd-8 mr-12" @tap="pickAndSendVideo">
-            <text class="text-24 text-[#555]">🎬 视频</text>
-          </view>
-          <view class="px-16 py-12 bg-[#f5f5f5] rd-8" @tap="toggleVoiceRecording">
-            <text class="text-24 text-[#555]">{{ isRecording ? "⏹ 停止" : "🎤 语音" }}</text>
-          </view>
-        </view>
+			<!-- 输入栏 -->
+			<view class="flex flex-col bg-white" style="border-top: 1rpx solid #e5e5e5">
+				<!-- 快捷操作栏 -->
+				<view class="flex flex-row items-center px-16 pt-8 pb-4">
+					<view class="px-16 py-12 bg-[#f5f5f5] rd-8 mr-12" @tap="pickAndSendImage">
+						<text class="text-24 text-[#555]">🖼 图片</text>
+					</view>
+					<view class="px-16 py-12 bg-[#f5f5f5] rd-8 mr-12" @tap="pickAndSendVideo">
+						<text class="text-24 text-[#555]">🎬 视频</text>
+					</view>
+					<view class="px-16 py-12 bg-[#f5f5f5] rd-8" @tap="toggleVoiceRecording">
+						<text class="text-24 text-[#555]">{{ isRecording ? "⏹ 停止" : "🎤 语音" }}</text>
+					</view>
+				</view>
 
-        <!-- 输入行 -->
-        <view class="flex flex-row items-center px-24 pt-8 pb-24">
-          <input
-            class="flex-1 h-72 bg-[#f5f5f5] rd-36 px-28 text-28 text-[#333]"
-            type="text"
-            placeholder="输入消息..."
-            v-model="inputText"
-            confirm-type="send"
-            @confirm="handleSendText"
-          />
-          <view class="ml-16 px-32 py-14 bg-[#1976d2] rd-36" :class="inputText.length == 0 ? 'bg-[#ccc]' : ''" @tap="handleSendText">
-            <text class="text-28 text-white fw-[500]">发送</text>
-          </view>
-        </view>
+				<!-- 输入行 -->
+				<view class="flex flex-row items-center px-24 pt-8 pb-24">
+					<input
+						class="flex-1 h-72 bg-[#f5f5f5] rd-36 px-28 text-28 text-[#333]"
+						type="text"
+						placeholder="输入消息..."
+						v-model="inputText"
+						confirm-type="send"
+						@confirm="handleSendText"
+					/>
+					<view class="ml-16 px-32 py-14 bg-[#1976d2] rd-36" :class="inputText.length == 0 ? 'bg-[#ccc]' : ''" @tap="handleSendText">
+						<text class="text-28 text-white fw-[500]">发送</text>
+					</view>
+				</view>
 
-        <!-- 录音状态提示 -->
-        <view v-if="isRecording" class="px-24 pb-16">
-          <view class="flex flex-row items-center bg-[#fff3f3] rd-12 px-24 py-12">
-            <text class="text-32 text-[#e53935]">●</text>
-            <text class="text-26 text-[#e53935] ml-12">正在录音... {{ recordDuration }}″</text>
-            <text class="text-24 text-[#999] ml-auto">点击"停止"结束录音</text>
-          </view>
-        </view>
-      </view>
-    </view>
+				<!-- 录音状态提示 -->
+				<view v-if="isRecording" class="px-24 pb-16">
+					<view class="flex flex-row items-center bg-[#fff3f3] rd-12 px-24 py-12">
+						<text class="text-32 text-[#e53935]">●</text>
+						<text class="text-26 text-[#e53935] ml-12">正在录音... {{ recordDuration }}″</text>
+						<text class="text-24 text-[#999] ml-auto">点击"停止"结束录音</text>
+					</view>
+				</view>
+			</view>
+		</view>
 
-    <!-- 未登录 -->
-    <view v-if="!imStore.state.isLoggedIn" class="flex-1 flex items-center justify-center">
-      <text class="text-28 text-[#999]">请先登录 IM</text>
-    </view>
-  </hs-screen>
+		<!-- 未登录 -->
+		<view v-if="!imStore.state.isLoggedIn" class="flex-1 flex items-center justify-center">
+			<text class="text-28 text-[#999]">请先登录 IM</text>
+		</view>
+	</hs-screen>
 </template>
 
 <script setup>

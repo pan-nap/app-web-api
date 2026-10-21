@@ -1,25 +1,25 @@
 <template>
-  <!-- dialogPage：独立页面，不进入页面栈，由 uni.openDialogPage 打开 -->
-  <view class="flex-1 bg-[rgba(0,0,0,0.45)] flex flex-row justify-center items-center" @tap="closeByMask">
-    <view class="w-640 bg-white rd-24 pt-48 px-40 pb-40 flex flex-col" @tap.stop>
-      <text class="text-36 fw-[700] text-[#191a1b]">dialogPage 弹窗</text>
-      <text class="mt-20 text-28 lh-[44rpx] text-[#636669]">
-        这是一个独立的 dialogPage 页面（pages/dialog/index）， 通过 uni.openDialogPage 打开，可自定义遮罩、动画、内容与返回逻辑，
-        自定义能力最强，但需要独立页面与事件通信配合。
-      </text>
+	<!-- dialogPage：独立页面，不进入页面栈，由 uni.openDialogPage 打开 -->
+	<view class="flex-1 bg-[rgba(0,0,0,0.45)] flex flex-row justify-center items-center" @tap="closeByMask">
+		<view class="w-640 bg-white rd-24 pt-48 px-40 pb-40 flex flex-col" @tap.stop>
+			<text class="text-36 fw-[700] text-[#191a1b]">dialogPage 弹窗</text>
+			<text class="mt-20 text-28 lh-[44rpx] text-[#636669]">
+				这是一个独立的 dialogPage 页面（pages/dialog/index）， 通过 uni.openDialogPage 打开，可自定义遮罩、动画、内容与返回逻辑，
+				自定义能力最强，但需要独立页面与事件通信配合。
+			</text>
 
-      <!-- 演示：从宿主页面传入参数 -->
-      <view class="mt-24 bg-[#f0f3f7] rd-12 px-20 py-16 flex flex-col" v-if="scene != ''">
-        <text class="text-22 text-[#738199]">接收参数 scene</text>
-        <text class="mt-8 text-28 text-[#2376f3] fw-[600]">{{ scene }}</text>
-      </view>
+			<!-- 演示：从宿主页面传入参数 -->
+			<view class="mt-24 bg-[#f0f3f7] rd-12 px-20 py-16 flex flex-col" v-if="scene != ''">
+				<text class="text-22 text-[#738199]">接收参数 scene</text>
+				<text class="mt-8 text-28 text-[#2376f3] fw-[600]">{{ scene }}</text>
+			</view>
 
-      <view class="mt-40 flex flex-row justify-flex-end">
-        <button class="ml-24 w-180 text-30 rd-12 bg-[#f0f3f7] text-[#40536d]" @tap="cancel">取消</button>
-        <button class="ml-24 w-180 text-30 rd-12 bg-[#2376f3] text-white" @tap="confirm">确定</button>
-      </view>
-    </view>
-  </view>
+			<view class="mt-40 flex flex-row justify-flex-end">
+				<button class="ml-24 w-180 text-30 rd-12 bg-[#f0f3f7] text-[#40536d]" @tap="cancel">取消</button>
+				<button class="ml-24 w-180 text-30 rd-12 bg-[#2376f3] text-white" @tap="confirm">确定</button>
+			</view>
+		</view>
+	</view>
 </template>
 
 <script setup>

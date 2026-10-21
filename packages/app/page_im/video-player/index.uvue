@@ -1,7 +1,7 @@
 <template>
-  <view class="flex-1 bg-black">
-    <video :src="videoSrc" class="flex-1" :controls="true" :autoplay="true" object-fit="contain" @ended="onVideoEnded" />
-  </view>
+	<view class="flex-1 bg-black">
+		<video :src="videoSrc" class="flex-1" :controls="true" :autoplay="true" object-fit="contain" @ended="onVideoEnded" />
+	</view>
 </template>
 
 <script setup>

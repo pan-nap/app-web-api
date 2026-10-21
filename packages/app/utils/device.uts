@@ -3,11 +3,11 @@
  * @returns 是否为小程序环境
  */
 export const isMp = (): boolean => {
-  // #ifdef MP
-  return true;
-  // #endif
+	// #ifdef MP
+	return true;
+	// #endif
 
-  return false;
+	return false;
 };
 
 /**
@@ -15,11 +15,11 @@ export const isMp = (): boolean => {
  * @returns 是否为App环境
  */
 export const isApp = (): boolean => {
-  // #ifdef APP
-  return true;
-  // #endif
+	// #ifdef APP
+	return true;
+	// #endif
 
-  return false;
+	return false;
 };
 
 /**
@@ -27,10 +27,10 @@ export const isApp = (): boolean => {
  * @returns 是否为App-IOS环境
  */
 export const isAppIOS = (): boolean => {
-  // #ifdef APP-IOS
-  return true;
-  // #endif
-  return false;
+	// #ifdef APP-IOS
+	return true;
+	// #endif
+	return false;
 };
 
 /**
@@ -38,10 +38,10 @@ export const isAppIOS = (): boolean => {
  * @returns 是否为App-Android环境
  */
 export const isAppAndroid = (): boolean => {
-  // #ifdef APP-ANDROID
-  return true;
-  // #endif
-  return false;
+	// #ifdef APP-ANDROID
+	return true;
+	// #endif
+	return false;
 };
 
 /**
@@ -49,11 +49,11 @@ export const isAppAndroid = (): boolean => {
  * @returns 是否为H5环境
  */
 export const isH5 = (): boolean => {
-  // #ifdef WEB
-  return true;
-  // #endif
+	// #ifdef WEB
+	return true;
+	// #endif
 
-  return false;
+	return false;
 };
 
 /**
@@ -61,11 +61,11 @@ export const isH5 = (): boolean => {
  * @returns 是否为鸿蒙环境
  */
 export const isHarmony = (): boolean => {
-  // #ifdef APP-HARMONY
-  return true;
-  // #endif
+	// #ifdef APP-HARMONY
+	return true;
+	// #endif
 
-  return false;
+	return false;
 };
 
 /**
@@ -73,12 +73,12 @@ export const isHarmony = (): boolean => {
  * @returns 设备像素比
  */
 export const getDevicePixelRatio = (): number => {
-  const dpr = uni.getDeviceInfo().devicePixelRatio ?? 1;
+	const dpr = uni.getDeviceInfo().devicePixelRatio ?? 1;
 
-  // #ifdef  MP
-  // 微信小程序高清处理
-  return 3;
-  // #endif
+	// #ifdef  MP
+	// 微信小程序高清处理
+	return 3;
+	// #endif
 
-  return dpr;
+	return dpr;
 };

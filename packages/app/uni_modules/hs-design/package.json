@@ -4,8 +4,8 @@
 	"version": "1.0.0",
 	"description": "hs-design",
 	"keywords": [
-        "hs-design"
-    ],
+		"hs-design"
+	],
 	"repository": "",
 	"engines": {
 		"HBuilderX": "^3.1.0",

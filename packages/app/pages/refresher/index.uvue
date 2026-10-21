@@ -1,11 +1,13 @@
 <template>
 	<!-- 下拉刷新重置 + 底部上拉加载：顶部用 hs-screen 内置 refresher（自带“正在加载中”提示），
 	     底部用 @scrolltolower 触底事件 + 列表末尾 loading 尾部 -->
-	<hs-screen title="刷新与加载Demo" refresher-enabled :refresher-triggered="refreshing"
-		@refresherrefresh="onRefresh" @scrolltolower="onLoadMore">
+	<hs-screen title="刷新与加载Demo" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh" @scrolltolower="onLoadMore">
 		<hs-card class="flex flex-col mb-12">
 			<text class="text-32 font-bold text-gray-800 mb-10">使用说明</text>
-			<text class="text-26 text-gray-500">顶部下拉：显示“正在加载中”，松手后重置列表为初始数据；滚动到底部：触发 @scrolltolower，底部显示“正在加载中”并追加数据，满 20 条后显示“没有更多了”。</text>
+			<text class="text-26 text-gray-500"
+				>顶部下拉：显示“正在加载中”，松手后重置列表为初始数据；滚动到底部：触发 @scrolltolower，底部显示“正在加载中”并追加数据，满 20
+				条后显示“没有更多了”。</text
+			>
 		</hs-card>
 		<hs-card v-for="(item, key) in list" :key="key" class="mb-12 flex flex-row items-center justify-between">
 			<text class="text-30 text-[#12171C]">{{ item }}</text>
@@ -22,59 +24,59 @@
 </template>
 
 <script setup>
-	// refresher-triggered 控制顶部下拉提示：true 保持可见，重置完成后置 false 收回
-	const refreshing = ref(false)
-	const loading = ref(false)
-	const noMore = ref(false)
-	const list = ref<string[]>([
-		'初始数据 - 学生 A',
-		'初始数据 - 学生 B',
-		'初始数据 - 学生 C',
-		'初始数据 - 学生 C',
-		'初始数据 - 学生 C',
-		'初始数据 - 学生 C',
-		'初始数据 - 学生 C',
-		'初始数据 - 学生 C',
-		'初始数据 - 学生 C',
-		'初始数据 - 学生 C',
-		'初始数据 - 学生 C',
-		'初始数据 - 学生 C',
-		'初始数据 - 学生 C',
-		'初始数据 - 学生 A',
-		'初始数据 - 学生 B',
-	])
+// refresher-triggered 控制顶部下拉提示：true 保持可见，重置完成后置 false 收回
+const refreshing = ref(false)
+const loading = ref(false)
+const noMore = ref(false)
+const list = ref<string[]>([
+	'初始数据 - 学生 A',
+	'初始数据 - 学生 B',
+	'初始数据 - 学生 C',
+	'初始数据 - 学生 C',
+	'初始数据 - 学生 C',
+	'初始数据 - 学生 C',
+	'初始数据 - 学生 C',
+	'初始数据 - 学生 C',
+	'初始数据 - 学生 C',
+	'初始数据 - 学生 C',
+	'初始数据 - 学生 C',
+	'初始数据 - 学生 C',
+	'初始数据 - 学生 C',
+	'初始数据 - 学生 A',
+	'初始数据 - 学生 B',
+])
 
-	// 初始数据快照，下拉重置时回到这个状态
-	const initialList = list.value.slice()
+// 初始数据快照，下拉重置时回到这个状态
+const initialList = list.value.slice()
 
-	// 下拉刷新：重置列表为初始数据，与触底加载互斥
-	const onRefresh = () => {
-		if (loading.value) {
-			return
-		}
-		refreshing.value = true
-		// 模拟接口请求耗时，真实场景在此调用 store 的首屏查询方法
-		setTimeout(() => {
-			list.value = initialList.slice()
-			noMore.value = false
-			refreshing.value = false
-		}, 1500)
+// 下拉刷新：重置列表为初始数据，与触底加载互斥
+const onRefresh = () => {
+	if (loading.value) {
+		return
 	}
+	refreshing.value = true
+	// 模拟接口请求耗时，真实场景在此调用 store 的首屏查询方法
+	setTimeout(() => {
+		list.value = initialList.slice()
+		noMore.value = false
+		refreshing.value = false
+	}, 1500)
+}
 
-	// 触底加载：loading/刷新期间不重复触发，加载完成后追加数据并收起提示
-	const onLoadMore = () => {
-		if (loading.value || noMore.value || refreshing.value) {
-			return
-		}
-		loading.value = true
-		// 模拟接口请求耗时，真实场景在此调用 store 的分页查询方法
-		setTimeout(() => {
-			for (let i = 0; i < 5; i++) {
-				list.value.push(`上拉加载的数据（共 ${list.value.length + 1} 条）`)
-			}
-			// 演示：加载满 20 条后视为没有更多
-			noMore.value = list.value.length >= 20
-			loading.value = false
-		}, 1500)
+// 触底加载：loading/刷新期间不重复触发，加载完成后追加数据并收起提示
+const onLoadMore = () => {
+	if (loading.value || noMore.value || refreshing.value) {
+		return
 	}
+	loading.value = true
+	// 模拟接口请求耗时，真实场景在此调用 store 的分页查询方法
+	setTimeout(() => {
+		for (let i = 0; i < 5; i++) {
+			list.value.push(`上拉加载的数据（共 ${list.value.length + 1} 条）`)
+		}
+		// 演示：加载满 20 条后视为没有更多
+		noMore.value = list.value.length >= 20
+		loading.value = false
+	}, 1500)
+}
 </script>

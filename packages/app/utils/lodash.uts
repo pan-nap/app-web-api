@@ -4,7 +4,7 @@
  * @example isArray('123') // false
  */
 export function isArray(value: any): boolean {
-  return Array.isArray(value);
+	return Array.isArray(value);
 }
 
 /**
@@ -13,7 +13,7 @@ export function isArray(value: any): boolean {
  * @example isObject([]) // false
  */
 export function isObject(value: any): boolean {
-  return typeof value == "object" && !Array.isArray(value) && !isNull(value);
+	return typeof value == "object" && !Array.isArray(value) && !isNull(value);
 }
 
 /**
@@ -22,7 +22,7 @@ export function isObject(value: any): boolean {
  * @example isString(123) // false
  */
 export function isString(value: any): boolean {
-  return typeof value == "string";
+	return typeof value == "string";
 }
 
 /**
@@ -31,17 +31,17 @@ export function isString(value: any): boolean {
  * @example isNumber('123') // false
  */
 export function isNumber(value: any): boolean {
-  // return typeof value == "number" && !isNaN(value);
-  return /^[\+-]?(\d+\.?\d*|\.\d+|\d\.\d+e\+\d+)$/.test(value);
+	// return typeof value == "number" && !isNaN(value);
+	return /^[\+-]?(\d+\.?\d*|\.\d+|\d\.\d+e\+\d+)$/.test(value);
 }
 /** 链接验证
  * @param {string} url
  * @returns {Boolean}
  */
 export function isURL(url: string): boolean {
-  const reg =
-    /^((https|http|ftp|rtsp|mms):\/\/)(([0-9a-zA-Z_!~*'().&=+$%-]+: )?[0-9a-zA-Z_!~*'().&=+$%-]+@)?(([0-9]{1,3}.){3}[0-9]{1,3}|([0-9a-zA-Z_!~*'()-]+.)*([0-9a-zA-Z][0-9a-zA-Z-]{0,61})?[0-9a-zA-Z].[a-zA-Z]{2,6})(:[0-9]{1,4})?((\/?)|(\/[0-9a-zA-Z_!~*'().;?:@&=+$,%#-]+)+\/?)$/;
-  return reg.test(url);
+	const reg =
+		/^((https|http|ftp|rtsp|mms):\/\/)(([0-9a-zA-Z_!~*'().&=+$%-]+: )?[0-9a-zA-Z_!~*'().&=+$%-]+@)?(([0-9]{1,3}.){3}[0-9]{1,3}|([0-9a-zA-Z_!~*'()-]+.)*([0-9a-zA-Z][0-9a-zA-Z-]{0,61})?[0-9a-zA-Z].[a-zA-Z]{2,6})(:[0-9]{1,4})?((\/?)|(\/[0-9a-zA-Z_!~*'().;?:@&=+$,%#-]+)+\/?)$/;
+	return reg.test(url);
 }
 
 /** 字母验证
@@ -49,8 +49,8 @@ export function isURL(url: string): boolean {
  * @returns {Boolean}
  */
 export function isAbc(str: string): boolean {
-  const reg = /^[A-Za-z]+$/;
-  return reg.test(str);
+	const reg = /^[A-Za-z]+$/;
+	return reg.test(str);
 }
 
 /** 字母或数字验证
@@ -58,8 +58,8 @@ export function isAbc(str: string): boolean {
  * @returns {Boolean}
  */
 export function isAbcNum(str: string): boolean {
-  const reg = /^[0-9a-zA-Z]*$/g;
-  return reg.test(str);
+	const reg = /^[0-9a-zA-Z]*$/g;
+	return reg.test(str);
 }
 
 /** 中文验证
@@ -67,8 +67,8 @@ export function isAbcNum(str: string): boolean {
  * @returns {Boolean}
  */
 export function isChinese(str: string): boolean {
-  const reg = /[\u4E00-\u9FA5]/g;
-  return reg.test(str);
+	const reg = /[\u4E00-\u9FA5]/g;
+	return reg.test(str);
 }
 
 /**
@@ -77,7 +77,7 @@ export function isChinese(str: string): boolean {
  * @example isBoolean(1) // false
  */
 export function isBoolean(value: any): boolean {
-  return typeof value == "boolean";
+	return typeof value == "boolean";
 }
 
 /**
@@ -86,7 +86,7 @@ export function isBoolean(value: any): boolean {
  * @example isFunction({}) // false
  */
 export function isFunction(value: any): boolean {
-  return typeof value == "function";
+	return typeof value == "function";
 }
 
 /**
@@ -95,13 +95,13 @@ export function isFunction(value: any): boolean {
  * @example isNull(undefined) // true
  */
 export function isNull(value?: any): boolean {
-  // #ifdef APP
-  return value == null;
-  // #endif
+	// #ifdef APP
+	return value == null;
+	// #endif
 
-  // #ifndef APP
-  return value == null || value == undefined;
-  // #endif
+	// #ifndef APP
+	return value == null || value == undefined;
+	// #endif
 }
 
 /**
@@ -111,19 +111,19 @@ export function isNull(value?: any): boolean {
  * @example isEmpty({}) // true
  */
 export function isEmpty(value: any): boolean {
-  if (isArray(value)) {
-    return (value as any[]).length == 0;
-  }
+	if (isArray(value)) {
+		return (value as any[]).length == 0;
+	}
 
-  if (isString(value)) {
-    return value == "";
-  }
+	if (isString(value)) {
+		return value == "";
+	}
 
-  if (isObject(value)) {
-    return keys(value).length == 0;
-  }
+	if (isObject(value)) {
+		return keys(value).length == 0;
+	}
 
-  return false;
+	return false;
 }
 
 /**
@@ -131,7 +131,7 @@ export function isEmpty(value: any): boolean {
  * @example keys({a: 1, b: 2}) // ['a', 'b']
  */
 export function keys(value: any): string[] {
-  return Object.keys(value as Record<string, any>);
+	return Object.keys(value as Record<string, any>);
 }
 
 /**
@@ -140,7 +140,7 @@ export function keys(value: any): string[] {
  * @example first([]) // null
  */
 export function first<T>(array: T[]): T | null {
-  return isArray(array) && array.length > 0 ? array[0] : null;
+	return isArray(array) && array.length > 0 ? array[0] : null;
 }
 
 /**
@@ -149,7 +149,7 @@ export function first<T>(array: T[]): T | null {
  * @example last([]) // null
  */
 export function last<T>(array: T[]): T | null {
-  return isArray(array) && array.length > 0 ? array[array.length - 1] : null;
+	return isArray(array) && array.length > 0 ? array[array.length - 1] : null;
 }
 
 /**
@@ -158,15 +158,15 @@ export function last<T>(array: T[]): T | null {
  * @example slice([1, 2, 3], 1, 2) // [2]
  */
 export function slice<T>(array: T[], start: number = 0, end: number = array.length): T[] {
-  if (!isArray(array)) return [];
+	if (!isArray(array)) return [];
 
-  const result: T[] = [];
+	const result: T[] = [];
 
-  for (let i = start; i < end && i < array.length; i++) {
-    result.push(array[i]);
-  }
+	for (let i = start; i < end && i < array.length; i++) {
+		result.push(array[i]);
+	}
 
-  return result;
+	return result;
 }
 
 /**
@@ -175,7 +175,7 @@ export function slice<T>(array: T[], start: number = 0, end: number = array.leng
  * @example has({a: 1}, 'b') // false
  */
 export function has(object: any, key: string): boolean {
-  return keys(object).includes(key);
+	return keys(object).includes(key);
 }
 
 /**
@@ -184,17 +184,17 @@ export function has(object: any, key: string): boolean {
  * @example get({a: {b: 1}}, 'a.c', 'default') // 'default'
  */
 export function get(object: any, path: string, defaultValue: any = null): any {
-  if (isNull(object)) {
-    return defaultValue;
-  }
+	if (isNull(object)) {
+		return defaultValue;
+	}
 
-  const value = (object as Record<string, any>)[path];
+	const value = (object as Record<string, any>)[path];
 
-  if (isNull(value)) {
-    return defaultValue;
-  }
+	if (isNull(value)) {
+		return defaultValue;
+	}
 
-  return value;
+	return value;
 }
 
 /**
@@ -208,46 +208,46 @@ export function get(object: any, path: string, defaultValue: any = null): any {
  * @returns 返回修改后的原始对象，以便链式调用。
  */
 export function set(target: any, path: string | Array<string>, value: any): any {
-  // 1. 路径解析：将 string 路径转换成 Array<string>
-  let pathSegments: Array<string> = [];
-  if (typeof path === "string") {
-    // 使用正则匹配所有键名，处理 'a[0].b.c' 等复杂情况
-    const matches = path.toString().match(/[^.[\]]+/g);
-    pathSegments = matches ? matches : [];
-  } else if (Array.isArray(path)) {
-    pathSegments = [...path];
-  } else {
-    return target;
-  }
+	// 1. 路径解析：将 string 路径转换成 Array<string>
+	let pathSegments: Array<string> = [];
+	if (typeof path === "string") {
+		// 使用正则匹配所有键名，处理 'a[0].b.c' 等复杂情况
+		const matches = path.toString().match(/[^.[\]]+/g);
+		pathSegments = matches ? matches : [];
+	} else if (Array.isArray(path)) {
+		pathSegments = [...path];
+	} else {
+		return target;
+	}
 
-  if (pathSegments.length == 0) return target;
+	if (pathSegments.length == 0) return target;
 
-  // 2. 遍历并创建路径
-  let current: any = target;
-  // 只需要遍历到倒数第二层，最后一层用于设置值
-  for (let i = 0; i < pathSegments.length - 1; i++) {
-    const key = pathSegments[i];
-    const nextKey = pathSegments[i + 1];
-    const nextKeyIsNumber = !isNaN(Number(nextKey));
+	// 2. 遍历并创建路径
+	let current: any = target;
+	// 只需要遍历到倒数第二层，最后一层用于设置值
+	for (let i = 0; i < pathSegments.length - 1; i++) {
+		const key = pathSegments[i];
+		const nextKey = pathSegments[i + 1];
+		const nextKeyIsNumber = !isNaN(Number(nextKey));
 
-    if (typeof current[key] !== "object" || current[key] === null) {
-      // 根据下一级路径判断是创建数组还是对象
-      // 如果下一级路径段是数字（例如 '0'），或下一级路径段能转为数字，则创建数组
-      if (nextKeyIsNumber) {
-        current[key] = [];
-      } else {
-        current[key] = {};
-      }
-    }
-    current = current[key];
-  }
+		if (typeof current[key] !== "object" || current[key] === null) {
+			// 根据下一级路径判断是创建数组还是对象
+			// 如果下一级路径段是数字（例如 '0'），或下一级路径段能转为数字，则创建数组
+			if (nextKeyIsNumber) {
+				current[key] = [];
+			} else {
+				current[key] = {};
+			}
+		}
+		current = current[key];
+	}
 
-  // 3. 赋值
-  const lastKey = pathSegments[pathSegments.length - 1];
-  if (!isEmpty(lastKey)) {
-    current[lastKey] = value;
-  }
-  return target;
+	// 3. 赋值
+	const lastKey = pathSegments[pathSegments.length - 1];
+	if (!isEmpty(lastKey)) {
+		current[lastKey] = value;
+	}
+	return target;
 }
 
 /**
@@ -255,15 +255,15 @@ export function set(target: any, path: string | Array<string>, value: any): any 
  * @example map([1, 2, 3], x => x * 2) // [2, 4, 6]
  */
 export function map<T, U>(array: T[], iteratee: (item: T, index: number) => U): U[] {
-  const result: U[] = [];
+	const result: U[] = [];
 
-  if (!isArray(array)) return result;
+	if (!isArray(array)) return result;
 
-  for (let i = 0; i < array.length; i++) {
-    result.push(iteratee(array[i], i));
-  }
+	for (let i = 0; i < array.length; i++) {
+		result.push(iteratee(array[i], i));
+	}
 
-  return result;
+	return result;
 }
 
 /**
@@ -271,14 +271,14 @@ export function map<T, U>(array: T[], iteratee: (item: T, index: number) => U): 
  * @example reduce([1, 2, 3], (sum, n) => sum + n, 0) // 6
  */
 export function reduce<T, U>(array: T[], iteratee: (accumulator: U, value: T, index: number) => U, initialValue: U): U {
-  if (!isArray(array)) return initialValue;
+	if (!isArray(array)) return initialValue;
 
-  let accumulator: U = initialValue;
-  for (let i = 0; i < array.length; i++) {
-    accumulator = iteratee(accumulator, array[i], i);
-  }
+	let accumulator: U = initialValue;
+	for (let i = 0; i < array.length; i++) {
+		accumulator = iteratee(accumulator, array[i], i);
+	}
 
-  return accumulator;
+	return accumulator;
 }
 
 /**
@@ -286,15 +286,15 @@ export function reduce<T, U>(array: T[], iteratee: (accumulator: U, value: T, in
  * @example every([2, 4, 6], x => x % 2 == 0) // true
  */
 export function every<T>(array: T[], predicate: (value: T, index: number) => boolean): boolean {
-  if (!isArray(array)) return true;
+	if (!isArray(array)) return true;
 
-  for (let i = 0; i < array.length; i++) {
-    if (!predicate(array[i], i)) {
-      return false;
-    }
-  }
+	for (let i = 0; i < array.length; i++) {
+		if (!predicate(array[i], i)) {
+			return false;
+		}
+	}
 
-  return true;
+	return true;
 }
 
 /**
@@ -302,15 +302,15 @@ export function every<T>(array: T[], predicate: (value: T, index: number) => boo
  * @example some([1, 2, 3], x => x > 2) // true
  */
 export function some<T>(array: T[], predicate: (value: T, index: number) => boolean): boolean {
-  if (!isArray(array)) return false;
+	if (!isArray(array)) return false;
 
-  for (let i = 0; i < array.length; i++) {
-    if (predicate(array[i], i)) {
-      return true;
-    }
-  }
+	for (let i = 0; i < array.length; i++) {
+		if (predicate(array[i], i)) {
+			return true;
+		}
+	}
 
-  return false;
+	return false;
 }
 
 /**
@@ -318,21 +318,21 @@ export function some<T>(array: T[], predicate: (value: T, index: number) => bool
  * @example uniq([1, 2, 2, 3]) // [1, 2, 3]
  */
 export function uniq<T>(array: T[]): T[] {
-  if (!isArray(array)) return [];
+	if (!isArray(array)) return [];
 
-  const result: T[] = [];
-  const seen = new Map<T, boolean>();
+	const result: T[] = [];
+	const seen = new Map<T, boolean>();
 
-  for (let i = 0; i < array.length; i++) {
-    const item = array[i];
-    const key = item;
-    if (!seen.has(item)) {
-      seen.set(key, true);
-      result.push(item);
-    }
-  }
+	for (let i = 0; i < array.length; i++) {
+		const item = array[i];
+		const key = item;
+		if (!seen.has(item)) {
+			seen.set(key, true);
+			result.push(item);
+		}
+	}
 
-  return result;
+	return result;
 }
 
 /**
@@ -340,20 +340,20 @@ export function uniq<T>(array: T[]): T[] {
  * @example flatten([1, [2, 3], 4]) // [1, 2, 3, 4]
  */
 export function flatten(array: any[]): any[] {
-  if (!isArray(array)) return [];
+	if (!isArray(array)) return [];
 
-  const result: any[] = [];
+	const result: any[] = [];
 
-  for (let i = 0; i < array.length; i++) {
-    const item = array[i];
-    if (isArray(item)) {
-      result.push(...(item as any[]));
-    } else {
-      result.push(item);
-    }
-  }
+	for (let i = 0; i < array.length; i++) {
+		const item = array[i];
+		if (isArray(item)) {
+			result.push(...(item as any[]));
+		} else {
+			result.push(item);
+		}
+	}
 
-  return result;
+	return result;
 }
 
 /**
@@ -361,20 +361,20 @@ export function flatten(array: any[]): any[] {
  * @example flattenDeep([1, [2, [3, [4]]]]) // [1, 2, 3, 4]
  */
 export function flattenDeep(array: any[]): any[] {
-  if (!isArray(array)) return [];
+	if (!isArray(array)) return [];
 
-  const result: any[] = [];
+	const result: any[] = [];
 
-  for (let i = 0; i < array.length; i++) {
-    const item = array[i];
-    if (isArray(item)) {
-      result.push(...flattenDeep(item as any[]));
-    } else {
-      result.push(item);
-    }
-  }
+	for (let i = 0; i < array.length; i++) {
+		const item = array[i];
+		if (isArray(item)) {
+			result.push(...flattenDeep(item as any[]));
+		} else {
+			result.push(item);
+		}
+	}
 
-  return result;
+	return result;
 }
 
 /**
@@ -383,19 +383,19 @@ export function flattenDeep(array: any[]): any[] {
  * @example sort(['c', 'a', 'b'], 'desc') // ['c', 'b', 'a']
  */
 export function sort<T>(array: T[], order: "asc" | "desc" = "asc"): T[] {
-  const result = [...array];
+	const result = [...array];
 
-  return result.sort((a, b) => {
-    if (typeof a == "number" && typeof b == "number") {
-      return order == "asc" ? a - b : b - a;
-    }
+	return result.sort((a, b) => {
+		if (typeof a == "number" && typeof b == "number") {
+			return order == "asc" ? a - b : b - a;
+		}
 
-    if (typeof a == "string" && typeof b == "string") {
-      return order == "asc" ? a.localeCompare(b) : b.localeCompare(a);
-    }
+		if (typeof a == "string" && typeof b == "string") {
+			return order == "asc" ? a.localeCompare(b) : b.localeCompare(a);
+		}
 
-    return 0;
-  });
+		return 0;
+	});
 }
 
 /**
@@ -403,22 +403,22 @@ export function sort<T>(array: T[], order: "asc" | "desc" = "asc"): T[] {
  * @example orderBy([{age: 30}, {age: 20}], 'age') // [{age: 20}, {age: 30}]
  */
 export function orderBy<T>(array: T[], key: string, order: "asc" | "desc" = "asc"): T[] {
-  if (!isArray(array)) return [];
+	if (!isArray(array)) return [];
 
-  const result = [...array];
+	const result = [...array];
 
-  result.sort((a, b) => {
-    const valueA = get(a as any, key) as number;
-    const valueB = get(b as any, key) as number;
+	result.sort((a, b) => {
+		const valueA = get(a as any, key) as number;
+		const valueB = get(b as any, key) as number;
 
-    if (order == "asc") {
-      return valueA > valueB ? 1 : -1;
-    } else {
-      return valueA < valueB ? 1 : -1;
-    }
-  });
+		if (order == "asc") {
+			return valueA > valueB ? 1 : -1;
+		} else {
+			return valueA < valueB ? 1 : -1;
+		}
+	});
 
-  return result;
+	return result;
 }
 
 /**
@@ -426,28 +426,28 @@ export function orderBy<T>(array: T[], key: string, order: "asc" | "desc" = "asc
  * @example groupBy([{type: 'a'}, {type: 'b'}, {type: 'a'}], 'type') // {a: [{type: 'a'}, {type: 'a'}], b: [{type: 'b'}]}
  */
 export function groupBy<T>(array: T[], key: string) {
-  if (!isArray(array)) return {};
+	if (!isArray(array)) return {};
 
-  const result = {};
+	const result = {};
 
-  for (let i = 0; i < array.length; i++) {
-    const item = array[i];
-    let value = get(item as any, key)!;
+	for (let i = 0; i < array.length; i++) {
+		const item = array[i];
+		let value = get(item as any, key)!;
 
-    if (typeof value == "number") {
-      value = value.toString();
-    }
+		if (typeof value == "number") {
+			value = value.toString();
+		}
 
-    if (typeof value == "string") {
-      if (!isArray(result[value])) {
-        result[value] = new Array<T>();
-      }
+		if (typeof value == "string") {
+			if (!isArray(result[value])) {
+				result[value] = new Array<T>();
+			}
 
-      (result[value] as T[]).push(item);
-    }
-  }
+			(result[value] as T[]).push(item);
+		}
+	}
 
-  return result;
+	return result;
 }
 
 /**
@@ -455,11 +455,11 @@ export function groupBy<T>(array: T[], key: string) {
  * @example assign({a: 1}, {b: 2}) // {a: 1, b: 2}
  */
 export function assign(...items: any[]) {
-  let result = {} as Record<string, any>;
-  items.forEach((item) => {
-    Object.assign(result, item);
-  });
-  return result;
+	let result = {} as Record<string, any>;
+	items.forEach((item) => {
+		Object.assign(result, item);
+	});
+	return result;
 }
 
 /**
@@ -468,11 +468,11 @@ export function assign(...items: any[]) {
  * @example nth([1, 2, 3], -1) // 3
  */
 export function nth<T>(array: T[], index: number): T | null {
-  if (index >= 0) {
-    return array[index];
-  }
+	if (index >= 0) {
+		return array[index];
+	}
 
-  return array[array.length + index];
+	return array[array.length + index];
 }
 
 /**
@@ -480,9 +480,9 @@ export function nth<T>(array: T[], index: number): T | null {
  * @example pull([1, 2, 3, 1, 2, 3], 1, 2) // [3, 3]
  */
 export function pull<T>(array: T[], ...values: T[]): T[] {
-  if (!isArray(array)) return [];
+	if (!isArray(array)) return [];
 
-  return array.filter((item) => !values.includes(item));
+	return array.filter((item) => !values.includes(item));
 }
 
 /**
@@ -490,17 +490,17 @@ export function pull<T>(array: T[], ...values: T[]): T[] {
  * @example remove([1, 2, 3, 4], x => x % 2 == 0) // [1, 3]
  */
 export function remove<T>(array: T[], predicate: (value: T, index: number) => boolean): T[] {
-  if (!isArray(array)) return [];
+	if (!isArray(array)) return [];
 
-  const result: T[] = [];
+	const result: T[] = [];
 
-  for (let i = 0; i < array.length; i++) {
-    if (!predicate(array[i], i)) {
-      result.push(array[i]);
-    }
-  }
+	for (let i = 0; i < array.length; i++) {
+		if (!predicate(array[i], i)) {
+			result.push(array[i]);
+		}
+	}
 
-  return result;
+	return result;
 }
 
 /**
@@ -508,15 +508,15 @@ export function remove<T>(array: T[], predicate: (value: T, index: number) => bo
  * @example forEach([1, 2, 3], x => console.log(x))
  */
 export function forEach<T>(data: T[], iteratee: (value: T, index: number) => void): void {
-  if (isArray(data)) {
-    const array = data as T[];
+	if (isArray(data)) {
+		const array = data as T[];
 
-    for (let i = 0; i < array.length; i++) {
-      if (array[i] != null) {
-        iteratee(array[i], i);
-      }
-    }
-  }
+		for (let i = 0; i < array.length; i++) {
+			if (array[i] != null) {
+				iteratee(array[i], i);
+			}
+		}
+	}
 }
 
 /**
@@ -524,14 +524,14 @@ export function forEach<T>(data: T[], iteratee: (value: T, index: number) => voi
  * @example find([1, 2, 3, 4], x => x > 2) // 3
  */
 export function find<T>(array: T[], predicate: (value: T, index: number) => boolean): T | null {
-  if (!isArray(array)) return null;
+	if (!isArray(array)) return null;
 
-  for (let i = 0; i < array.length; i++) {
-    if (predicate(array[i], i)) {
-      return array[i];
-    }
-  }
-  return null;
+	for (let i = 0; i < array.length; i++) {
+		if (predicate(array[i], i)) {
+			return array[i];
+		}
+	}
+	return null;
 }
 
 /**
@@ -539,13 +539,13 @@ export function find<T>(array: T[], predicate: (value: T, index: number) => bool
  * @example forInObject({a: 1, b: 2}, (value, key) => console.log(key, value))
  */
 export function forInObject(data: any, iteratee: (value: any, key: string) => void): void {
-  if (isObject(data)) {
-    const objKeys = keys(data);
-    for (let i = 0; i < objKeys.length; i++) {
-      const key = objKeys[i];
-      iteratee(get(data, key)!, key);
-    }
-  }
+	if (isObject(data)) {
+		const objKeys = keys(data);
+		for (let i = 0; i < objKeys.length; i++) {
+			const key = objKeys[i];
+			iteratee(get(data, key)!, key);
+		}
+	}
 }
 
 /**
@@ -553,15 +553,15 @@ export function forInObject(data: any, iteratee: (value: any, key: string) => vo
  * @example toArray({a: 1, b: 2}, (value, key) => ({key, value})) // [{key: 'a', value: 1}, {key: 'b', value: 2}]
  */
 export function toArray<T>(data: any, iteratee: (value: any, key: string) => T): T[] {
-  const result: T[] = [];
+	const result: T[] = [];
 
-  if (isObject(data)) {
-    forInObject(data, (value, key) => {
-      result.push(iteratee(value, key));
-    });
-  }
+	if (isObject(data)) {
+		forInObject(data, (value, key) => {
+			result.push(iteratee(value, key));
+		});
+	}
 
-  return result;
+	return result;
 }
 
 /**
@@ -569,24 +569,24 @@ export function toArray<T>(data: any, iteratee: (value: any, key: string) => T):
  * @example uuid() // "123e4567-e89b-12d3-a456-426614174000"
  */
 export function uuid(): string {
-  let uuid = "";
-  let i: number;
-  let random: number;
+	let uuid = "";
+	let i: number;
+	let random: number;
 
-  for (i = 0; i < 36; i++) {
-    if (i == 8 || i == 13 || i == 18 || i == 23) {
-      uuid += "-";
-    } else if (i == 14) {
-      uuid += "4";
-    } else if (i == 19) {
-      random = (Math.random() * 16) | 0;
-      uuid += ((random & 0x3) | 0x8).toString(16);
-    } else {
-      random = (Math.random() * 16) | 0;
-      uuid += random.toString(16);
-    }
-  }
-  return uuid;
+	for (i = 0; i < 36; i++) {
+		if (i == 8 || i == 13 || i == 18 || i == 23) {
+			uuid += "-";
+		} else if (i == 14) {
+			uuid += "4";
+		} else if (i == 19) {
+			random = (Math.random() * 16) | 0;
+			uuid += ((random & 0x3) | 0x8).toString(16);
+		} else {
+			random = (Math.random() * 16) | 0;
+			uuid += random.toString(16);
+		}
+	}
+	return uuid;
 }
 
 /**
@@ -594,22 +594,22 @@ export function uuid(): string {
  * @example debounce(() => console.log('执行'), 300)
  */
 export function debounce(func: () => void, delay: number): () => number {
-  let timeoutId = 0;
+	let timeoutId = 0;
 
-  return function (): number {
-    // 清除之前的定时器
-    if (timeoutId != 0) {
-      clearTimeout(timeoutId);
-    }
+	return function (): number {
+		// 清除之前的定时器
+		if (timeoutId != 0) {
+			clearTimeout(timeoutId);
+		}
 
-    // 设置新的定时器
-    timeoutId = setTimeout(() => {
-      func();
-      timeoutId = 0;
-    }, delay);
+		// 设置新的定时器
+		timeoutId = setTimeout(() => {
+			func();
+			timeoutId = 0;
+		}, delay);
 
-    return timeoutId;
-  };
+		return timeoutId;
+	};
 }
 
 /**
@@ -619,32 +619,32 @@ export function debounce(func: () => void, delay: number): () => number {
  * throttled()
  */
 export function throttle(func: () => void, delay: number): () => number {
-  let timeoutId: number = 0;
-  let lastExec: number = 0;
+	let timeoutId: number = 0;
+	let lastExec: number = 0;
 
-  return function (): number {
-    const now: number = Date.now();
+	return function (): number {
+		const now: number = Date.now();
 
-    // 如果距离上次执行已超过delay，则立即执行
-    if (now - lastExec >= delay) {
-      func();
-      lastExec = now;
-      return 0;
-    }
+		// 如果距离上次执行已超过delay，则立即执行
+		if (now - lastExec >= delay) {
+			func();
+			lastExec = now;
+			return 0;
+		}
 
-    // 否则在剩余时间后执行
-    if (timeoutId != 0) {
-      clearTimeout(timeoutId);
-    }
-    const remaining: number = delay - (now - lastExec);
-    timeoutId = setTimeout(() => {
-      func();
-      lastExec = Date.now();
-      timeoutId = 0;
-    }, remaining);
+		// 否则在剩余时间后执行
+		if (timeoutId != 0) {
+			clearTimeout(timeoutId);
+		}
+		const remaining: number = delay - (now - lastExec);
+		timeoutId = setTimeout(() => {
+			func();
+			lastExec = Date.now();
+			timeoutId = 0;
+		}, remaining);
 
-    return timeoutId;
-  };
+		return timeoutId;
+	};
 }
 
 /**
@@ -652,7 +652,7 @@ export function throttle(func: () => void, delay: number): () => number {
  * @example random(1, 10) // 随机生成1到10之间的整数
  */
 export function random(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
@@ -661,15 +661,15 @@ export function random(min: number, max: number): number {
  * @returns blob数据
  */
 export function base64ToBlob(data: string, type: string = "image/jpeg"): Blob {
-  // #ifdef H5
-  let bytes = window.atob(data.split(",")[1]);
-  let ab = new ArrayBuffer(bytes.length);
-  let ia = new Uint8Array(ab);
-  for (let i = 0; i < bytes.length; i++) {
-    ia[i] = bytes.charCodeAt(i);
-  }
-  return new Blob([ab], { type });
-  // #endif
+	// #ifdef H5
+	let bytes = window.atob(data.split(",")[1]);
+	let ab = new ArrayBuffer(bytes.length);
+	let ia = new Uint8Array(ab);
+	for (let i = 0; i < bytes.length; i++) {
+		ia[i] = bytes.charCodeAt(i);
+	}
+	return new Blob([ab], { type });
+	// #endif
 }
 
 /**
@@ -679,11 +679,11 @@ export function base64ToBlob(data: string, type: string = "image/jpeg"): Blob {
  * @returns 是否相等
  */
 export function isEqual(a: any, b: any): boolean {
-  if (isObject(a) && isObject(b)) {
-    return isEqual(JSON.stringify(a), JSON.stringify(b));
-  } else if (isArray(a) && isArray(b)) {
-    return isEqual(JSON.stringify(a), JSON.stringify(b));
-  }
+	if (isObject(a) && isObject(b)) {
+		return isEqual(JSON.stringify(a), JSON.stringify(b));
+	} else if (isArray(a) && isArray(b)) {
+		return isEqual(JSON.stringify(a), JSON.stringify(b));
+	}
 
-  return a == b;
+	return a == b;
 }

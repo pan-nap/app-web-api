@@ -1,12 +1,12 @@
 <template>
 	<hs-screen title="stomp测试页">
-    <button @tap="initStomp">连接STOMP</button>
+		<button @tap="initStomp">连接STOMP</button>
 		<button @tap="sendMsg">发送消息</button>
-		<text>收到消息：{{receiveMsg}}</text>
+		<text>收到消息：{{ receiveMsg }}</text>
 	</hs-screen>
 </template>
 
-<script setup >
+<script setup>
 import { stompClient, useStompMessage } from '@/utils/stomp.uts'
 import { StompMessage } from '@/uni_modules/hs-stomp'
 

@@ -1,12 +1,12 @@
 <template>
 	<hs-screen title="mqtt页">
-    <button @tap="initMqtt">连接MQTT</button>
+		<button @tap="initMqtt">连接MQTT</button>
 		<button @tap="sendMsg">发送消息</button>
-		<text>收到消息：{{receiveMsg}}</text>
+		<text>收到消息：{{ receiveMsg }}</text>
 	</hs-screen>
 </template>
 
-<script setup >
+<script setup>
 import { mqttClient, useMqttMessage } from '@/utils/mqtt.uts'
 
 const receiveMsg = ref("")

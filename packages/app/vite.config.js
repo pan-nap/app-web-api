@@ -1,8 +1,8 @@
 /** vite.config.js */
-import { defineConfig } from 'vite';
-import uni from '@dcloudio/vite-plugin-uni';
-import { unovite } from './js_sdk/a-hua-unocss';
-import config from './config.json'
+import { defineConfig } from "vite";
+import uni from "@dcloudio/vite-plugin-uni";
+import { unovite } from "./js_sdk/a-hua-unocss";
+import config from "./config.json";
 
 const colors = {
 	// 文字色
@@ -99,7 +99,7 @@ export default defineConfig({
 	plugins: [
 		uni(),
 		unovite({
-			theme: { colors },
+			theme: { colors }
 		})
 	],
 	server: {
@@ -111,11 +111,11 @@ export default defineConfig({
 				rewrite: (path) => path.replace(/^\/sf-web/, ""),
 				changeOrigin: true
 			},
-			'/stomp': {
-					changeOrigin: true,
-					target: 'https://dev.huasuerp.com:6060/',
-					ws: true,
-				}
+			"/stomp": {
+				changeOrigin: true,
+				target: "https://dev.huasuerp.com:6060/",
+				ws: true
+			}
 		}
-	},
+	}
 });
