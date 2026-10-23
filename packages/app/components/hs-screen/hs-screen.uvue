@@ -1,5 +1,5 @@
 <template>
-	<view class="flex-1 flex flex-col bg-[#eef1f7]" :style="[{ paddingTop: `${statusBarHeight}px` }]">
+	<view class="flex-1 flex flex-col bg-white" :style="[{ paddingTop: `${statusBarHeight}px` }]">
 		<view v-if="!hideBar" style="height: 44px" class="bg-white flex flex-row items-center">
 			<view class="basis-[100rpx] shrink-0 px-20 h-[44px] flex flex-row justify-center items-center">
 				<view v-if="!hideBack" @click="navBack" class="flex-1 flex flex-row justify-center items-center">
@@ -22,7 +22,7 @@
 				页面自带滚动容器时传 :scroll="false" 回退为 view，避免双层 scroll-view 嵌套 -->
 		<scroll-view
 			v-if="scroll"
-			class="flex-1 py-10 flex flex-col"
+			class="flex-1 py-10 flex flex-col bg-[#eef1f7]"
 			:refresher-enabled="refresherEnabled"
 			:refresher-triggered="refresherTriggered"
 			refresher-default-style="none"
@@ -37,7 +37,7 @@
 				<text class="text-28 text-[#999]">下拉刷新中。。。</text>
 			</view>
 		</scroll-view>
-		<view v-else class="flex-1 py-10 flex flex-col">
+		<view v-else class="flex-1 py-10 flex flex-col bg-[#eef1f7]">
 			<slot></slot>
 		</view>
 	</view>

@@ -1,6 +1,7 @@
 // ========== hs-im UTS插件 - iOS平台入口 ==========
 // 基于腾讯 TIM SDK iOS 封装
-// 底层使用 OC 桥接类 IMBridgeHelper
+// 底层使用 Swift 混编类 IMBridgeHelper（Swift 直接调用 TencentCloudIM 的 OC SDK）
+// 说明：iOS 原生混编仅支持 Swift 源码，OC 源码不参与编译
 
 // ========== 消息类型常量 ==========
 export class MessageType {

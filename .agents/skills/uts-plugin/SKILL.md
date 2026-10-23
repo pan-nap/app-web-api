@@ -7,24 +7,24 @@ description: "UTS 插件开发规范与坑点总结。涵盖 uni_modules 插件�
 
 ## 快速定位表
 
-| 问题类型            | 描述                                                                       | 参考文件                                                            |
-| ------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| **插件结构**        | 目录组织（以 hs-im 为模板）、package.json 配置、职责分层                      | [plugin-structure.md](references/plugin-structure.md)               |
-| **hs-im 参考项目**  | hs-im 是四平台（Web/Android/iOS/HarmonyOS）UTS 插件的完整模板，涵盖类型系统、纯 JS 辅助、Kotlin/OC 桥接、CLI 原生 SDK 下载等模式，新插件开发应参照此结构 | 参考 `uni_modules/hs-im/` 目录及 [plugin-structure.md](references/plugin-structure.md) |
-| **类型系统**        | 类型声明、模式速查、TS→UTS 转换                                            | [type-system.md](references/type-system.md)                         |
-| **编译错误**        | 内联对象、解构、for...of、async 推断等 15 类错误 + 速查表                  | [compile-errors.md](references/compile-errors.md)                   |
-| **运行时错误**      | ClassCastException、Smart cast、uni.$emit 丢失等 6 类错误 + 速查表         | [runtime-errors.md](references/runtime-errors.md)                   |
-| **开发原则**        | 107 条开发原则（核心 + Android/iOS/HarmonyOS/Web 专属）                   | [development-principles.md](references/development-principles.md)   |
-| **平台适配**        | 条件编译、平台 API 差异速查、Android 专有方法跨端调用（Property does not exist） | [platform-adaptation.md](references/platform-adaptation.md)         |
-| **云打包/本地编译** | libs 目录冲突、config.json 依赖、切换工作流                                | [cloud-build.md](references/cloud-build.md)                         |
-| **TRTC 集成**       | TRTC SDK 桥接架构、事件监听、坑点、自定义基座工作流                        | [trtc-integration.md](references/trtc-integration.md)               |
-| **STOMP 插件**      | STOMP 帧结构、构建/解析、WebSocket 子协议、心跳机制、导出回调 keepAlive   | [stomp-plugin.md](references/stomp-plugin.md)                       |
-| **MQTT 插件**       | MQTT 3.1.1 报文编码、UTF-8 手动实现、Uint8Array 拼接                       | [mqtt-plugin.md](references/mqtt-plugin.md)                         |
-| **Android 混编**    | Kotlin 语法转换、UTSAndroid API、原生资源配置、线程管理、外部SDK API兼容性 | [platform-hybrid-android.md](references/platform-hybrid-android.md) |
-| **iOS 混编**        | Swift 语法转换、DCloudUTSFoundation、原生资源配置                          | [platform-hybrid-ios.md](references/platform-hybrid-ios.md)         |
-| **HarmonyOS 混编**  | ArkTS 类型差异、ohpm 依赖、module.json5、ets 混编                          | [platform-hybrid-harmony.md](references/platform-hybrid-harmony.md) |
-| **Web 混编**        | TIM SDK 常量映射、NPM 依赖配置、Promise 限制、UTSJSONObject payload 构造 | [platform-hybrid-web.md](references/platform-hybrid-web.md)         |
-| **hs-im 集成**      | Android/iOS/HarmonyOS/Web 四平台 TIM SDK 集成方案、文件上传插件           | [platform-hybrid-android.md](references/platform-hybrid-android.md) |
+| 问题类型            | 描述                                                                                                                                                        | 参考文件                                                                               |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **插件结构**        | 目录组织（以 hs-im 为模板）、package.json 配置、职责分层                                                                                                    | [plugin-structure.md](references/plugin-structure.md)                                  |
+| **hs-im 参考项目**  | hs-im 是四平台（Web/Android/iOS/HarmonyOS）UTS 插件的完整模板，涵盖类型系统、纯 JS 辅助、Kotlin/Swift 桥接、CLI 原生 SDK 下载等模式，新插件开发应参照此结构 | 参考 `uni_modules/hs-im/` 目录及 [plugin-structure.md](references/plugin-structure.md) |
+| **类型系统**        | 类型声明、模式速查、TS→UTS 转换                                                                                                                             | [type-system.md](references/type-system.md)                                            |
+| **编译错误**        | 内联对象、解构、for...of、async 推断等 15 类错误 + 速查表                                                                                                   | [compile-errors.md](references/compile-errors.md)                                      |
+| **运行时错误**      | ClassCastException、Smart cast、uni.$emit 丢失等 6 类错误 + 速查表                                                                                          | [runtime-errors.md](references/runtime-errors.md)                                      |
+| **开发原则**        | 107 条开发原则（核心 + Android/iOS/HarmonyOS/Web 专属）                                                                                                     | [development-principles.md](references/development-principles.md)                      |
+| **平台适配**        | 条件编译、平台 API 差异速查、Android 专有方法跨端调用（Property does not exist）                                                                            | [platform-adaptation.md](references/platform-adaptation.md)                            |
+| **云打包/本地编译** | libs 目录冲突、config.json 依赖、切换工作流                                                                                                                 | [cloud-build.md](references/cloud-build.md)                                            |
+| **TRTC 集成**       | TRTC SDK 桥接架构、事件监听、坑点、自定义基座工作流                                                                                                         | [trtc-integration.md](references/trtc-integration.md)                                  |
+| **STOMP 插件**      | STOMP 帧结构、构建/解析、WebSocket 子协议、心跳机制、导出回调 keepAlive                                                                                     | [stomp-plugin.md](references/stomp-plugin.md)                                          |
+| **MQTT 插件**       | MQTT 3.1.1 报文编码、UTF-8 手动实现、Uint8Array 拼接                                                                                                        | [mqtt-plugin.md](references/mqtt-plugin.md)                                            |
+| **Android 混编**    | Kotlin 语法转换、UTSAndroid API、原生资源配置、线程管理、外部SDK API兼容性                                                                                  | [platform-hybrid-android.md](references/platform-hybrid-android.md)                    |
+| **iOS 混编**        | Swift 语法转换、DCloudUTSFoundation、原生资源配置（OC 源码 `.h/.m` 不参与编译）                                                                             | [platform-hybrid-ios.md](references/platform-hybrid-ios.md)                            |
+| **HarmonyOS 混编**  | ArkTS 类型差异、ohpm 依赖、module.json5、ets 混编                                                                                                           | [platform-hybrid-harmony.md](references/platform-hybrid-harmony.md)                    |
+| **Web 混编**        | TIM SDK 常量映射、NPM 依赖配置、Promise 限制、UTSJSONObject payload 构造                                                                                    | [platform-hybrid-web.md](references/platform-hybrid-web.md)                            |
+| **hs-im 集成**      | Android/iOS/HarmonyOS/Web 四平台 TIM SDK 集成方案、文件上传插件                                                                                             | [platform-hybrid-android.md](references/platform-hybrid-android.md)                    |
 
 ## 参考文件索引
 

@@ -18,11 +18,13 @@ export class Md5Service {
 	static hash(input: string | null): string {
 		if (input == null) return "";
 		const digest = MessageDigest.getInstance("MD5");
-		// getBytes("UTF-8") 与各端 UTF-8 语义一致；toByteArray 非 UTS 内置 API
-		const bytes = digest.digest((input! as string).getBytes("UTF-8"));
+		// UTS 的 string 类型没有 getBytes，需先转为 java.lang.String 再按 UTF-8 取字节
+		const javaStr = input! as java.lang.String;
+		const bytes = digest.digest(javaStr.getBytes("UTF-8"));
 		const hexTable = buildHexByteTable();
 		let hex = "";
-		for (let i = 0; i < bytes.length; i++) {
+		// Kotlin ByteArray 用 size 取长度；索引要求 Int，number 会报类型不匹配
+		for (let i: Int = 0; i < bytes.size; i++) {
 			// Kotlin Byte 有符号，+256 归一为 0~255
 			let v = bytes[i] as number;
 			if (v < 0) v = v + 256;

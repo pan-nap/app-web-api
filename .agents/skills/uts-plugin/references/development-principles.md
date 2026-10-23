@@ -17,16 +17,16 @@
 13. **字符串转义用 \xNN** — UTS 不支持 `\0`、`\a` 等简写转义，用 `\x00` 替代
 14. **Map 替代方案** — 需遍历 Map 时，改用 `string[]` 数组 + 手动拼接 key:value，或直接用 `class` 存储
 15. **uni_modules 只可靠导出 class** — 独立函数和 type/interface 重导出可能不被外部解析。插件入口 **必须导出 class**，type/enum 定义在 class 所在文件内直接 `export`，不要用 `export { X } from './file'` 重导出
-16. **多平台编译策略：按需选择单文件条件编译或多平台独立文件** — UTS 插件支持两种多平台编译方案，应根据**是否需要平台桥接语言**（Kotlin/ObjC/Swift）选择：
-    - **方案 A（单文件条件编译）**：所有平台实现在 `utssdk/index.uts` 一个文件中，用 `#ifdef APP-ANDROID / APP-IOS / APP-HARMONY` 区分平台。`app-android/` 目录只放原生配置文件（`config.json`、`AndroidManifest.xml`）。适用于：**纯 UTS 实现、无 Kotlin/ObjC 桥接代码**的简单插件。
-    - **方案 B（多平台独立文件，⭐推荐）**：各平台有独立 `index.uts` 文件放在对应子目录，辅以原生桥接文件。`interface.uts` 在根目录定义 API 契约。适用于：**需要 Kotlin/ObjC/Swift 桥接**的复杂插件（如 hs-im）。
+16. **多平台编译策略：按需选择单文件条件编译或多平台独立文件** — UTS 插件支持两种多平台编译方案，应根据**是否需要平台桥接语言**（Kotlin/Swift）选择：
+    - **方案 A（单文件条件编译）**：所有平台实现在 `utssdk/index.uts` 一个文件中，用 `#ifdef APP-ANDROID / APP-IOS / APP-HARMONY` 区分平台。`app-android/` 目录只放原生配置文件（`config.json`、`AndroidManifest.xml`）。适用于：**纯 UTS 实现、无 Kotlin/Swift 桥接代码**的简单插件。
+    - **方案 B（多平台独立文件，⭐推荐）**：各平台有独立 `index.uts` 文件放在对应子目录，辅以原生桥接文件。`interface.uts` 在根目录定义 API 契约。适用于：**需要 Kotlin/Swift 桥接**的复杂插件（如 hs-im）。
     - 两种方案对比如下：
 
 | 维度 | 方案 A：单文件条件编译 | 方案 B：多平台独立文件（⭐推荐） |
 |------|----------------------|-------------------------------|
-| 目录结构 | `utssdk/index.uts`（含 #ifdef）<br>`utssdk/app-android/config.json` | `utssdk/interface.uts`（契约）<br>`utssdk/app-android/index.uts` + `XxxBridge.kt`<br>`utssdk/app-ios/index.uts` + `XxxBridge.m` |
+| 目录结构 | `utssdk/index.uts`（含 #ifdef）<br>`utssdk/app-android/config.json` | `utssdk/interface.uts`（契约）<br>`utssdk/app-android/index.uts` + `XxxBridge.kt`<br>`utssdk/app-ios/index.uts` + `XxxBridge.swift` |
 | 代码组织 | 一个文件内 `#ifdef` 分平台 | 各平台独立文件，互不干扰 |
-| 桥接语言支持 | ❌ 不支持（无法跨文件引用） | ✅ Kotlin `.kt` / ObjC `.h/.m` 原生桥接 |
+| 桥接语言支持 | ❌ 不支持（无法跨文件引用） | ✅ Kotlin `.kt` / Swift `.swift` 原生桥接 |
 | 代码可读性 | 平台差异大时代码膨胀 | 各平台独立文件，清晰整洁 |
 | 适用场景 | 纯 UTS、简单平台差异 | 需要原生 SDK 桥接、平台逻辑复杂 |
 | 模板项目 | hs-mqtt 插件 | hs-im 插件 |
@@ -41,8 +41,7 @@
     │   └── IMBridge.kt     # Kotlin 桥接类
     ├── app-ios/
     │   ├── index.uts       # iOS 平台实现
-    │   ├── IMBridge.h      # ObjC 桥接头文件
-    │   └── IMBridge.m      # ObjC 桥接实现
+    │   └── IMBridgeHelper.swift  # Swift 桥接类（可直接调用 OC SDK）
     └── app-harmony/
         └── index.uts       # HarmonyOS 平台实现
     ```
@@ -137,9 +136,9 @@
 62. **Java `InputStream.read(byte[])` 不接受 `Array<number>`** — UTS 中 `Array<number>` 不等同于 Java `byte[]`，不能作为参数传入。涉及字节流读取时，改用 `BufferedReader` + `InputStreamReader`（文本）或 `DataInputStream`（二进制）包装类。写入时同理用 `OutputStreamWriter` 替代 `OutputStream.write(byte[])`。
 63. **`UTSAndroid.getUniActivity()` 全程可空** — 返回 `Activity?`，每次使用都必须用 `?.` 空安全调用或先判空后使用。推荐先赋值给局部常量一次，后续统一用该局部变量调用。
 64. **平台子目录是否放 `.uts` 取决于编译方案** — 根据 #16 的两种多平台编译策略：
-    - **方案 A（单文件条件编译）**：`app-android/`、`app-ios/`、`app-harmony/` 目录只存放**原生资源文件**（`AndroidManifest.xml`、`config.json`、ObjC `.h/.m` 等），不放置 `.uts` 文件。所有 `.uts` 代码（包括各平台实现）统一放在 `utssdk/index.uts` 中，通过 `#ifdef` 条件编译分平台。
-    - **方案 B（多平台独立文件）**：`app-android/index.uts`、`app-ios/index.uts`、`web/index.uts` 各自独立实现，原生桥接文件（`.kt`、`.h/.m`）放在同目录下。根目录 `interface.uts` 只放 API 契约（方法签名不含 body）。
-    - **hs-im 采用方案 B**：各平台有独立 `index.uts`，配合 `IMBridge.kt`/`.h/.m` 实现 TIM SDK 桥接。外部通过 `import { IMService } from '@/uni_modules/hs-im'` 统一引入，无需关心平台差异。
+    - **方案 A（单文件条件编译）**：`app-android/`、`app-ios/`、`app-harmony/` 目录只存放**原生资源文件**（`AndroidManifest.xml`、`config.json`、Swift `.swift` 等），不放置 `.uts` 文件。所有 `.uts` 代码（包括各平台实现）统一放在 `utssdk/index.uts` 中，通过 `#ifdef` 条件编译分平台。
+    - **方案 B（多平台独立文件）**：`app-android/index.uts`、`app-ios/index.uts`、`web/index.uts` 各自独立实现，原生桥接文件（`.kt`、`.swift`）放在同目录下。根目录 `interface.uts` 只放 API 契约（方法签名不含 body）。
+    - **hs-im 采用方案 B**：各平台有独立 `index.uts`，配合 `IMBridge.kt` / `IMBridgeHelper.swift` 实现 TIM SDK 桥接。外部通过 `import { IMService } from '@/uni_modules/hs-im'` 统一引入，无需关心平台差异。
 
 ## Android 专属原则
 
