@@ -34,3 +34,6 @@ packages/app/uni_modules/hs-trtc/utssdk/app-android/libs/
 
 # hs-im UTS 插件本地编译依赖（从 AAR 中提取的 classes.jar，云打包只看 config.json）
 packages/app/uni_modules/hs-im/utssdk/app-android/libs/
+
+# a-hua-unocss 临时生成文件
+packages/app/js_sdk/a-hua-unocss/temp.scss
