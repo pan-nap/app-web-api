@@ -1,6 +1,6 @@
 {
-	"baseUrl": "http://192.168.10.72:3001",
-	"mqttUrl": "192.168.10.72",
+	"baseUrl": "http://192.168.10.74:3001",
+	"mqttUrl": "192.168.10.74",
 	"mqttPort": 8098,
 	"stompUrl": "dev.huasuerp.com",
 	"stompPort": 6060
