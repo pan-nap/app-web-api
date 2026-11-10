@@ -6,6 +6,7 @@ import dictionaryRouter from './dictionary.js';
 import employeeRouter from './employees.js';
 import uploadRouter from './upload.js';
 import documentRouter from './documents.js';
+import pacsRouter from './pacs.js';
 
 export function registerRoutes(app) {
   app.use(authRouter.routes()).use(authRouter.allowedMethods());
@@ -16,4 +17,5 @@ export function registerRoutes(app) {
   app.use(employeeRouter.routes()).use(employeeRouter.allowedMethods());
   app.use(uploadRouter.routes()).use(uploadRouter.allowedMethods());
   app.use(documentRouter.routes()).use(documentRouter.allowedMethods());
+  app.use(pacsRouter.routes()).use(pacsRouter.allowedMethods());
 }

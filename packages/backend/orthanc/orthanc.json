@@ -1,0 +1,44 @@
+// 本地测试用 Orthanc 内核配置（P2）。
+// 启动方式：以 bin/ 为工作目录运行 `Orthanc.exe ../orthanc.json`，
+// 故下方相对路径均相对 bin/ 解析。仅 loopback 访问、无认证，与 demo 阶段一致。
+{
+  "Name": "HS_PACS_ORTHANC",
+
+  // 归档与索引目录（相对 bin/）：原始 DICOM 落 storage，SQLite 索引落 db。
+  "StorageDirectory": "../storage",
+  "IndexDirectory": "../db",
+  "StorageCompression": false,
+  "MaximumStorageSize": 0,
+  "MaximumPatientCount": 0,
+
+  // HTTP / REST / DICOMweb 服务
+  "HttpServerEnabled": true,
+  "HttpPort": 8042,
+  "HttpDescribeErrors": true,
+  "RemoteAccessAllowed": false, // 仅本地回环（本地测试，Node BFF 与浏览器均经 localhost）
+  "AuthenticationEnabled": false,
+
+  // DICOM C-STORE SCP（接收真实设备推送）
+  "DicomServerEnabled": true,
+  "DicomAet": "HS_PACS",
+  "DicomPort": 4242,
+  "DicomCheckCalledAet": false,
+  "DefaultEncoding": "Latin1",
+  "DicomModalities": {},
+
+  // 提取版默认 Plugins 为空、不会自动扫描，需显式声明要加载的插件。
+  // 本地测试仅启用 DICOMweb；生产可再追加 MySQL 索引/存储插件。
+  "Plugins": [
+    "./Plugins/OrthancDicomWeb.dll"
+  ],
+
+  "DicomWeb": {
+    "Enable": true,
+    "Root": "/dicom-web/",
+    "EnableWado": true,
+    "WadoRoot": "/wado",
+    "Ssl": false
+  },
+
+  "ConcurrentJobs": 2
+}

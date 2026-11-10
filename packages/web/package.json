@@ -16,6 +16,9 @@
   },
   "dependencies": {
     "@cashier/emr": "workspace:*",
+    "@cornerstonejs/core": "^5.15.2",
+    "@cornerstonejs/dicom-image-loader": "^5.15.2",
+    "@cornerstonejs/tools": "^5.15.2",
     "hs-admin-ui": "https://oss-cn-beijing.hserp.cn/scmp/920001/2026/10/25/2026102597256292.tgz",
     "lodash-es": "^4.18.1",
     "pinia": "^3.0.4",

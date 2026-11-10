@@ -29,6 +29,13 @@ pnpm-debug.log*
 # Upload files (user uploads)
 packages/backend/uploads/
 
+# Orthanc 内核本地运行时：二进制/归档/索引/日志不入库，仅 orthanc.json 配置与启动脚本入库
+packages/backend/orthanc/bin/
+packages/backend/orthanc/storage/
+packages/backend/orthanc/db/
+packages/backend/orthanc/orthanc.log
+packages/backend/orthanc/*.exe
+
 # hs-trtc UTS 插件本地编译依赖（从 AAR 中提取的 classes.jar，云打包只看 config.json）
 packages/app/uni_modules/hs-trtc/utssdk/app-android/libs/
 

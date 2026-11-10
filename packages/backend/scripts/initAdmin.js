@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { createPool } from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
+import { pacsTables } from './pacsSchema.js';
 
 const DB_HOST = process.env.DB_HOST;
 const DB_USER = process.env.DB_USER;
@@ -155,6 +156,11 @@ const initDatabase = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    console.log('正在创建 PACS 表...');
+    for (const table of pacsTables) {
+      await connection.execute(table.sql);
+    }
 
     const [schoolExists] = await connection.execute('SELECT COUNT(*) as count FROM dictionaries WHERE type = ?', ['school']);
     if (schoolExists[0].count === 0) {

@@ -58,6 +58,12 @@ const routes: RouteRecordRaw[] = [
         name: "temperature",
         component: () => import("@/views/admin/temperature/index.vue"),
         meta: { title: "体温单" }
+      },
+      {
+        path: "pacs",
+        name: "pacs",
+        component: () => import("@/views/admin/pacs/index.vue"),
+        meta: { title: "PACS阅片" }
       }
     ]
   }
