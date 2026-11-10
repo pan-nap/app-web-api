@@ -26,9 +26,9 @@
       </el-button-group>
       <el-divider direction="vertical" />
       <el-button size="small" @click="resetView">重置视图</el-button>
-      <el-button size="small" type="success" :loading="saving" @click="saveAnnotations">保存批注</el-button>
+      <el-button size="small" type="success" :loading="saving" :disabled="!canWrite" @click="saveAnnotations">保存批注</el-button>
       <el-button size="small" @click="reloadAnnotations">复现批注</el-button>
-      <el-button size="small" type="danger" @click="clearAnnotations">清空批注</el-button>
+      <el-button size="small" type="danger" :disabled="!canWrite" @click="clearAnnotations">清空批注</el-button>
     </div>
 
     <div class="info-bar">
@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
-import { HsMessage } from "hs-admin-ui";
+import { HsMessage, Utils } from "hs-admin-ui";
 import { init as coreInit, RenderingEngine, Enums as csEnums, Types as csTypes, metaData } from "@cornerstonejs/core";
 import {
   init as toolsInit,
@@ -148,6 +148,11 @@ const windowPresets = ref<{ label: string; center: number; width: number }[]>([]
 const currentWindowIndex = ref("0");
 const activeTool = ref(WindowLevelTool.toolName);
 
+// 角色 gating：与后端 requireRole 一致。admin 全权；technologist 可归档；radiologist 可批注。
+const userRole = ref("");
+const canWrite = computed(() => ["admin", "radiologist", "technologist"].includes(userRole.value));
+const canIngest = computed(() => ["admin", "technologist"].includes(userRole.value));
+
 const activeToolLabel = computed(() => {
   const all = [...operationTools, ...annotationTools];
   return all.find((t) => t.name === activeTool.value)?.label || activeTool.value;
@@ -167,6 +172,14 @@ async function ensureInit() {
   await coreInit();
   await toolsInit();
   dicomImageLoader.init({ maxWebWorkers: 1, useLegacyMetadataProvider: true });
+  // wadouri 影像走独立 XHR，不经 useRequest，需手动注入 JWT，否则受保护的 WADO 路由会拒绝
+  dicomImageLoader.internal.setOptions({
+    beforeSend: async () => {
+      const userInfo = await Utils.systemStore.get("userInfo");
+      const token = userInfo?.access_token;
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    }
+  });
   ALL_TOOLS.forEach((t) => addTool(t));
   csReady = true;
 }
@@ -224,6 +237,10 @@ async function loadStudy() {
       seriesList.value = (detail.series || []) as any[];
       patientInfo.value = `${detail.patientName || ""} / ${detail.patientId || ""}`;
     } else {
+      if (!canIngest.value) {
+        statusText.value = "无可用检查（需归档权限）";
+        return;
+      }
       const seed = await pacsStore.seedDemo();
       currentStudyUid = seed.studyInstanceUid;
       seriesList.value = [
@@ -369,6 +386,8 @@ function resetView() {
 }
 
 onMounted(async () => {
+  const userInfo = await Utils.systemStore.get("userInfo");
+  userRole.value = userInfo?.role || "";
   await setupViewer();
   await loadStudy();
 });

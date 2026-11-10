@@ -7,6 +7,7 @@ import employeeRouter from './employees.js';
 import uploadRouter from './upload.js';
 import documentRouter from './documents.js';
 import pacsRouter from './pacs.js';
+import auditRouter from './audit.js';
 
 export function registerRoutes(app) {
   app.use(authRouter.routes()).use(authRouter.allowedMethods());
@@ -18,4 +19,5 @@ export function registerRoutes(app) {
   app.use(uploadRouter.routes()).use(uploadRouter.allowedMethods());
   app.use(documentRouter.routes()).use(documentRouter.allowedMethods());
   app.use(pacsRouter.routes()).use(pacsRouter.allowedMethods());
+  app.use(auditRouter.routes()).use(auditRouter.allowedMethods());
 }

@@ -26,6 +26,6 @@ export default function(ctx) {
 
     const access_token = generateToken({ id: user.id, username: user.username });
 
-    success(ctx, { access_token, username: user.username }, '登录成功');
+    success(ctx, { access_token, username: user.username, role: user.role, name: user.name, id: user.id }, '登录成功');
   })
 }

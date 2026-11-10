@@ -79,4 +79,30 @@ export const pacsTables = [
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `,
   },
+  {
+    // P3 安全审计：记录登录与 PACS 敏感操作（调阅/归档/批注写删），含拒绝尝试。
+    // user_id 无外键：登录失败/匿名尝试也需落审计，不被约束阻断。
+    name: 'pacs_audit_log',
+    sql: `
+      CREATE TABLE IF NOT EXISTS pacs_audit_log (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        user_id INT NULL,
+        username VARCHAR(50) NULL,
+        action VARCHAR(64) NOT NULL,
+        resource_type VARCHAR(32) NULL,
+        resource_id VARCHAR(64) NULL,
+        study_uid VARCHAR(64) NULL,
+        ip VARCHAR(64) NULL,
+        user_agent VARCHAR(255) NULL,
+        status_code INT NULL,
+        result_code INT NULL,
+        detail JSON NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user (user_id),
+        INDEX idx_action (action),
+        INDEX idx_study (study_uid),
+        INDEX idx_created (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `,
+  },
 ];
