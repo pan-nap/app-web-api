@@ -35,8 +35,14 @@ components/
 <template>
   <hs-screen>
     <hs-card title="标题">
-      <hs-form :model="formData" :rules="formRules">
-        <hs-form-item label="账号" prop="username">
+      <hs-form
+        :model="formData"
+        :rules="formRules"
+      >
+        <hs-form-item
+          label="账号"
+          prop="username"
+        >
           <hs-input v-model="formData.username" />
         </hs-form-item>
       </hs-form>
@@ -48,6 +54,8 @@ components/
 ## 布局规范
 
 ### Flex布局
+
+→ 默认方向、gap 不支持等规则只在 [UVUE CSS](css-ucss.md)「flex 方向」「flex 间距」维护；本文只给项目原子类写法：
 
 ```vue
 <!-- 默认竖排 -->
@@ -74,24 +82,38 @@ components/
 </hs-card>
 ```
 
+### 图片：hs-img
+
+```vue
+<hs-img class="ml-16 h-88 w-160" :src="codeImg" mode="aspectFit" @error="codeImg = ''" />
+```
+
+- `mode` **没声明成 prop**，靠组件内 `defineOptions({ inheritAttrs: false })` + `v-bind="attrs"` 显式透传（`image` 的 `mode` 默认是 `scaleToFill`，丢了就会拉伸）。
+- 组件内部故意拷了一份 `imgSrc = ref(props.src)`：官方 `component/image.md` Tips 要求「在 error 事件里重新设置 image 组件的 src，可实现自定义错误图」，而组件不能直改 `props.src`，所以**模板绑的是 `imgSrc`**。不要把这份镜像当冗余删掉，也不要改回 `:src="props.src"`（那样 `onError` 里的重置会静默失效）。
+- `error` 已在 `defineEmits` 里声明，父页面的 `@error` 只会被 `emit` 触发一次（不会和透传双触发）；`@load` 未声明，原样透给内部 `image`。
+- ⚠️ 占位/错误图文件必须放在 `static/`（项目根或 uni_modules 下）或 `import` 导入，否则不会 copy 进包（官方 Tips）。
+- ℹ️ 置空不会死循环：`imgSrc.value = ''` 重复赋同值不触发渲染，最多重试一次就自锁，不需要另写防重入 flag。
+
 ## 表单组件使用
 
 表单校验规则使用标准对象字面量（蒸汽模式直接写 js/ts 语法，无需 UTSJSONObject）：
 
 ```typescript
-import type { FormRule } from "@/uni_modules/hs-design/types/form";
+import type { FormRule, FormRules } from "@/uni_modules/hs-design/types/form.uts";
 
 const fieldRules: FormRule[] = [
   { required: true, message: "必填提示" },
   { pattern: /^[\s\S]{6,20}$/, message: "格式错误" }
 ];
-// 标准 Record<string, any> 组装规则
-const formRules: Record<string, any> = {
+// FormRules = Record<string, FormRule[]>
+const formRules: FormRules = {
   fieldName: fieldRules
 };
 ```
 
 ## ref 类型规范
+
+> 本节是 ref 类型的**唯一维护处**；[组合式 API](vue-composition-api.md) 与 [DOM、元素与页面栈](features-dom.md) 只链接不重复。
 
 ### 内置组件 ref 类型
 
@@ -106,9 +128,8 @@ const formRules: Record<string, any> = {
 
 ### 调用子组件方法
 
-- **内置组件 / easycom 组件**：通过 `this.$refs.xxx` 拿到实例并 as 成对应类型，用 `.` 调用方法。
-- **非 easycom 自定义组件**：通过 `this.$refs.xxx.$callMethod('方法名', 参数)` 调用。
-- 子组件需通过 **defineExpose** 显式暴露方法或数据。
+- 直接用 `xxx.value.方法名()`；子组件必须 **`defineExpose`** 显式暴露方法或数据，父组件才能通过 ref 调用。easycom 组件可把 ref 断成「组件名驼峰 + ComponentPublicInstance」后调用。
+- ❌ 禁句：`this.$refs.xxx`、`$callMethod(...)` —— 蒸汽模式没有 `this`。
 
 ## Props定义规范
 
@@ -152,7 +173,12 @@ defineProps<{ title?: string }>();
 
 ```vue
 <template>
-  <button class="hs-button" v-bind="attrs" :loading="loading" @tap="handleClick">
+  <button
+    class="hs-button"
+    v-bind="attrs"
+    :loading="loading"
+    @tap="handleClick"
+  >
     <slot></slot>
   </button>
 </template>
@@ -185,7 +211,7 @@ async function handleClick() {
 
 ## useAttrs 安全使用规范
 
-`useAttrs()` 在运行时返回 `Map<String, Any?>` 类型（非 `UTSJSONObject`），使用时必须注意：
+`useAttrs()` 在蒸汽模式（js 驱动）下返回接近普通对象（`utssdk/` 插件里是 `Map<String, Any?>`，见 uts-plugin skill）。**不要写 `attrs as UTSJSONObject`，也不要解构**；接入前先 `console.log(attrs)` 确认当前端实际类型。
 
 **禁止操作**：
 
@@ -197,29 +223,18 @@ async function handleClick() {
 - 模板中通过 `v-bind="bindAttrs"` 绑定过滤后的非事件属性
 - 脚本中通过 `attrs['onClick']` 下标语法获取父级事件
 
-**entries 遍历分端处理**：
+**过滤非事件属性（本项目写法）**：蒸汽模式各平台逻辑层都是 js，统一用 `Object.entries`，不需要再为 Android 写条件编译：
 
 ```typescript
 const bindAttrs = {};
-
-// #ifdef APP-ANDROID
-// Kotlin 环境：attrs.entries 是 Map 的属性
-for (const entry of attrs.entries) {
-  if (entry.key != "onClick") {
-    bindAttrs[entry.key] = entry.value;
-  }
-}
-// #endif
-
-// #ifndef APP-ANDROID
-// JS 环境：使用 Object.entries
 for (const [key, value] of Object.entries(attrs)) {
   if (key != "onClick") {
     bindAttrs[key] = value;
   }
 }
-// #endif
 ```
+
+> 在 `utssdk/` 插件里 attrs 是 `Map<String, Any?>`，才需要 `attrs.entries` 遍历（插件写法见 uts-plugin skill）。
 
 ## 指令使用规范
 
@@ -279,6 +294,13 @@ UniApp X 中文字必须使用 `<text>` 标签包裹，字体属性（大小、�
 
 > 插槽约定：传入 `#content` 插槽即启用**触发模式**，此时默认插槽作为触发元素；不传 `#content` 时保持经典用法，默认插槽即弹窗内容。
 
+### 遮罩与点击关闭行为（page-container 的硬限制）
+
+- `page-container` **没有** `close-on-click-overlay` 属性（官方属性表只有 show / duration / z-index / overlay / round / position / close-on-slide-down / overlay-style / custom-style），**“点遮罩就关”是它的内置行为**。
+- 所以 `hs-dialog` 的 `closeOnClickOverlay=false` **不能**靠在 `@clickoverlay` 里判开关来实现：遮罩已经自己关了，紧接着 `@afterleave` 会把 v-model 置 false。官方唯一开关见 `component/page-container.md` Tips：**`overlay-style` 设 `pointer-events: none`**（hs-dialog 内部已按此实现，见 `mergedOverlayStyle`）。给封装组件加“开关型” prop 前，先确认底层组件有没有对应的原生能力。
+- ⚠️ 代价：`pointer-events: none` 后遮罩不吃事件，点它会**穿透到下层页面**（官方 demo 就叫“蒙层穿透”）。弹窗下方被盖住的按钮仍可能被误触，“必须显式点按钮才能关”的场景要额外考虑下层危险操作（如退出登录）。
+- `pointer-events` 兼容性 Android 3.9 / iOS 4.11 / 鸿蒙 4.61+；但**被 `flatten` 拍平的元素不支持**。
+
 ### 方式一：触发插槽（el-popover 风格，推荐）
 
 点击默认插槽内的触发元素自动打开弹窗，无需外部状态变量：
@@ -297,10 +319,12 @@ UniApp X 中文字必须使用 `<text>` 标签包裹，字体属性（大小、�
 </hs-dialog>
 ```
 
-### 方式二：v-model:visible
+### 方式二：v-model
+
+组件导出的是 `modelValue`，所以写 `v-model`（不是 `v-model:visible`）：
 
 ```vue
-<hs-dialog v-model:visible="dialogVisible" position="center">
+<hs-dialog v-model="dialogVisible" position="center">
   <view class="flex flex-col bg-white w-[70%] rd-24 p-36">
     <text>弹窗内容</text>
     <button @tap="dialogVisible = false">关闭</button>

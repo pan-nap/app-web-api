@@ -31,9 +31,7 @@ description: uni-app x 原生 SDK、混合开发、嵌入原生工程、导出�
 
 ## 集成文档
 
-- [集成 Android 原生 SDK](https://doc.dcloud.net.cn/uni-app-x/native/use/android.html)
-- [集成 iOS 原生 SDK](https://doc.dcloud.net.cn/uni-app-x/native/use/ios.html)
-- [集成鸿蒙原生 SDK](https://doc.dcloud.net.cn/uni-app-x/native/use/harmony.html)
+→ 三平台（Android / iOS / 鸿蒙）集成链接统一在 [文档资源](resources.md)「在线文档」维护，本文不重复。
 
 ## 关键点
 

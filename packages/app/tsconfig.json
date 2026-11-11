@@ -1,0 +1,18 @@
+{
+  // 供 DCloud uni-app x 语言服务插件（VSCode/Qoder）识别项目根：
+  // tsserver 从文件向上找最近的 tsconfig，本文件必须存在，
+  // 否则 hs-his-app 的 uts/uvue 会被仓库根 tsconfig 认领，插件判定为 Web 项目而不提供提示。
+  // @/ 别名与 vue/pinia 类型由插件内置解析，无需在此配置 paths/types。
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["**/*.uts", "**/*.uvue", "**/*.ts", "**/*.js"],
+  "exclude": ["node_modules", "unpackage", "dist", "scripts", "static"]
+}

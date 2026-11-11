@@ -26,9 +26,8 @@ packages/app/
 │   ├── uni-test.js         # 测试脚本
 │   └── .tmp/               # 临时文件（已排除git提交）
 ├── static/                  # 静态资源（图片、字体等，不参与编译仅复制）
-├── store/                   # 状态管理（Class模式）
-│   ├── user.uts            # 用户状态
-│   └── student.uts         # 学生信息状态
+├── store/                   # 状态管理（标准 pinia）
+│   └── user.uts            # 用户状态
 ├── style/                   # 全局样式
 ├── uni_modules/             # 插件市场模块
 │   └── hs-design/          # 组件库
@@ -53,16 +52,24 @@ packages/app/
 ### uni-app x 项目标识
 
 - `manifest.json` 中**必须存在 `"uni-app-x": {}` 节点**，否则项目被识别为老版 uni-app。
-- **蒸汽模式**需在 `manifest.json` 中配置 `"uni-app-x": { "vapor": true }`。
+- **蒸汽模式**需在 `manifest.json` 开启，本项目实际配置（建议不手改字段名，用可视化界面勾选）：
+
+  ```json
+  {
+    "uni-app-x": {
+      "vapor": true, // 蒸汽模式
+      "styleIsolationVersion": "2", // 样式隔离策略 2.0（蒸汽模式仅支持此值）
+      "vapor-render-target": "bytecode" // 视图层编译为字节码（编译快；machine 为机器码）
+    }
+  }
+  ```
+
 - 页面后缀必须为 **`.uvue`**，且需在 `pages.json` 中注册。
 - 工具/脚本文件后缀为 **`.uts`**（不要写 `.ts` 或 `.js`）。
 
-### 蒸汽模式语法要求（HBuilderX 5.24）
+### 蒸汽模式语法要求
 
-- `.uvue` 文件的 `<script setup>` **不要写 `lang` 属性**（5.25 之前不支持 `lang="ts"`）
-- 可直接写 js/ts 语法，无需强类型标注
-- 原生 API（`UTSAndroid`、`getAndroidView`）只能在 `utssdk/` 插件中使用
-- 页面中使用 `UniElement` 代替原生视图引用
+→ 规则清单只在 **SKILL.md「蒸汽模式核心要点」** 维护一份（文件后缀、`lang` 属性、仅组合式、原生 API 需进 `utssdk/`、`UniElement` 等），本文不重复；踩坑时的报错原文见 [常见问题](common-issues.md)。
 
 ### pages.json
 

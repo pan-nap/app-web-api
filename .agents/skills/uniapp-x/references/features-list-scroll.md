@@ -7,12 +7,7 @@ description: 长列表 scroll-view、list-view、吸顶、嵌套滚动、sticky-
 
 ## 蒸汽模式页面滚动特性
 
-**蒸汽模式下，App 平台的页面默认可滚动**，与 Web 和小程序保持一致（需 HBuilder 5.12+）。
-
-| 模式         | 页面默认滚动      | 需要 scroll-view 包裹 |
-| ------------ | ----------------- | --------------------- |
-| VDOM 模式    | ❌ 不可滚动       | ✅ 必须显式包裹       |
-| **蒸汽模式** | ✅ **默认可滚动** | ❌ **不需要**         |
+**蒸汽模式下，App 平台的页面默认可滚动**，与 Web 和小程序保持一致（需 HBuilder 5.12+）：内容自然流动的页面**不需要**再包一层 scroll-view。
 
 ### 禁用页面滚动
 
@@ -49,14 +44,7 @@ description: 长列表 scroll-view、list-view、吸顶、嵌套滚动、sticky-
 </hs-screen>
 
 <!-- 需要滚动监听/下拉刷新：直接在 hs-screen 上监听，事件由内容区 scroll-view 透传 -->
-<hs-screen
-  title="列表页"
-  refresher-enabled
-  :refresher-triggered="triggered"
-  @scrolltolower="loadMore"
-  @scroll="onScroll"
-  @refresherrefresh="onRefresh"
->
+<hs-screen title="列表页" refresher-enabled :refresher-triggered="triggered" @scrolltolower="loadMore" @scroll="onScroll" @refresherrefresh="onRefresh">
   <view>内容区域</view>
 </hs-screen>
 ```
@@ -68,8 +56,23 @@ description: 长列表 scroll-view、list-view、吸顶、嵌套滚动、sticky-
 ## scroll-view 与 list-view
 
 - **scroll-view**：灵活，无内置复用机制，适合普通滚动、自定义下拉刷新；可做**嵌套滚动**。
-- **list-view**：基于 recycle-view，**长列表推荐**，可复用节点保证性能；子节点为 **list-item**，支持 **sticky-header** / **sticky-section** 吸顶。
+- **list-view**：蒸汽模式下是全新 C+uts 实现（**不再基于 recycle-view**），支持 **vue 实例 + DOM 全面复用**，内存占用进一步降低；官方已不再需要以前的“复用长列表/分批加载长列表”示例写法。子节点为 **list-item**，支持 **sticky-header** / **sticky-section** 吸顶。
 - 微信小程序下 list-view 目前编译为 scroll-view。
+
+### 蒸汽模式 list-view 复用硬规则（不满足就不复用）
+
+1. `list-item` 上的 `v-for` **必须写 `:key`**，否则无法复用。
+2. 一个 `list-view` 下只有**第一个**带 `:key` 的 `list-item` v-for 参与复用；多组 list-item 各自 v-for 时，第 2 个起不复用。
+3. `list-view` 与 `list-item` 必须写在**同一个 uvue 文件**内；把 list-item 包到子组件里就不会被复用。
+4. 满足复用条件的才当真正的 list-item，其余会被编译为 view。
+
+### 蒸汽模式组件属性变更（搬入老代码逐个核对）
+
+- 部分组件布尔属性默认值由 **true 改为 false**（scroll-view、swiper 等），搬旧页面时要逐个核对，必要时显式写上。
+- **swiper**：默认高度 150px，需随内容撑开用 `auto-height`；`swiper-item` 的 position 固定为 `absolute`；可用 `indicator-class`/`indicator-active-class` 或 `<template v-slot:indicator>` 自定义指示器；支持 3D 轮播。
+- **uts 兼容模式组件已废弃**：仅支持 uts 标准模式组件（`native-view` 写法）。
+- **早期 hello/uni-id-pages 组件需替换**：`uni-loading` → 内置 `loading`；`uni-popup` → 内置 `page-container`。
+- **iOS 蒸汽模式**：下拉刷新会触发 `onPageScroll` 且 `scrollTop` 为负值，监听滚动时需判负。
 
 ## 吸顶
 
@@ -101,4 +104,4 @@ description: 长列表 scroll-view、list-view、吸顶、嵌套滚动、sticky-
 | `uni.pageScrollTo()`                          | `scroll-top` 属性 / `scroll-into-view` 锚点                                                                                                       |
 | `enablePullDownRefresh` + `onPullDownRefresh` | `refresher-enabled` + `@refresherrefresh`（蒸汽模式无页面下拉刷新，官方要求用 scroll-view api；注意 `disableScroll: true` 时 App 端不能下拉刷新） |
 
-参考实现：`page_im/chat/index.uvue` 用 `@scrolltolower` 加载历史、`:scroll-into-view` 锚定底部。
+参考实现：`pages/refresher/index.uvue`（通过 `hs-screen` 透传的 `refresher-enabled`/`@refresherrefresh` 做下拉重置，`@scrolltolower` 做触底加载）。

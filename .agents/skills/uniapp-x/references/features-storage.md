@@ -7,11 +7,9 @@
 
 ## 同步 API
 
-- **uni.setStorageSync(key, data)**：写入；**对象字面量需 as UTSJSONObject**，例如：
-  ```ts
-  uni.setStorageSync('obj', { a: 1 } as UTSJSONObject)
-  ```
-- **uni.getStorageSync(key)**：读取，返回 any，需根据业务 as 成类型。
+- **uni.setStorageSync(key, data)**：写入。直接传对象字面量即可：`uni.setStorageSync('obj', { a: 1 })`。
+  - ❌ 禁句：`{ a: 1 } as UTSJSONObject`（仅 `utssdk/` 插件内需要强类型声明，见 uts-plugin skill）。
+- **uni.getStorageSync(key)**：读取，返回 any；按普通对象 `.`/`[]` 访问。业务对象建议先过 store/mapper 里的 `toXxx` 转换，避免接口字段变动直接冲击页面。
 - **uni.removeStorageSync(key)** / **uni.clearStorageSync()**：删除/清空。
 
 ## 异步 API

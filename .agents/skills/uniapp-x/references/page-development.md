@@ -13,7 +13,9 @@ description: 页面开发完整示例（登录、首页）
 - **`<script>`**：逻辑，蒸汽模式下仅支持组合式（`<script setup>`）；逻辑层由 js 引擎驱动，直接写标准 js/ts 语法，无需强类型。
 - **`<style>`**：样式，App 端为 ucss 子集。
 
-### 组合式 API（推荐）
+### 组合式约束
+
+→ 语法规则不在本文重复：蒸汽模式**只支持组合式** `<script setup>`，不支持选项式与 mixin；API 一览、“无需 import”、`defineOptions` 见 [组合式 API](vue-composition-api.md)，页面显示/隐藏命名（`onPageShow`/`onPageHide`）见 [生命周期](lifecycle.md)。
 
 ```vue
 <script setup>
@@ -25,25 +27,20 @@ onLoad(() => {});
 </script>
 ```
 
-- 更灵活、代码更短；可监听页面生命周期（onLoad、onShow 等）。
-- 新页面/组件建议直接用组合式。
-
-### 选项式 API（蒸汽模式不支持）
-
-蒸汽模式仅支持组合式 API，不再支持 `export default {}` 选项式写法与 mixin；历史选项式代码需先转为组合式再适配蒸汽模式。
-
 ### 关键点
 
 - 仅能有一个 `<script>`，使用组合式（`<script setup>`）。
-- 页面「显示/隐藏」用 **onPageShow/onPageHide**；组件内用 onShow/onHide。
-- **不需要 import** Vue/uni 的 API（ref、onLoad 等），框架会自动注入。
-- **CSS 统一用 tailwind 原子类**（a-hua-unocss 编译时生成，见 css-ucss.md），极个别无法表达时才用 `<style>` 标签写简单 class。
+- **CSS 统一用 tailwind 原子类**（a-hua-unocss 编译时生成，见 [UVUE CSS](css-ucss.md)），极个别无法表达时才用 `<style>` 标签写简单 class。
 
 ## 登录页（pages/login/index.uvue）
 
 ```vue
 <template>
-  <hs-screen :verify-login="false" hide-bar title="登录页">
+  <hs-screen
+    :verify-login="false"
+    hide-bar
+    title="登录页"
+  >
     <!-- 顶部品牌区域 -->
     <view class="mb-28 flex flex-col p-8 pt-18">
       <view class="flex flex-row items-center justify-center rd-full bg-mainGray-950 px-18 py-10">
@@ -55,17 +52,43 @@ onLoad(() => {});
 
     <!-- 登录卡片 -->
     <hs-card>
-      <hs-form ref="formRef" class="login-form" :model="formData" :rules="formRules">
-        <hs-form-item label="账号" prop="username">
-          <hs-input v-model="formData.username" placeholder="请输入账号" />
+      <hs-form
+        ref="formRef"
+        class="login-form"
+        :model="formData"
+        :rules="formRules"
+      >
+        <hs-form-item
+          label="账号"
+          prop="username"
+        >
+          <hs-input
+            v-model="formData.username"
+            placeholder="请输入账号"
+          />
         </hs-form-item>
-        <hs-form-item label="密码" prop="password">
-          <hs-input v-model="formData.password" type="text" :password="true" placeholder="请输入密码" @confirm="handleLogin" />
+        <hs-form-item
+          label="密码"
+          prop="password"
+        >
+          <hs-input
+            v-model="formData.password"
+            type="text"
+            :password="true"
+            placeholder="请输入密码"
+            @confirm="handleLogin"
+          />
         </hs-form-item>
       </hs-form>
 
       <!-- 使用 hs-button 替代原生 button，内置 loading 状态管理 -->
-      <hs-button type="primary" class="login-submit-btn mt-8" @tap="handleLogin"> 立即登录 </hs-button>
+      <hs-button
+        type="primary"
+        class="login-submit-btn mt-8"
+        @tap="handleLogin"
+      >
+        立即登录
+      </hs-button>
     </hs-card>
   </hs-screen>
 </template>
@@ -121,28 +144,29 @@ const handleLogin = async () => {
 
 ## 首页（pages/index/index.uvue）
 
-遵循 **store-data-decoupling** 规范：页面层只负责UI展示和用户交互，Store层负责接口调用和数据处理：
+当前首页是**功能入口页**：`hs-card` 列表 + `uni.navigateTo` 跳各演示页（mqtt、stomp、刷新与加载 Demo），另附 openDialogPage 与 hs-dialog 两种弹窗示例：
 
 ```vue
 <script setup>
-import { useStudentStore } from '@/store/student.uts'
-import { useUserStore } from '@/store/user.uts'
+import { openDialogPage } from '@/hook/openDialogPage'
 
-const userStore = useUserStore()
-const studentStore = useStudentStore()
+const visible = ref(false)
 
-// 页面只负责计算属性和调用Store
-const isSearchDisabled = computed(() : boolean => {
-  return studentStore.state.idCard.length != 18
-})
+const jumpTo = (url : string) => {
+  uni.navigateTo({ url })
+}
 
-const handleSearch = async () => {
-  if (studentStore.state.idCard == '') {
-    showToast('请输入身份证号')
-    return
-  }
-  // Store 内部处理异常，页面直接 await
-  await studentStore.queryByIdCard(studentStore.state.idCard)
+const openDialogPageDemo = () => {
+  openDialogPage<{ action: string }>('/page_dialog/index/index', {
+    params: { scene: 'dialog-page-demo' }
+  }).then((result) => {
+    const action = result.action ?? ''
+    uni.showToast({ title: action == 'confirm' ? 'dialogPage 返回：确定' : 'dialogPage 返回：取消', icon: 'none' })
+  }).catch((err) => {
+    console.error('openDialogPage fail:', err)
+  })
 }
 </script>
 ```
+
+业务页仍按 [状态管理](state-management.md)「数据解耦规范」写：页面只做 UI 与交互、只 `await` store 方法，接口调用与异常处理全部下沉到 store（完整 store 写法见 state-management「Store 结构」，本文不重复）。

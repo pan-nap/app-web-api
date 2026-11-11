@@ -25,6 +25,8 @@
 | `charCodeAt`     | 返回 `number` | 返回 `Number?` | 需要 `as number`         |
 | `Uint8Array[i]`  | 返回 `number` | 返回 `Number?` | 需要 `as number`         |
 
+> 断言要加在**取值表达式**上（`str.charCodeAt(i) as number`），只给变量写 `const c: number = str.charCodeAt(i)` 不消除可空性，Kotlin 仍报 `type mismatch: inferred type is 'Number?', but 'Number' was expected`。这类错误本地 `publish app-android --type appResource` 验不出来（它只转译不做 Kotlin 类型检查），复现方法见 [compile-errors 3.19](compile-errors.md)。
+
 ## Android 专有方法跨端调用（调用侧必须条件编译）
 
 **现象**（Web/H5 构建）：

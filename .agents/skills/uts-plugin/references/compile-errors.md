@@ -184,42 +184,42 @@ import { MqttConfig } from "./interface.uts";
 
 ## 高频编译错误速查表
 
-| 错误信息                                                                      | 原因                                    | 解决方案                                                                        |
-| ----------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------- | ---------------- | --------- |
-| `Direct declaration of Object Literal Type is not supported`                  | 内联对象类型                            | 用 `class` 替代 `type { ... }`                                                  |
-| `Intersection Type is not supported`                                          | `as` 与 `&` 未加括号                    | `(x as number) & mask`                                                          |
-| `Conditional statements must use boolean types`                               | `                                       |                                                                                 | ` 用于非布尔类型 | 改用 `??` |
-| `Cannot infer type for this parameter`                                        | 类型未显式标注                          | 添加类型声明                                                                    |
-| `Smart cast to 'X' is impossible...`                                          | 变量被闭包捕获修改                      | 拷贝到局部 let/const                                                            |
-| `Unresolved reference`                                                        | 类型/变量未导入                         | 检查 import 路径                                                                |
-| `Not enough information to infer type argument for 'T'`                       | async 返回类型显式标注                  | 省略返回类型                                                                    |
-| `No value passed for parameter 'options'`                                     | `close()` 缺参                          | 传 `close({})`                                                                  |
-| `找不到名称 "mqtt"`                                                           | `.uts` 文件 import npm 包               | 改用 uni 内置 API                                                               |
-| `Infix call is prohibited on a nullable receiver`                             | 数组元素未 `as number`                  | `arr[i] as number`                                                              |
-| `Unsupported escape sequence`                                                 | `\0` 等转义序列不支持                   | 改用 `\x00`                                                                     |
-| `Expression 'keys' of type 'MutableSet<String>'...`                           | Map.keys() 返回 Set 不可遍历            | 改用 string[] 数组                                                              |
-| `找不到名称 "MapEntry"`                                                       | MapEntry 在 UTS 中不可用                | 改用数组 + class 存储                                                           |
-| `No value passed for parameter 'xxx'`                                         | `?:` 可选参数不兼容                     | 改用 `T \| null = null` 默认值                                                  |
-| `Assignment type mismatch: Function0<X> but X was expected`                   | 给静态方法属性赋函数表达式              | 方案 A：用 `#ifdef` 包裹方法体；方案 B：各平台独立 `index.uts` 直接实现         |
-| `Cannot create an instance of an abstract class`                              | 直接 new 抽象类                         | 定义具名 UTS 子类 extends                                                       |
-| `This type has a constructor, so it must be initialized here`                 | extends 类未调 super()                  | `constructor() { super() }`                                                     |
-| `Variable expected / Function invocation 'X()' expected`                      | 给类静态方法属性赋值                    | 方案 A：用 `#ifdef` 在方法体内条件编译；方案 B：各平台独立 `index.uts` 直接实现 |
-| `Smart cast to 'X' is impossible, because 'X' is a mutable...`                | 可变 var 被并发修改                     | 拷贝到局部 `const` 变量                                                         |
-| `找不到名称 "call"`                                                           | `?.call(null, ...)` 语法不支持          | 定义辅助函数局部变量检查+直接调用                                               |
-| `Not enough information to infer type argument for 'T'`（getParcelableExtra） | Java 泛型方法缺类型参数                 | `getParcelableExtra<Xxx>(key)` 显式传泛型                                       |
-| `'onReceive' hides member of supertype 'X' and needs an 'override' modifier`  | 重写父类方法缺 `override`               | UTS 类中必须加 `override` 关键字                                                |
-| `参数类型不匹配：实际类型为 'UTSJSONObject'，预期类型为 'Function0<Unit>'`    | SAM 接口传了对象字面量                  | 直接传函数（SAM 转换）                                                          |
-| `Only safe (?.) or non-null asserted (!!.) calls on a nullable receiver`      | `getUniActivity()` 未空安全调用         | `?.` 或用局部变量先判空                                                         |
-| `类型不匹配: 推断类型是 'X?'，但预期的是 'X'`                                 | `as` 强转不改变空值性                   | 用中间变量 + null 检查再赋值                                                    |
-| `ClassCastException: java.lang.Float cannot be cast to java.lang.Integer`     | UTS number 转 Kotlin Int 时实际为 Float | 使用 `Math.round()` 显式转整数                                                  |
-| `找不到名称 "moveTaskToFront"`                                                | UTS 中某些 Activity 方法不可见          | 改用 `startActivity` + `FLAG_ACTIVITY_REORDER_TO_FRONT`                         |
-| `Classifier 'class X' does not have a companion object`                       | 类名不能直接作为表达式                  | `UTSAndroid.getJavaClass(X)` 对 Kotlin 类不可用，改回旧 API                     |
-| `参数类型不匹配：实际类型为 'Int'，预期类型为 'Float'`                        | 数值字面量默认 Int                      | `radius as Float` 显式转换                                                      |
-| `找不到名称 "getBondState"/"getName"/"getAddress"`                            | `getParcelableExtra` 返回类型推断失败   | 显式泛型 `getParcelableExtra<BluetoothDevice>(key)`                             |
-| `Property 'xxx' does not exist on type 'typeof XxxService'`                   | 方法只存在于单平台实现                  | 调用侧用 `#ifdef` 包裹或在各平台补齐空实现                                      |
-| `Cannot find name 'Settings'`                                                 | 反射调用 Android 系统 API               | 用 `java.lang.Class.forName('android.provider.Settings')` 反射方式              |
-| `Type 'number' is not assignable to type 'Int'`                               | 数值类型传给 Kotlin Int 参数            | `config.roomId as Int` 显式转换                                                 |
-| `Type 'number' is not assignable to type 'Long'`                              | 数值类型传给 Kotlin Long 参数           | `result as Long` 显式转换                                                       |
+| 错误信息                                                                      | 原因                                                | 解决方案                                                                                          |
+| ----------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------- | --------- |
+| `Direct declaration of Object Literal Type is not supported`                  | 内联对象类型                                        | 用 `class` 替代 `type { ... }`                                                                    |
+| `Intersection Type is not supported`                                          | `as` 与 `&` 未加括号                                | `(x as number) & mask`                                                                            |
+| `Conditional statements must use boolean types`                               | `                                                   |                                                                                                   | ` 用于非布尔类型 | 改用 `??` |
+| `Cannot infer type for this parameter`                                        | 类型未显式标注                                      | 添加类型声明                                                                                      |
+| `Smart cast to 'X' is impossible...`                                          | 变量被闭包捕获修改                                  | 拷贝到局部 let/const                                                                              |
+| `Unresolved reference`                                                        | 类型/变量未导入                                     | 检查 import 路径                                                                                  |
+| `Not enough information to infer type argument for 'T'`                       | async 返回类型显式标注                              | 省略返回类型                                                                                      |
+| `No value passed for parameter 'options'`                                     | `close()` 缺参                                      | 传 `close({})`                                                                                    |
+| `找不到名称 "mqtt"`                                                           | `.uts` 文件 import npm 包                           | 改用 uni 内置 API                                                                                 |
+| `Infix (or operator) call is prohibited on a nullable receiver`               | `charCodeAt()` / `arr[i]` 返回 `Number?` 就参与运算 | `str.charCodeAt(i) as number`、`arr[i] as number`（**只写 `: number` 标注不生效，必须显式断言**） |
+| `Unsupported escape sequence`                                                 | `\0` 等转义序列不支持                               | 改用 `\x00`                                                                                       |
+| `Expression 'keys' of type 'MutableSet<String>'...`                           | Map.keys() 返回 Set 不可遍历                        | 改用 string[] 数组                                                                                |
+| `找不到名称 "MapEntry"`                                                       | MapEntry 在 UTS 中不可用                            | 改用数组 + class 存储                                                                             |
+| `No value passed for parameter 'xxx'`                                         | `?:` 可选参数不兼容                                 | 改用 `T \| null = null` 默认值                                                                    |
+| `Assignment type mismatch: Function0<X> but X was expected`                   | 给静态方法属性赋函数表达式                          | 方案 A：用 `#ifdef` 包裹方法体；方案 B：各平台独立 `index.uts` 直接实现                           |
+| `Cannot create an instance of an abstract class`                              | 直接 new 抽象类                                     | 定义具名 UTS 子类 extends                                                                         |
+| `This type has a constructor, so it must be initialized here`                 | extends 类未调 super()                              | `constructor() { super() }`                                                                       |
+| `Variable expected / Function invocation 'X()' expected`                      | 给类静态方法属性赋值                                | 方案 A：用 `#ifdef` 在方法体内条件编译；方案 B：各平台独立 `index.uts` 直接实现                   |
+| `Smart cast to 'X' is impossible, because 'X' is a mutable...`                | 可变 var 被并发修改                                 | 拷贝到局部 `const` 变量                                                                           |
+| `找不到名称 "call"`                                                           | `?.call(null, ...)` 语法不支持                      | 定义辅助函数局部变量检查+直接调用                                                                 |
+| `Not enough information to infer type argument for 'T'`（getParcelableExtra） | Java 泛型方法缺类型参数                             | `getParcelableExtra<Xxx>(key)` 显式传泛型                                                         |
+| `'onReceive' hides member of supertype 'X' and needs an 'override' modifier`  | 重写父类方法缺 `override`                           | UTS 类中必须加 `override` 关键字                                                                  |
+| `参数类型不匹配：实际类型为 'UTSJSONObject'，预期类型为 'Function0<Unit>'`    | SAM 接口传了对象字面量                              | 直接传函数（SAM 转换）                                                                            |
+| `Only safe (?.) or non-null asserted (!!.) calls on a nullable receiver`      | `getUniActivity()` 未空安全调用                     | `?.` 或用局部变量先判空                                                                           |
+| `类型不匹配: 推断类型是 'X?'，但预期的是 'X'`                                 | `as` 强转不改变空值性                               | 用中间变量 + null 检查再赋值                                                                      |
+| `ClassCastException: java.lang.Float cannot be cast to java.lang.Integer`     | UTS number 转 Kotlin Int 时实际为 Float             | 使用 `Math.round()` 显式转整数                                                                    |
+| `找不到名称 "moveTaskToFront"`                                                | UTS 中某些 Activity 方法不可见                      | 改用 `startActivity` + `FLAG_ACTIVITY_REORDER_TO_FRONT`                                           |
+| `Classifier 'class X' does not have a companion object`                       | 类名不能直接作为表达式                              | `UTSAndroid.getJavaClass(X)` 对 Kotlin 类不可用，改回旧 API                                       |
+| `参数类型不匹配：实际类型为 'Int'，预期类型为 'Float'`                        | 数值字面量默认 Int                                  | `radius as Float` 显式转换                                                                        |
+| `找不到名称 "getBondState"/"getName"/"getAddress"`                            | `getParcelableExtra` 返回类型推断失败               | 显式泛型 `getParcelableExtra<BluetoothDevice>(key)`                                               |
+| `Property 'xxx' does not exist on type 'typeof XxxService'`                   | 方法只存在于单平台实现                              | 调用侧用 `#ifdef` 包裹或在各平台补齐空实现                                                        |
+| `Cannot find name 'Settings'`                                                 | 反射调用 Android 系统 API                           | 用 `java.lang.Class.forName('android.provider.Settings')` 反射方式                                |
+| `Type 'number' is not assignable to type 'Int'`                               | 数值类型传给 Kotlin Int 参数                        | `config.roomId as Int` 显式转换                                                                   |
+| `Type 'number' is not assignable to type 'Long'`                              | 数值类型传给 Kotlin Long 参数                       | `result as Long` 显式转换                                                                         |
 
 ## 新增编译错误详解
 
@@ -281,3 +281,27 @@ TRTCBridge.setOnEnterRoom(function (result: Long): void {
   }
 });
 ```
+
+### 3.19 不等真机打包，本地先把生成的 Kotlin 编一遍
+
+**适用场景**：打自定义调试基座时报 `FAILURE: Build failed ... Execution failed for task ':uni_modules:xxx:compileReleaseKotlin'`，但本地 `publish app-android --type appResource` 又是成功的。
+
+**关键认知**：`appResource` 只做 **uts → kt 源码转译，不做 Kotlin 类型检查**，所以可空性、类型不匹配这类错误只会在 Gradle 编译阶段暴露。想提前复现，用 HBuilderX 自带的 kotlinc 直接编译转译产物：
+
+```bash
+# 1) 转译产物就在项目里（appResource 编译后生成）
+unpackage/dist/build/app-android/uni_modules/<插件名>/utssdk/app-android/src/index.kt
+
+# 2) 用 HBuilderX 自带 JDK + kotlinc + uts 运行时 jar 编译
+J="C:/Program Files/HBuilderX/plugins/amazon-corretto/bin/java.exe"
+KL='C:/Program Files/HBuilderX/plugins/uniapp-runextension/kotlinc/lib/*'   # java -cp 支持通配符
+CP=$(ls "/c/Program Files/HBuilderX/plugins/uniapp-runextension"/lib/*.jar \
+        "/c/Program Files/HBuilderX/plugins/uniapp-runextension"/lib2/*.jar | cygpath -w -f - | tr '\n' ';')
+"$J" -Xmx1g -cp "$KL" org.jetbrains.kotlin.cli.jvm.K2JVMCompiler -classpath "$CP" -d out index.kt
+```
+
+三个坑：
+
+- `-classpath` **不接受 `dir/*` 通配符**（会抛 `InvalidPathException: Illegal char <*>`），必须用 `cygpath -w` 展开成 Windows 分号分隔的 jar 列表。
+- 文件尾部的 `open class UniUTSMethodRegister { ... }`（`@UTSAutoRegister` / `UTSBridge.registerUTSMethod`）和 `import io.dcloud.uniappxv.runtime.*`、`import io.dcloud.uts.autoregister.*` 依赖 Gradle 从 maven 拉的包，本地没有 → 会报 4 条 `unresolved reference`。**截掉这段胶水再编**，剩下的就是算法本体，错误定位不受影响。
+- 判据看「错误条数」而不是「是否退出 0」：改对了应只剩上述环境性报错或 0 条；仍出现 `nullable receiver` / `type mismatch` 就是没修干净。实测同一文件去掉 `as number` 得 15 条错、补回断言后 0 条。

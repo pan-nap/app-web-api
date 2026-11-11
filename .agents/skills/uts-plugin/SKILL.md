@@ -12,7 +12,7 @@ description: "UTS 插件开发规范与坑点总结。涵盖 uni_modules 插件�
 | **插件结构**        | 目录组织（以 hs-im 为模板）、package.json 配置、职责分层                                                                                                    | [plugin-structure.md](references/plugin-structure.md)                                  |
 | **hs-im 参考项目**  | hs-im 是四平台（Web/Android/iOS/HarmonyOS）UTS 插件的完整模板，涵盖类型系统、纯 JS 辅助、Kotlin/Swift 桥接、CLI 原生 SDK 下载等模式，新插件开发应参照此结构 | 参考 `uni_modules/hs-im/` 目录及 [plugin-structure.md](references/plugin-structure.md) |
 | **类型系统**        | 类型声明、模式速查、TS→UTS 转换                                                                                                                             | [type-system.md](references/type-system.md)                                            |
-| **编译错误**        | 内联对象、解构、for...of、async 推断等 15 类错误 + 速查表                                                                                                   | [compile-errors.md](references/compile-errors.md)                                      |
+| **编译错误**        | 内联对象、解构、for...of、async 推断等 17 类错误 + 速查表 + 本地 kotlinc 提前复现 Gradle 编译错误                                                           | [compile-errors.md](references/compile-errors.md)                                      |
 | **运行时错误**      | ClassCastException、Smart cast、uni.$emit 丢失等 6 类错误 + 速查表                                                                                          | [runtime-errors.md](references/runtime-errors.md)                                      |
 | **开发原则**        | 107 条开发原则（核心 + Android/iOS/HarmonyOS/Web 专属）                                                                                                     | [development-principles.md](references/development-principles.md)                      |
 | **平台适配**        | 条件编译、平台 API 差异速查、Android 专有方法跨端调用（Property does not exist）                                                                            | [platform-adaptation.md](references/platform-adaptation.md)                            |
@@ -34,7 +34,7 @@ uts-plugin/
 └── references/
     ├── plugin-structure.md           ← 插件目录结构、package.json、职责分层
     ├── type-system.md                ← 类型声明、interface.uts、模式速查表
-    ├── compile-errors.md             ← 编译错误详解 + 高频错误速查表
+    ├── compile-errors.md             ← 编译错误详解 + 高频错误速查表 + 本地 kotlinc 复现原生编译错
     ├── runtime-errors.md             ← 运行时错误详解 + 高频错误速查表
     ├── development-principles.md     ← #1~#107 开发原则总结
     ├── platform-adaptation.md        ← 条件编译、平台 API 差异

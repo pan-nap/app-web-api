@@ -10,7 +10,7 @@
 
 - **uni.getLaunchOptionsSync()**：获取本次启动时的参数。
 - **uni.getEnterOptionsSync()**：获取本次进入前台时的参数。
-- 做"直达页"时一般在 **App.onShow** 里解析并 navigateTo。
+- 做"直达页"时一般在**应用级显示**回调里解析并 navigateTo：组合式/蒸汽模式为 `onAppShow`（见 [App 入口](core-app.md)「应用生命周期」，命名不在本文重复）。
 
 ## 系统信息
 
