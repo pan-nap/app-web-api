@@ -1,6 +1,6 @@
 {
   // 多根工作区（Multi-root Workspace）配置：
-  // uni-app x 语言服务（DCloud 插件）识别项目的关键是 packages/hs-his-app/tsconfig.json：
+  // uni-app x 语言服务（DCloud 插件）识别项目的关键是 packages/app/tsconfig.json：
   // tsserver 从文件向上找最近的 tsconfig，以其目录为项目根检测 manifest.json/pages.json/App.uvue/main.uts。
   // 有了该 tsconfig 后，单根（直接打开仓库根）和本多根工作区两种打开方式均有代码提示。
   // 使用方式：菜单「文件 → 打开工作区」选择本文件；直接打开仓库根目录也可。
